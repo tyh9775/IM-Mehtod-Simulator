@@ -1,5 +1,7 @@
 import numpy as np
 import random
+from scipy.integrate import simpson
+
 
 #Switch for deltas to be generated
 Delta=False
@@ -8,7 +10,7 @@ Delta=False
 Free=False 
 
 #should output the PID and 4-momentum of every particle generated as the output
-#header should include the number of events generated, the number of particles generated
+#header should include the number of events, the total number of particles, and the 
 
 if Delta is False and Free is False:
     print("No particles generated!")
@@ -61,11 +63,50 @@ def vec_gen(r):
   z=r*np.cos(theta)
   return x, y, z, theta, phi
 
+#distance formula: sqrt(x1^2+x2^2+...+xn^2)
+def dist_form(vec):
+  vsum2=0
+  for i in range(0,len(vec)):
+    vsum2+=vec[i]**2
+  return np.sqrt(vsum2)  
+
+#given two 4-vectors, calculate the sum of the spatial components
+def p_sum(p4a,p4b):
+  ptot=[]
+  for i in range (0,3):
+    ptot.append(p4a[i+1]+p4b[i+1]) 
+  return ptot
+
+#Breit_Wigner distribution for the  mass distribution of delta resonances:
+#class bw_dist(st.rv_continuous):
+def bw_pdf(md,md0,mn,mpi):
+  A=0.95 
+  q=np.sqrt((md**2-mn**2-mpi**2)**2-4*(mn*mpi)**2)/(2*md)
+  gmd=(0.47*q**3)/(mpi**2+0.6*q**2)
+  return (4*md0**2*gmd)/((A)*((md**2-md0**2)**2+md0**2*gmd**2))
 
 
+
+#constant values
+mdel=1232 #MeV/c^2 - rest mass of delta resonance
+m_p=938 #MeV/c^2 - rest mass of proton
+m_pi=139.570 #MeV/c^2 - rest mass of charged pion
+Eb=270 #Beam energy per nucleon (AMeV)
+
+#bounds for the Breit-Wigner distribution of the delta mass in lab frame
+md_min=m_p+m_pi
+md_max=2015+Eb-m_p #2015 MeV is the minimum C.M. energy of the delta for the energy-dependent isospin-averaged isotropic cross section to be non-zero
+
+#build mass distribution
+x_bw=np.linspace(md_min,md_max,1000)
+y_bw=[]
+for i in range (0,len(x_bw)):
+  y_bw.append(bw_pdf(x_bw[i],mdel,m_p,m_pi))
+norm_const=simpson(y=y_bw,x=x_bw)
+y_norm=y_bw/norm_const
 
 #number of events
-N_events=100
+N_events=10000
 
 
 for i in range(0,N_events):
