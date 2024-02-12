@@ -1,6 +1,7 @@
 import numpy as np
 import random
 from scipy.integrate import simpson
+import csv
 
 
 #Switch for deltas to be generated
@@ -23,6 +24,8 @@ if Delta is False and Free is False:
 def bw_pdf(md,md0,mn,mpi):
   A=0.95 
   q=np.sqrt((md**2-mn**2-mpi**2)**2-4*(mn*mpi)**2)/(2*md)
+  if np.isnan(q):
+    q=0
   gmd=(0.47*q**3)/(mpi**2+0.6*q**2)
   return (4*md0**2*gmd)/((A)*((md**2-md0**2)**2+md0**2*gmd**2))
 
@@ -82,7 +85,7 @@ def kgam_calc(KE,m0):
 
 #constant values
 m_del0=1232 #MeV/c^2 - rest mass of delta resonance
-m_p=938 #MeV/c^2 - rest mass of proton
+m_p=939 #MeV/c^2 - rest mass of proton
 m_pi=139.570 #MeV/c^2 - rest mass of charged pion
 Eb=270 #Beam energy per nucleon (AMeV)
 rt_s=2015+Eb #energy at the center of collision (sqrt of s)
@@ -95,7 +98,7 @@ md_min=m_p+m_pi
 md_max=rt_s-m_p 
 
 #build mass distribution 
-x_bw=np.linspace(md_min,md_max,1000)
+x_bw=np.linspace(md_min,md_max,100)
 y_bw=[]
 for i in range (0,len(x_bw)):
   y_bw.append(bw_pdf(x_bw[i],m_del0,m_p,m_pi))
@@ -115,8 +118,8 @@ N_events=1
 #number of created delta resonances
 N_total=0
 
-#create a binary output file 
-with open("data.txt", 'w') as file:
+#create an output file 
+with open("data.csv", 'w') as file:
   file.close()
 
 
@@ -189,9 +192,10 @@ for i in range(0,N_events):
       pdata=np.array(['p',p4pL],dtype=object)
       pidata=np.array(['pip',p4piL], dtype=object)
 
-      with open('data.txt','a') as file:
-        file.write(str(pdata))
-        file.write(str(pidata))
+      with open('data.csv','a',newline='') as file:
+        g=csv.writer(file, delimiter=',')
+        g.writerow(pdata)
+        g.writerow(pidata)
         file.close()
 
   ########################
@@ -220,8 +224,9 @@ for i in range(0,N_events):
       p4pif=[piEt,pxpi,pypi,pzpi]
       pfdata=np.array(['p',p4pf],dtype=object)
       pifdata=np.array(['pip',p4pif],dtype=object)
-      with open('data.txt','a') as file:
-        file.write(str(pfdata))
-        file.write(str(pifdata))
+      with open('data.csv','a',newline='') as file:
+        g=csv.writer(file, delimiter=',')
+        g.writerow(pfdata)
+        g.writerow(pifdata)
         file.close()
   
