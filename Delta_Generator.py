@@ -95,7 +95,8 @@ Eb=270 #Beam energy per nucleon (AMeV)
 
 #bounds for the Breit-Wigner distribution of the delta mass in lab frame
 md_min=m_p+m_pi
-md_max=2015+Eb-m_p #2015 MeV is the minimum C.M. energy of the delta for the energy-dependent isospin-averaged isotropic cross section to be non-zero
+md_max=2015+Eb-m_p 
+#2015 MeV is the minimum C.M. energy of the collision for the energy-dependent isospin-averaged isotropic cross section to be non-zero
 
 #build mass distribution 
 x_bw=np.linspace(md_min,md_max,1000)
@@ -104,6 +105,13 @@ for i in range (0,len(x_bw)):
   y_bw.append(bw_pdf(x_bw[i],mdel,m_p,m_pi))
 norm_const=simpson(y=y_bw,x=x_bw)
 y_norm=y_bw/norm_const
+
+#constants for free particle generation 
+#KE of pions should be higher than the KE of protons in general since mpi<mp
+T1=100
+a1=T1*250
+T2=100
+a2=T2*300
 
 #number of events
 N_events=10000
@@ -122,7 +130,15 @@ for i in range(0,N_events):
   if Delta is True:
     N_delta=2 #number of resonances created per event
     #N_detla should be randomized according to some distribution eventually
-    
+    #consider making it scale with the energy of delta
+
+    #randomly choose the relative mass of the delta resonance according to bw dist
+    #using monte carlo method
+    mrel=random.uniform(md_min,md_max)
+    ytest=random.uniform(0,max(y_norm))
+    while ytest > bw_pdf(mrel,mdel,m_p,m_pi):
+      mrel=random.uniform(md_min,md_max)
+      ytest=random.uniform(0,max(y_norm))
 
 
 
@@ -132,4 +148,21 @@ for i in range(0,N_events):
   ########################
 
   if Free is True:
-    ()
+    N_free =2 #number of free particle pairs per event
+    #should also be randomized(Boltzmann dist?)
+
+    #generate the kinetic energy of the particles in lab frame
+    p_k=en_dist(a1,T1,N_free)
+    pi_k=en_dist(a2,T2,N_free)  
+    
+    for k in range(0,len(p_k)):
+      gam1,v1,p_mom,p_et=gam_calc(p_k[k],m_p)
+      pxp,pyp,pzp,th_p,ph_p=vec_gen(p_mom)
+      p4p=[p_et,pxp,pyp,pzp]
+      gam2,v2,pi_mom,pi_et=gam_calc(pi_k[k],m_pi)
+      pxpi,pypi,pzpi,th_pi,ph_pi=vec_gen(pi_mom) 
+      p4pi=[pi_et,pxpi,pypi,pzpi]
+      
+      p_list.append(p4p)
+      pi_list.append(p4pi)
+  
