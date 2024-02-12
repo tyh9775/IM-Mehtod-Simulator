@@ -136,7 +136,7 @@ for i in range(0,N_events):
     #using monte carlo method
     mdel=random.uniform(md_min,md_max)
     ytest=random.uniform(0,max(y_norm))
-    while ytest > bw_pdf(mdel,m_del0,m_p,m_pi):
+    while ytest > bw_pdf(mdel,m_del0,m_p,m_pi)/norm_const:
       mdel=random.uniform(md_min,md_max)
       ytest=random.uniform(0,max(y_norm))
 
