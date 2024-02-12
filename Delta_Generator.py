@@ -88,7 +88,7 @@ def bw_pdf(md,md0,mn,mpi):
 
 
 #constant values
-mdel=1232 #MeV/c^2 - rest mass of delta resonance
+m_del0=1232 #MeV/c^2 - rest mass of delta resonance
 m_p=938 #MeV/c^2 - rest mass of proton
 m_pi=139.570 #MeV/c^2 - rest mass of charged pion
 Eb=270 #Beam energy per nucleon (AMeV)
@@ -102,7 +102,7 @@ md_max=2015+Eb-m_p
 x_bw=np.linspace(md_min,md_max,1000)
 y_bw=[]
 for i in range (0,len(x_bw)):
-  y_bw.append(bw_pdf(x_bw[i],mdel,m_p,m_pi))
+  y_bw.append(bw_pdf(x_bw[i],m_del0,m_p,m_pi))
 norm_const=simpson(y=y_bw,x=x_bw)
 y_norm=y_bw/norm_const
 
@@ -132,14 +132,15 @@ for i in range(0,N_events):
     #N_detla should be randomized according to some distribution eventually
     #consider making it scale with the energy of delta
 
-    #randomly choose the relative mass of the delta resonance according to bw dist
+    #randomly choose the mass of the delta resonance according to bw dist
     #using monte carlo method
-    mrel=random.uniform(md_min,md_max)
+    mdel=random.uniform(md_min,md_max)
     ytest=random.uniform(0,max(y_norm))
-    while ytest > bw_pdf(mrel,mdel,m_p,m_pi):
-      mrel=random.uniform(md_min,md_max)
+    while ytest > bw_pdf(mdel,m_del0,m_p,m_pi):
+      mdel=random.uniform(md_min,md_max)
       ytest=random.uniform(0,max(y_norm))
 
+    #calculate the 
 
 
 
