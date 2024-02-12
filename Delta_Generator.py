@@ -7,7 +7,7 @@ from scipy.integrate import simpson
 Delta=True
 
 #Switch for free particles to be generated with the delta resonances
-Free=False 
+Free=True 
 
 #should output the PID and 4-momentum of every particle generated 
 #header should include the number of events and the total number of particles 
@@ -68,23 +68,17 @@ def gam_mat(gam,v,vx,vy,vz,p4):
                 [-gam*vz,(gam-1)*vx*vz/v**2,(gam-1)*vy*vz/v**2,1+(gam-1)*vz**2/v**2]])
     return np.dot(A,p4)
 
-#distance formula: sqrt(x1^2+x2^2+...+xn^2)
-def dist_form(vec):
-  vsum2=0
-  for i in range(0,len(vec)):
-    vsum2+=vec[i]**2
-  return np.sqrt(vsum2)  
-
-#given two 4-vectors, calculate the sum of the spatial components
-def p_sum(p4a,p4b):
-  ptot=[]
-  for i in range (0,3):
-    ptot.append(p4a[i+1]+p4b[i+1]) 
-  return ptot
-
 #to generate n particles according to an (a/T)*e^(-x/T) distribution
 def en_dist(a,T,n):
   return a*np.random.exponential(scale=1/T,size=n)
+
+#given KE and rest mass, calculate Lorentz factor, rel v, total E, and rel p
+def kgam_calc(KE,m0):
+  gam=1+KE/m0
+  v=np.sqrt(1-1/gam**2)
+  Et=KE+m0
+  prel=gam*m0*v
+  return gam,v,Et,prel
 
 #constant values
 m_del0=1232 #MeV/c^2 - rest mass of delta resonance
@@ -116,13 +110,15 @@ T2=100
 a2=T2*300
 
 #number of events
-N_events=10000
+N_events=1
 
 #number of created delta resonances
 N_total=0
 
-p_list=[]
-pi_list=[]
+#create a binary output file 
+with open("data.txt", 'w') as file:
+  file.close()
+
 
 for i in range(0,N_events):
   ################
@@ -135,6 +131,7 @@ for i in range(0,N_events):
     #consider making it scale with the energy of delta
     
     for i in range(0,N_delta):
+      N_total=N_total+1
       ######################################
       #starting in center of collision frame
       ######################################
@@ -184,14 +181,24 @@ for i in range(0,N_events):
       #LT back to lab frame
       #####################
 
+      #4 momenta of p and pi in lab frame
       p4pL=gam_mat(dgam,dv,-vdx,-vdy,-vdz,p4pD)
       p4piL=gam_mat(dgam,dv,-vdx,-vdy,-vdz,p4piD)
 
+      #write the PID and 4 momenta to the output file
+      pdata=np.array(['p',p4pL],dtype=object)
+      pidata=np.array(['pip',p4piL], dtype=object)
 
+      with open('data.txt','a') as file:
+        file.write(str(pdata))
+        file.write(str(pidata))
+        file.close()
 
   ########################
   #Free particle generator
   ########################
+        
+  #In lab frame
 
   if Free is True:
     N_free =2 #number of free particle pairs per event
@@ -202,13 +209,19 @@ for i in range(0,N_events):
     pi_k=en_dist(a2,T2,N_free)  
     
     for k in range(0,len(p_k)):
-      gam1,v1,p_mom,p_et=gam_calc(p_k[k],m_p)
-      pxp,pyp,pzp,th_p,ph_p=vec_gen(p_mom)
-      p4p=[p_et,pxp,pyp,pzp]
-      gam2,v2,pi_mom,pi_et=gam_calc(pi_k[k],m_pi)
-      pxpi,pypi,pzpi,th_pi,ph_pi=vec_gen(pi_mom) 
-      p4pi=[pi_et,pxpi,pypi,pzpi]
-      
-      p_list.append(p4p)
-      pi_list.append(p4pi)
+      #calculate L factor, rel v, total E, and rel momenta of p an pi
+      gam1,v1,pEt,ppr=kgam_calc(p_k[k],m_p)
+      gam2,v2,piEt,pipr=kgam_calc(pi_k[k],m_pi)
+
+      #give the particles a direction and write the 4 momenta
+      pxp,pyp,pzp,th_p,ph_p=vec_gen(ppr)
+      p4pf=[pEt,pxp,pyp,pzp]
+      pxpi,pypi,pzpi,th_pi,ph_pi=vec_gen(pipr) 
+      p4pif=[piEt,pxpi,pypi,pzpi]
+      pfdata=np.array(['p',p4pf],dtype=object)
+      pifdata=np.array(['pip',p4pif],dtype=object)
+      with open('data.txt','a') as file:
+        file.write(str(pfdata))
+        file.write(str(pifdata))
+        file.close()
   
