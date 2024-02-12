@@ -97,7 +97,7 @@ Eb=270 #Beam energy per nucleon (AMeV)
 md_min=m_p+m_pi
 md_max=2015+Eb-m_p #2015 MeV is the minimum C.M. energy of the delta for the energy-dependent isospin-averaged isotropic cross section to be non-zero
 
-#build mass distribution
+#build mass distribution 
 x_bw=np.linspace(md_min,md_max,1000)
 y_bw=[]
 for i in range (0,len(x_bw)):
@@ -108,6 +108,11 @@ y_norm=y_bw/norm_const
 #number of events
 N_events=10000
 
+#number of created delta resonances
+N_total=0
+
+p_list=[]
+pi_list=[]
 
 for i in range(0,N_events):
   ################
@@ -115,8 +120,9 @@ for i in range(0,N_events):
   ################
 
   if Delta is True:
-    ()
-
+    N_delta=2 #number of resonances created per event
+    #N_detla should be randomized according to some distribution eventually
+    
 
 
 
