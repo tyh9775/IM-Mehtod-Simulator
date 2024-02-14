@@ -2,6 +2,7 @@ import numpy as np
 import random
 from scipy.integrate import simpson
 import csv
+from array import array
 
 #load constants from the file in the repository
 import myconst as mc
@@ -12,6 +13,10 @@ with open("data.csv", 'w') as file:
 
 with open("data1.csv",'w') as f:
   f.close()
+
+with open("data_bin.bin",'wb') as fb:
+  fb.close()
+
 
 #Switch for deltas to be generated
 Delta=True
@@ -133,7 +138,7 @@ for i in range(0,N_events):
     
     N_total=N_total+N_delta
 
-    for i in range(0,N_delta):
+    for j in range(0,N_delta):
       N_total=N_total+1
       ######################################
       #starting in center of collision frame
@@ -204,6 +209,13 @@ for i in range(0,N_events):
         fw.writerow(pdata1)
         f.close()
 
+      #in binary
+      with open("data_bin.bin",'ab') as fb:
+        bdata=array('f',pdata1+pidata1)
+        bdata.tofile(fb)
+        fb.close()
+
+
   ########################
   #Free particle generator
   ########################
@@ -245,6 +257,11 @@ for i in range(0,N_events):
         fw.writerow(pfdata1)
         f.close()
 
+      #in binary
+      with open("data_bin.bin",'ab') as fb:
+        bdata=array('f',pfdata1+pifdata1)
+        bdata.tofile(fb)
+        fb.close()
 
 check=True
 
