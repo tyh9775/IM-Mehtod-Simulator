@@ -8,9 +8,10 @@ from array import array
 import myconst as mc
 
 #create an output file 
+'''
 with open("data.csv", 'w') as file:
   file.close()
-
+'''
 with open("data1.csv",'w') as f:
   f.close()
 
@@ -39,6 +40,9 @@ def bw_pdf(md,md0,mn,mpi):
   A=0.95 
   if md==mn+mpi:
     q=0
+  elif md<mn+mpi:
+    print("invalide mass of delta resonance produced; check mass of nucleon and pion")
+    quit()
   else:
     q=np.sqrt((md**2-mn**2-mpi**2)**2-4*(mn*mpi)**2)/(2*md)
   gmd=(0.47*q**3)/(mpi**2+0.6*q**2)
@@ -192,21 +196,21 @@ for i in range(0,N_events):
       #4 momenta of p and pi in lab frame and use write to output file
       p4pL=gam_mat(dgam,dv,-vdx,-vdy,-vdz,p4pD)
       p4piL=gam_mat(dgam,dv,-vdx,-vdy,-vdz,p4piD)
-
+      '''
       with open('data.csv','a',newline='') as file:
         g=csv.writer(file, delimiter=',')
         g.writerow(p4pL)
         g.writerow(p4piL)
         file.close()
-      
+      '''
       #Invariant mass as PID
       pdata1=[mc.m_p,p4pL[1],p4pL[2],p4pL[3]]
       pidata1=[mc.m_pi,p4piL[1],p4piL[2],p4piL[3]]
 
       with open("data1.csv",'a',newline='') as f:
         fw=csv.writer(f,delimiter=',')
-        fw.writerow(pidata1)
         fw.writerow(pdata1)
+        fw.writerow(pidata1)
         f.close()
 
       #in binary
@@ -223,7 +227,7 @@ for i in range(0,N_events):
   #In lab frame
 
   if Free is True:
-    N_free =2 #number of free particle pairs per event
+    N_free=2 #number of free particle pairs per event
     #should also be randomized (Boltzmann dist?)
 
     #generate the kinetic energy of the particles in lab frame
@@ -235,26 +239,28 @@ for i in range(0,N_events):
       gam1,v1,pEt,ppr=kgam_calc(p_k[k],mc.m_p)
       gam2,v2,piEt,pipr=kgam_calc(pi_k[k],mc.m_pi)
 
+
       #give the particles a direction and write the 4 momenta
       pxp,pyp,pzp,th_p,ph_p=vec_gen(ppr)
       p4pf=[pEt,pxp,pyp,pzp]
       pxpi,pypi,pzpi,th_pi,ph_pi=vec_gen(pipr) 
       p4pif=[piEt,pxpi,pypi,pzpi]
-      
+
+      '''
       with open('data.csv','a',newline='') as file:
         g=csv.writer(file, delimiter=',')
         g.writerow(p4pf)
         g.writerow(p4pif)
         file.close()
-
+      '''
       #Invariant mass as PID
       pfdata1=[mc.m_p,p4pf[1],p4pf[2],p4pf[3]]
       pifdata1=[mc.m_pi,p4pif[1],p4pif[2],p4pif[3]]      
 
       with open("data1.csv",'a',newline='') as f:
         fw=csv.writer(f,delimiter=',')
-        fw.writerow(pifdata1)
         fw.writerow(pfdata1)
+        fw.writerow(pifdata1)
         f.close()
 
       #in binary
@@ -267,3 +273,13 @@ check=True
 
 if check:
   print("Number of Delta resonances created:",N_total)
+
+
+with open('data1.csv','r') as f:
+  lines=f.readlines()
+  f.close()
+
+with open('data1s.csv','w') as g:
+  random.shuffle(lines)
+  g.writelines(lines)
+  g.close()
