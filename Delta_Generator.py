@@ -124,14 +124,23 @@ T2=100
 a2=T2*300
 
 #number of events
-N_events=1
+N_events=2
+
+#event counter
+counter=0
+
 
 #number of created delta resonances
-N_total=0
+ND_total=0
 
-
+#number of all particles
+NP_total=0
 
 for i in range(0,N_events):
+  counter = counter+1
+  #number of particles per event
+  particles=0
+
   ################
   #Delta Generator
   ################
@@ -140,85 +149,99 @@ for i in range(0,N_events):
     N_delta=2 #number of resonances created per event
     #N_detla should be randomized according to some distribution eventually
     #consider making it scale with the energy of delta
+  else:
+    N_delta=0
     
     
+  if Free is True:
+    N_free=2 #number of free particle pairs per event
+    #should also be randomized (Boltzmann dist?)
+  else:
+    N_free=0 
+        
+  particles=particles+N_delta*2+N_free*2
+  NP_total=NP_total+particles
+  with open("data1.csv", 'a') as f:
+    fw=csv.writer(f,delimiter=',')
+    fw.writerow([counter,particles])
+    f.close()
 
-    for j in range(0,N_delta):
-      N_total=N_total+1
-      ######################################
-      #starting in center of collision frame
-      ######################################
+  for j in range(0,N_delta):
+    ND_total=ND_total+1
+    ######################################
+    #starting in center of collision frame
+    ######################################
 
-      #randomly choose the mass of the delta resonance according to bw dist
-      #using monte carlo method
+    #randomly choose the mass of the delta resonance according to bw dist
+    #using monte carlo method
+    mdel=random.uniform(md_min,md_max)
+    ytest=random.uniform(0,max(y_norm))
+    while ytest > bw_pdf(mdel,mc.m_del0,mc.m_p,mc.m_pi)/norm_const:
       mdel=random.uniform(md_min,md_max)
       ytest=random.uniform(0,max(y_norm))
-      while ytest > bw_pdf(mdel,mc.m_del0,mc.m_p,mc.m_pi)/norm_const:
-        mdel=random.uniform(md_min,md_max)
-        ytest=random.uniform(0,max(y_norm))
 
-      #calculate the momentum, total energy, and the relative velocity
-      pdel=bw_mom(mc.rt_s,mdel,mc.m_p)
-      Edel=E_solv(pdel,mc.m_del0)
-      dgam,dv=gam_calc(Edel,mc.m_del0)
-      
-      #give the velocity some direction
-      vdx,vdy,vdz,dth,dph=vec_gen(dv)
+    #calculate the momentum, total energy, and the relative velocity
+    pdel=bw_mom(mc.rt_s,mdel,mc.m_p)
+    Edel=E_solv(pdel,mc.m_del0)
+    dgam,dv=gam_calc(Edel,mc.m_del0)
+    
+    #give the velocity some direction
+    vdx,vdy,vdz,dth,dph=vec_gen(dv)
 
-      ############################################
-      #LT to the rest frame of the delta resonance
-      ############################################
+    ############################################
+    #LT to the rest frame of the delta resonance
+    ############################################
 
-      #decay the delta into a proton and a pion
-      #a->b+c decay
-      #can use energy conservation to solve for momentum of b and c in CoM frame
-      #E=m_a=sqrt(p^2+mb^2)+sqrt(p^2+mc^2)
-      #solved for p using n online algebraic tool
+    #decay the delta into a proton and a pion
+    #a->b+c decay
+    #can use energy conservation to solve for momentum of b and c in CoM frame
+    #E=m_a=sqrt(p^2+mb^2)+sqrt(p^2+mc^2)
+    #solved for p using n online algebraic tool
 
-      #momentum of the particles in CoM frame
-      pcm=dec_mom_sol(mc.m_del0,mc.m_p,mc.m_pi)
-      #(use mdel instead?)
+    #momentum of the particles in CoM frame
+    pcm=dec_mom_sol(mc.m_del0,mc.m_p,mc.m_pi)
+    #(use mdel instead?)
 
-      #total energy of each particle in CoM frame
-      Ep=E_solv(pcm,mc.m_p)
-      Epi=E_solv(pcm,mc.m_pi)
+    #total energy of each particle in CoM frame
+    Ep=E_solv(pcm,mc.m_p)
+    Epi=E_solv(pcm,mc.m_pi)
 
-      #give the proton and pion momenta direction in the delta frame
-      ppx,ppy,ppz,pth,pph=vec_gen(pcm)
+    #give the proton and pion momenta direction in the delta frame
+    ppx,ppy,ppz,pth,pph=vec_gen(pcm)
 
-      #write the 4 momenta of p and pi in delta frame
-      p4pD=[Ep,ppx,ppy,ppz]
-      p4piD=[Epi,-ppx,-ppy,-ppz]
+    #write the 4 momenta of p and pi in delta frame
+    p4pD=[Ep,ppx,ppy,ppz]
+    p4piD=[Epi,-ppx,-ppy,-ppz]
 
-      #####################
-      #LT back to lab frame
-      #####################
+    #####################
+    #LT back to lab frame
+    #####################
 
-      #4 momenta of p and pi in lab frame and use write to output file
-      p4pL=gam_mat(dgam,dv,-vdx,-vdy,-vdz,p4pD)
-      p4piL=gam_mat(dgam,dv,-vdx,-vdy,-vdz,p4piD)
-      '''
-      with open('data.csv','a',newline='') as file:
-        g=csv.writer(file, delimiter=',')
-        g.writerow(p4pL)
-        g.writerow(p4piL)
-        file.close()
-      '''
-      #Invariant mass as PID
-      pdata1=[mc.m_p,p4pL[1],p4pL[2],p4pL[3]]
-      pidata1=[mc.m_pi,p4piL[1],p4piL[2],p4piL[3]]
+    #4 momenta of p and pi in lab frame and use write to output file
+    p4pL=gam_mat(dgam,dv,-vdx,-vdy,-vdz,p4pD)
+    p4piL=gam_mat(dgam,dv,-vdx,-vdy,-vdz,p4piD)
+    '''
+    with open('data.csv','a',newline='') as file:
+      g=csv.writer(file, delimiter=',')
+      g.writerow(p4pL)
+      g.writerow(p4piL)
+      file.close()
+    '''
+    #Invariant mass as PID
+    pdata1=[mc.m_p,p4pL[1],p4pL[2],p4pL[3]]
+    pidata1=[mc.m_pi,p4piL[1],p4piL[2],p4piL[3]]
 
-      with open("data1.csv",'a',newline='') as f:
-        fw=csv.writer(f,delimiter=',')
-        fw.writerow(pdata1)
-        fw.writerow(pidata1)
-        f.close()
+    with open("data1.csv",'a',newline='') as f:
+      fw=csv.writer(f,delimiter=',')
+      fw.writerow(pdata1)
+      fw.writerow(pidata1)
+      f.close()
 
-      #in binary
-      with open("data_bin.bin",'ab') as fb:
-        bdata=array('f',pdata1+pidata1)
-        bdata.tofile(fb)
-        fb.close()
+    #in binary
+    with open("data_bin.bin",'ab') as fb:
+      bdata=array('f',pdata1+pidata1)
+      bdata.tofile(fb)
+      fb.close()
 
 
   ########################
@@ -227,54 +250,50 @@ for i in range(0,N_events):
         
   #In lab frame
 
-  if Free is True:
-    N_free=2 #number of free particle pairs per event
-    #should also be randomized (Boltzmann dist?)
-
-    #generate the kinetic energy of the particles in lab frame
-    p_k=en_dist(a1,T1,N_free)
-    pi_k=en_dist(a2,T2,N_free)  
-    
-    for k in range(0,len(p_k)):
-      #calculate L factor, rel v, total E, and rel momenta of p an pi
-      gam1,v1,pEt,ppr=kgam_calc(p_k[k],mc.m_p)
-      gam2,v2,piEt,pipr=kgam_calc(pi_k[k],mc.m_pi)
+  #generate the kinetic energy of the particles in lab frame
+  p_k=en_dist(a1,T1,N_free)
+  pi_k=en_dist(a2,T2,N_free)  
+  
+  for k in range(0,len(p_k)):
+    #calculate L factor, rel v, total E, and rel momenta of p an pi
+    gam1,v1,pEt,ppr=kgam_calc(p_k[k],mc.m_p)
+    gam2,v2,piEt,pipr=kgam_calc(pi_k[k],mc.m_pi)
 
 
-      #give the particles a direction and write the 4 momenta
-      pxp,pyp,pzp,th_p,ph_p=vec_gen(ppr)
-      p4pf=[pEt,pxp,pyp,pzp]
-      pxpi,pypi,pzpi,th_pi,ph_pi=vec_gen(pipr) 
-      p4pif=[piEt,pxpi,pypi,pzpi]
+    #give the particles a direction and write the 4 momenta
+    pxp,pyp,pzp,th_p,ph_p=vec_gen(ppr)
+    p4pf=[pEt,pxp,pyp,pzp]
+    pxpi,pypi,pzpi,th_pi,ph_pi=vec_gen(pipr) 
+    p4pif=[piEt,pxpi,pypi,pzpi]
 
-      '''
-      with open('data.csv','a',newline='') as file:
-        g=csv.writer(file, delimiter=',')
-        g.writerow(p4pf)
-        g.writerow(p4pif)
-        file.close()
-      '''
-      #Invariant mass as PID
-      pfdata1=[mc.m_p,p4pf[1],p4pf[2],p4pf[3]]
-      pifdata1=[mc.m_pi,p4pif[1],p4pif[2],p4pif[3]]      
+    '''
+    with open('data.csv','a',newline='') as file:
+      g=csv.writer(file, delimiter=',')
+      g.writerow(p4pf)
+      g.writerow(p4pif)
+      file.close()
+    '''
+    #Invariant mass as PID
+    pfdata1=[mc.m_p,p4pf[1],p4pf[2],p4pf[3]]
+    pifdata1=[mc.m_pi,p4pif[1],p4pif[2],p4pif[3]]      
 
-      with open("data1.csv",'a',newline='') as f:
-        fw=csv.writer(f,delimiter=',')
-        fw.writerow(pfdata1)
-        fw.writerow(pifdata1)
-        f.close()
+    with open("data1.csv",'a',newline='') as f:
+      fw=csv.writer(f,delimiter=',')
+      fw.writerow(pfdata1)
+      fw.writerow(pifdata1)
+      f.close()
 
-      #in binary
-      with open("data_bin.bin",'ab') as fb:
-        bdata=array('f',pfdata1+pifdata1)
-        bdata.tofile(fb)
-        fb.close()
+    #in binary
+    with open("data_bin.bin",'ab') as fb:
+      bdata=array('f',pfdata1+pifdata1)
+      bdata.tofile(fb)
+      fb.close()
 
 check=True
 
 if check:
-  print("Number of Delta resonances created:",N_total)
-
+  print("Number of Delta resonances created:",ND_total)
+  print("Number of all particles created:", NP_total)
 
 with open('data1.csv','r') as f:
   lines=f.readlines()
