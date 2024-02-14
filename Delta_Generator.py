@@ -184,25 +184,21 @@ for i in range(0,N_events):
       #LT back to lab frame
       #####################
 
-      #4 momenta of p and pi in lab frame
+      #4 momenta of p and pi in lab frame and use write to output file
       p4pL=gam_mat(dgam,dv,-vdx,-vdy,-vdz,p4pD)
       p4piL=gam_mat(dgam,dv,-vdx,-vdy,-vdz,p4piD)
 
-      #write the PID and 4 momenta to the output file
-      pdata=np.array(['p',p4pL],dtype=object)
-      pidata=np.array(['pip',p4piL], dtype=object)
-
+      with open('data.csv','a',newline='') as file:
+        g=csv.writer(file, delimiter=',')
+        g.writerow(p4pL)
+        g.writerow(p4piL)
+        file.close()
+      
       #Invariant mass as PID
       pdata1=[mc.m_p,p4pL[1],p4pL[2],p4pL[3]]
       pidata1=[mc.m_pi,p4piL[1],p4piL[2],p4piL[3]]
 
-      with open('data.csv','a',newline='') as file:
-        g=csv.writer(file, delimiter=',')
-        g.writerow(pdata)
-        g.writerow(pidata)
-        file.close()
-      
-      with open("data1.csv",'a') as f:
+      with open("data1.csv",'a',newline='') as f:
         fw=csv.writer(f,delimiter=',')
         fw.writerow(pidata1)
         fw.writerow(pdata1)
@@ -232,20 +228,18 @@ for i in range(0,N_events):
       p4pf=[pEt,pxp,pyp,pzp]
       pxpi,pypi,pzpi,th_pi,ph_pi=vec_gen(pipr) 
       p4pif=[piEt,pxpi,pypi,pzpi]
-      pfdata=np.array(['p',p4pf],dtype=object)
-      pifdata=np.array(['pip',p4pif],dtype=object)
       
+      with open('data.csv','a',newline='') as file:
+        g=csv.writer(file, delimiter=',')
+        g.writerow(p4pf)
+        g.writerow(p4pif)
+        file.close()
+
       #Invariant mass as PID
       pfdata1=[mc.m_p,p4pf[1],p4pf[2],p4pf[3]]
       pifdata1=[mc.m_pi,p4pif[1],p4pif[2],p4pif[3]]      
 
-      with open('data.csv','a',newline='') as file:
-        g=csv.writer(file, delimiter=',')
-        g.writerow(pfdata)
-        g.writerow(pifdata)
-        file.close()
-      
-      with open("data1.csv",'a') as f:
+      with open("data1.csv",'a',newline='') as f:
         fw=csv.writer(f,delimiter=',')
         fw.writerow(pifdata1)
         fw.writerow(pfdata1)
