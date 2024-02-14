@@ -35,8 +35,7 @@ def E_solv(p,m):
 #given total energy and rest mass, calculate the Lorentz factor and relative velocity
 def gam_calc(En,m0):
   gam=En/m0
-  v=np.sqrt(1-1/gam**2)
-  return gam, v
+  return gam
 
 #LT in 3D space in matrix form
 def gam_mat(gam,v,vx,vy,vz,p4):
@@ -83,21 +82,25 @@ for ii in range(0,len(mc.p_cut)):
         Etot=Ep+Epi #total energy of the two particles
         
         #move to the "delta" frame assuming the pair can create one
-        gam,v=gam_calc(Etot,mc.m_del0)
+        gam=gam_calc(Etot,mc.m_del0)
+        if gam<1:
+          continue
+        v=np.sqrt(1-1/gam**2)
+
         vx=ptot[0]/(gam*mc.m_del0)
         vy=ptot[1]/(gam*mc.m_del0)
         vz=ptot[2]/(gam*mc.m_del0)
 
-        pp.insert(0,Ep) #4 momentum of p in lab frame
-        print("pp",pp)
-        ppi.insert(0,Epi) #4 momentum of p in lab frame
-        print("ppi",ppi)
-
-
+        p4p=[Ep]+pp #4 momentum of p in lab frame
+        p4pi=[Epi]+ppi #4 momentum of pi in lab frame
+        ptest=gam_mat(gam,v,vx,vy,vz,p4p) #4 momentum of p in delta frame
+        pitest=gam_mat(gam,v,vx,vy,vz,p4pi) #4 momentum of pi in delta frame
+        pt_tot=v_sum(ptest,pitest)
+        pt_mag=dist_form(pt_tot[1:])
+        
 
         #momentum cut
-        if pmag < mc.p_cut[ii]:
+        if pt_mag < mc.p_cut[ii]:
           m_list.append(inv_m(Etot,pmag))
 
-
-print(m_list)
+    print(m_list)

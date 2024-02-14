@@ -10,4 +10,4 @@ rt_s=2015+Eb #energy at the center of collision (sqrt of s)
 #may have to come up with a more dynamic way to adjust rt_s
 
 p_cut=[10,100]
-m_cut=[2,10]
+m_cut=[2]
