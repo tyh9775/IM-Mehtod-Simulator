@@ -52,7 +52,7 @@ def bw_pdf(md,md0,mn,mpi):
 def bw_mom(s,m1,m2):
   return np.sqrt((s**2+m1**2-m2**2)**2/(4*s**2)-m1**2)
 
-#given the momentum and the rest mass, solve for the kinetic energy and the total energy
+#given the momentum and the rest mass, solve for the total energy
 def E_solv(p,m):
   return np.sqrt(p**2+m**2)
 
