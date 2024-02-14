@@ -6,6 +6,12 @@ import csv
 #load constants from the file in the repository
 import myconst as mc
 
+#create an output file 
+with open("data.csv", 'w') as file:
+  file.close()
+
+with open("data1.csv",'w') as f:
+  f.close()
 
 #Switch for deltas to be generated
 Delta=True
@@ -26,9 +32,10 @@ if Delta is False and Free is False:
 #class bw_dist(st.rv_continuous):
 def bw_pdf(md,md0,mn,mpi):
   A=0.95 
-  q=np.sqrt((md**2-mn**2-mpi**2)**2-4*(mn*mpi)**2)/(2*md)
-  if np.isnan(q):
+  if md==mn+mpi:
     q=0
+  else:
+    q=np.sqrt((md**2-mn**2-mpi**2)**2-4*(mn*mpi)**2)/(2*md)
   gmd=(0.47*q**3)/(mpi**2+0.6*q**2)
   return (4*md0**2*gmd)/((A)*((md**2-md0**2)**2+md0**2*gmd**2))
 
@@ -112,9 +119,6 @@ N_events=1
 #number of created delta resonances
 N_total=0
 
-#create an output file 
-with open("data.csv", 'w') as file:
-  file.close()
 
 
 for i in range(0,N_events):
@@ -127,6 +131,8 @@ for i in range(0,N_events):
     #N_detla should be randomized according to some distribution eventually
     #consider making it scale with the energy of delta
     
+    N_total=N_total+N_delta
+
     for i in range(0,N_delta):
       N_total=N_total+1
       ######################################
@@ -186,11 +192,21 @@ for i in range(0,N_events):
       pdata=np.array(['p',p4pL],dtype=object)
       pidata=np.array(['pip',p4piL], dtype=object)
 
+      #Invariant mass as PID
+      pdata1=[mc.m_p,p4pL[1],p4pL[2],p4pL[3]]
+      pidata1=[mc.m_pi,p4piL[1],p4piL[2],p4piL[3]]
+
       with open('data.csv','a',newline='') as file:
         g=csv.writer(file, delimiter=',')
         g.writerow(pdata)
         g.writerow(pidata)
         file.close()
+      
+      with open("data1.csv",'a') as f:
+        fw=csv.writer(f,delimiter=',')
+        fw.writerow(pidata1)
+        fw.writerow(pdata1)
+        f.close()
 
   ########################
   #Free particle generator
@@ -218,9 +234,25 @@ for i in range(0,N_events):
       p4pif=[piEt,pxpi,pypi,pzpi]
       pfdata=np.array(['p',p4pf],dtype=object)
       pifdata=np.array(['pip',p4pif],dtype=object)
+      
+      #Invariant mass as PID
+      pfdata1=[mc.m_p,p4pf[1],p4pf[2],p4pf[3]]
+      pifdata1=[mc.m_pi,p4pif[1],p4pif[2],p4pif[3]]      
+
       with open('data.csv','a',newline='') as file:
         g=csv.writer(file, delimiter=',')
         g.writerow(pfdata)
         g.writerow(pifdata)
         file.close()
-  
+      
+      with open("data1.csv",'a') as f:
+        fw=csv.writer(f,delimiter=',')
+        fw.writerow(pifdata1)
+        fw.writerow(pfdata1)
+        f.close()
+
+
+check=True
+
+if check:
+  print("Number of Delta resonances created:",N_total)
