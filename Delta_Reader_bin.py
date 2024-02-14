@@ -1,13 +1,20 @@
 import numpy as np
 import myconst as mc
 import csv
+from array import array
 
 #load constants
 import myconst as mc
 
+
+def bin_readline(file,bin_size):
+  f=array('f')
+  f.frombytes(file.read(bin_size))
+  g=list(f)
+  return g
 def PID(p):
   prt=0
-  if float(p) < mc.m_pi+0.01 and float(p) > mc.m_pi-0.01:
+  if p < mc.m_pi+0.01 and p > mc.m_pi-0.01:
     prt=0
   else:
     prt=1
@@ -55,16 +62,23 @@ def inv_m(en,p):
 p_list=[]
 pi_list=[]
 
+buffer_size=16
 with open("data_bin.bin",'rb') as file:
-  f=csv.reader(file, delimiter=',')
-  for row in f:
-    p4=[float(i) for i in row]
-    if PID(p4[0])==0:
-      pi_list.append(p4[1:])
+  f=bin_readline(file,buffer_size)
+  if PID(f[0])==0:
+    pi_list.append(f[1:])
+  else:
+    p_list.append(f[1:])
+  while f:
+    f=bin_readline(file,buffer_size)
+    if not f:
+      break
+    if PID(f[0])==0:
+      pi_list.append(f[1:])
     else:
-      p_list.append(p4[1:])
-  file.close()
+      p_list.append(f[1:])
 
+  file.close()
 
 
 for ii in range(0,len(mc.p_cut)):

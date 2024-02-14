@@ -3,6 +3,7 @@ import random
 from scipy.integrate import simpson
 import csv
 from array import array
+import struct
 
 #load constants from the file in the repository
 import myconst as mc
@@ -140,7 +141,7 @@ for i in range(0,N_events):
     #N_detla should be randomized according to some distribution eventually
     #consider making it scale with the energy of delta
     
-    N_total=N_total+N_delta
+    
 
     for j in range(0,N_delta):
       N_total=N_total+1
