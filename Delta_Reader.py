@@ -7,6 +7,8 @@ from scipy.integrate import simpson
 #from scipy.interpolate import interp1d
 import random
 
+#load constants
+import myconst as mc
 
 
 

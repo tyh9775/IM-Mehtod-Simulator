@@ -3,6 +3,9 @@ import random
 from scipy.integrate import simpson
 import csv
 
+#load constants from the file in the repository
+import myconst as mc
+
 
 #Switch for deltas to be generated
 Delta=True
@@ -83,25 +86,16 @@ def kgam_calc(KE,m0):
   prel=gam*m0*v
   return gam,v,Et,prel
 
-#constant values
-m_del0=1232 #MeV/c^2 - rest mass of delta resonance
-m_p=939 #MeV/c^2 - rest mass of proton
-m_pi=139.570 #MeV/c^2 - rest mass of charged pion
-Eb=270 #Beam energy per nucleon (AMeV)
-rt_s=2015+Eb #energy at the center of collision (sqrt of s)
-#2015 MeV is the minimum C.M. energy of the collision for the energy-dependent isospin-averaged isotropic cross section to be non-zero
-#may have to come up with a more dynamic way to adjust rt_s
-
 
 #bounds for the Breit-Wigner distribution of the delta mass in lab frame
-md_min=m_p+m_pi
-md_max=rt_s-m_p 
+md_min=mc.m_p+mc.m_pi
+md_max=mc.rt_s-mc.m_p 
 
 #build mass distribution 
 x_bw=np.linspace(md_min,md_max,100)
 y_bw=[]
 for i in range (0,len(x_bw)):
-  y_bw.append(bw_pdf(x_bw[i],m_del0,m_p,m_pi))
+  y_bw.append(bw_pdf(x_bw[i],mc.m_del0,mc.m_p,mc.m_pi))
 norm_const=simpson(y=y_bw,x=x_bw)
 y_norm=y_bw/norm_const
 
@@ -143,14 +137,14 @@ for i in range(0,N_events):
       #using monte carlo method
       mdel=random.uniform(md_min,md_max)
       ytest=random.uniform(0,max(y_norm))
-      while ytest > bw_pdf(mdel,m_del0,m_p,m_pi)/norm_const:
+      while ytest > bw_pdf(mdel,mc.m_del0,mc.m_p,mc.m_pi)/norm_const:
         mdel=random.uniform(md_min,md_max)
         ytest=random.uniform(0,max(y_norm))
 
       #calculate the momentum, total energy, and the relative velocity
-      pdel=bw_mom(rt_s,mdel,m_p)
-      Edel=E_solv(pdel,m_del0)
-      dgam,dv=gam_calc(Edel,m_del0)
+      pdel=bw_mom(mc.rt_s,mdel,mc.m_p)
+      Edel=E_solv(pdel,mc.m_del0)
+      dgam,dv=gam_calc(Edel,mc.m_del0)
       
       #give the velocity some direction
       vdx,vdy,vdz,dth,dph=vec_gen(dv)
@@ -163,15 +157,15 @@ for i in range(0,N_events):
       #a->b+c decay
       #can use energy conservation to solve for momentum of b and c in CoM frame
       #E=m_a=sqrt(p^2+mb^2)+sqrt(p^2+mc^2)
-      #solved for p using an online algebraic tool
+      #solved for p using n online algebraic tool
 
       #momentum of the particles in CoM frame
-      pcm=dec_mom_sol(m_del0,m_p,m_pi)
+      pcm=dec_mom_sol(mc.m_del0,mc.m_p,mc.m_pi)
       #(use mdel instead?)
 
       #total energy of each particle in CoM frame
-      Ep=E_solv(pcm,m_p)
-      Epi=E_solv(pcm,m_pi)
+      Ep=E_solv(pcm,mc.m_p)
+      Epi=E_solv(pcm,mc.m_pi)
 
       #give the proton and pion momenta direction in the delta frame
       ppx,ppy,ppz,pth,pph=vec_gen(pcm)
@@ -214,8 +208,8 @@ for i in range(0,N_events):
     
     for k in range(0,len(p_k)):
       #calculate L factor, rel v, total E, and rel momenta of p an pi
-      gam1,v1,pEt,ppr=kgam_calc(p_k[k],m_p)
-      gam2,v2,piEt,pipr=kgam_calc(pi_k[k],m_pi)
+      gam1,v1,pEt,ppr=kgam_calc(p_k[k],mc.m_p)
+      gam2,v2,piEt,pipr=kgam_calc(pi_k[k],mc.m_pi)
 
       #give the particles a direction and write the 4 momenta
       pxp,pyp,pzp,th_p,ph_p=vec_gen(ppr)
