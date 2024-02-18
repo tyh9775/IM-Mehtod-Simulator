@@ -9,10 +9,10 @@ import struct
 import myconst as mc
 
 #create an output file 
-'''
+
 with open("data.csv", 'w') as file:
   file.close()
-'''
+
 with open("data1.csv",'w') as f:
   f.close()
 
@@ -129,7 +129,6 @@ N_events=2
 #event counter
 counter=0
 
-
 #number of created delta resonances
 ND_total=0
 
@@ -161,11 +160,15 @@ for i in range(0,N_events):
         
   particles=particles+N_delta*2+N_free*2
   NP_total=NP_total+particles
-  with open("data1.csv", 'a') as f:
+  with open("data1.csv", 'a', newline='') as f:
     fw=csv.writer(f,delimiter=',')
     fw.writerow([counter,particles])
     f.close()
 
+  with open("data.csv", 'a', newline='') as file:
+    fw=csv.writer(file,delimiter=',')
+    fw.writerow([counter,particles])
+    file.close()
   for j in range(0,N_delta):
     ND_total=ND_total+1
     ######################################
@@ -220,13 +223,19 @@ for i in range(0,N_events):
     #4 momenta of p and pi in lab frame and use write to output file
     p4pL=gam_mat(dgam,dv,-vdx,-vdy,-vdz,p4pD)
     p4piL=gam_mat(dgam,dv,-vdx,-vdy,-vdz,p4piD)
-    '''
+
+    datap=[2212]
+    datapi=[211]
+    for k in range(0, len(p4pL)):
+      datap.append(p4pL[k])
+      datapi.append(p4piL[k])
+    
     with open('data.csv','a',newline='') as file:
       g=csv.writer(file, delimiter=',')
-      g.writerow(p4pL)
-      g.writerow(p4piL)
+      g.writerow(datap)
+      g.writerow(datapi)
       file.close()
-    '''
+    
     #Invariant mass as PID
     pdata1=[mc.m_p,p4pL[1],p4pL[2],p4pL[3]]
     pidata1=[mc.m_pi,p4piL[1],p4piL[2],p4piL[3]]
@@ -266,13 +275,18 @@ for i in range(0,N_events):
     pxpi,pypi,pzpi,th_pi,ph_pi=vec_gen(pipr) 
     p4pif=[piEt,pxpi,pypi,pzpi]
 
-    '''
+    datap=[2212]
+    datapi=[211]
+    for k in range(0, len(p4pf)):
+      datap.append(p4pf[k])
+      datapi.append(p4pif[k])
+    
     with open('data.csv','a',newline='') as file:
       g=csv.writer(file, delimiter=',')
-      g.writerow(p4pf)
-      g.writerow(p4pif)
+      g.writerow(datap)
+      g.writerow(datapi)
       file.close()
-    '''
+    
     #Invariant mass as PID
     pfdata1=[mc.m_p,p4pf[1],p4pf[2],p4pf[3]]
     pifdata1=[mc.m_pi,p4pif[1],p4pif[2],p4pif[3]]      
