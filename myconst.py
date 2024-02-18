@@ -9,5 +9,5 @@ rt_s=2015+Eb #energy at the center of collision (sqrt of s)
 #2015 MeV is the minimum C.M. energy of the collision for the energy-dependent isospin-averaged isotropic cross section to be non-zero
 #may have to come up with a more dynamic way to adjust rt_s
 
-p_cut=[10,100]
-m_cut=[2]
+p_cut=10
+m_cut=2

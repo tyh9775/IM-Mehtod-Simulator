@@ -124,7 +124,7 @@ T2=100
 a2=T2*300
 
 #number of events
-N_events=2
+N_events=5
 
 #event counter
 counter=0
@@ -162,7 +162,7 @@ for i in range(0,N_events):
   NP_total=NP_total+particles
   with open("data1.csv", 'a', newline='') as f:
     fw=csv.writer(f,delimiter=',')
-    fw.writerow([counter,particles])
+    fw.writerow([int(counter),int(particles)])
     f.close()
 
   with open("data.csv", 'a', newline='') as file:
@@ -307,7 +307,7 @@ check=True
 
 if check:
   print("Number of Delta resonances created:",ND_total)
-  print("Number of all particles created:", NP_total)
+  print("Number of all particles detected:", NP_total)
 
 with open('data1.csv','r') as f:
   lines=f.readlines()
