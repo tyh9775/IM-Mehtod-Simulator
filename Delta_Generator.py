@@ -10,7 +10,7 @@ import myconst as mc
 
 #create an output file 
 
-with open("data.csv", 'w') as file:
+with open("data.csv", 'w',newline='') as file:
   file.close()
 
 with open("data1.csv",'w') as f:
@@ -104,12 +104,9 @@ def kgam_calc(KE,m0):
   return gam,v,Et,prel
 
 
-#bounds for the Breit-Wigner distribution of the delta mass in lab frame
-md_min=mc.m_p+mc.m_pi
-md_max=mc.rt_s-mc.m_p 
 
 #build mass distribution 
-x_bw=np.linspace(md_min,md_max,100)
+x_bw=np.linspace(mc.md_min,mc.md_max,100)
 y_bw=[]
 for i in range (0,len(x_bw)):
   y_bw.append(bw_pdf(x_bw[i],mc.m_del0,mc.m_p,mc.m_pi))
@@ -124,7 +121,7 @@ T2=100
 a2=T2*300
 
 #number of events
-N_events=5
+N_events=1000
 
 #event counter
 counter=0
@@ -177,10 +174,10 @@ for i in range(0,N_events):
 
     #randomly choose the mass of the delta resonance according to bw dist
     #using monte carlo method
-    mdel=random.uniform(md_min,md_max)
+    mdel=random.uniform(mc.md_min,mc.md_max)
     ytest=random.uniform(0,max(y_norm))
     while ytest > bw_pdf(mdel,mc.m_del0,mc.m_p,mc.m_pi)/norm_const:
-      mdel=random.uniform(md_min,md_max)
+      mdel=random.uniform(mc.md_min,mc.md_max)
       ytest=random.uniform(0,max(y_norm))
 
     #calculate the momentum, total energy, and the relative velocity

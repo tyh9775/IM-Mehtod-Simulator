@@ -38,12 +38,6 @@ def v_sum(v1,v2):
     vtot.append(v1[i]+v2[i]) 
   return vtot
 
-'''
-#given the momentum and the rest mass, solve for the total energy
-def E_solv(p,m):
-  pmg=dist_form(p)
-  return np.sqrt(pmg**2+m**2)
-'''
 #given total energy and rest mass, calculate the Lorentz factor and relative velocity
 def gam_calc(En,m0):
   gam=En/m0
@@ -115,9 +109,7 @@ with open("data.csv",'r') as file:
     #momenta of protons and pions
     p_list=[]
     pi_list=[]
-    row1=next(f)
-    print(row1)
-    eventNum,partNum=h_read(row1)
+    eventNum,partNum=h_read(row)
     for i in range(0,partNum):
       rowdata=next(f)
       identifier=PID(rowdata)
@@ -125,8 +117,6 @@ with open("data.csv",'r') as file:
         p_list.append(rowdata[1:])
       elif identifier==1:
         pi_list.append(rowdata[1:])
-
-
     #invariant mass of the p and pi in the event
     m_list=IM_method(p_list,pi_list,mc.p_cut)
 
@@ -140,7 +130,5 @@ with open("data.csv",'r') as file:
 
   file.close()
 
-
-print(IM_list)
 
 
