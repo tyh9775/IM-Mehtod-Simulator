@@ -1,8 +1,9 @@
 from matplotlib import pyplot as plt
+from scipy.optimize import curve_fit
 import csv
 import myconst as mc
 import numpy as np
-from scipy.optimize import curve_fit
+
 
 
 
@@ -47,7 +48,7 @@ y_new=hist[x_start:x_omit-stp].tolist()+hist[x_omit+stp+1:x_start+x_end].tolist(
 #data to be considered for counting the number of deltas
 x_skipped=bins[x_omit-stp:x_omit+stp+1]
 y_skipped=hist[x_omit-stp:x_omit+stp+1]
-
+print(x_skipped)
 #fitting
 xplt=np.arange(bins[x_start],bins[x_start+x_end],0.5)
 ini_g=[0,0,0,0,0]
@@ -56,7 +57,7 @@ yplt=poly_func(xplt,*popt)
 r2_poly=r2_calc(poly_func,x_new,y_new,popt)
 r=str(round(r2_poly,5))
 plt.plot(xplt,yplt,label='poly fit \n R^2=%s'%(r))
-
+plt.plot(x_skipped,y_skipped,'o')
 #guessing count
 y_est=[]
 for i in range(0,len(x_skipped)):
@@ -71,5 +72,6 @@ plt.xlabel("Mass (MeV/c^2)")
 plt.legend(loc='upper right')
 plt.ylim(0,max(hist)*1.1)
 plt.figtext(0.75,0.65,"m_err=%d \n p_min=%d"%(mc.m_cut,mc.p_cut),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
+plt.savefig("IM_pairs.png")
 plt.show()
 plt.close()
