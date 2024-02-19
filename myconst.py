@@ -13,6 +13,8 @@ rt_s=2015+Eb #energy at the center of collision (sqrt of s)
 md_min=m_p+m_pi
 md_max=rt_s-m_p 
 
+#number of events
+nevts=1000
 
 p_cut=10
 m_cut=2

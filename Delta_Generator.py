@@ -121,7 +121,7 @@ T2=100
 a2=T2*300
 
 #number of events
-N_events=1000
+N_events=mc.nevts
 
 #event counter
 counter=0

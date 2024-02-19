@@ -39,10 +39,10 @@ hist,bins,packages=plt.hist(IM_list,bins=np.arange(int(mc.md_min)-1,int(mc.md_ma
 stp=int(mc.m_cut/binsize)
 x_omit=int(np.where(bins==mc.m_del0)[0][0]) #omit the inv mass of delta
 #data to be consider for the fitting of the "noise"
-x_new=bins[0:x_omit-stp].tolist()+bins[x_omit+stp+1:-1].tolist()
-y_new=hist[0:x_omit-stp].tolist()+hist[x_omit+stp+1:].tolist()
 x_start=np.where(hist>0.05*max(hist))[0][0]
 x_end=np.where(hist[x_start:]<0.05*max(hist))[0][0]
+x_new=bins[x_start:x_omit-stp].tolist()+bins[x_omit+stp+1:x_start+x_end].tolist()
+y_new=hist[x_start:x_omit-stp].tolist()+hist[x_omit+stp+1:x_start+x_end].tolist()
 
 #data to be considered for counting the number of deltas
 x_skipped=bins[x_omit-stp:x_omit+stp+1]
@@ -56,6 +56,14 @@ yplt=poly_func(xplt,*popt)
 r2_poly=r2_calc(poly_func,x_new,y_new,popt)
 r=str(round(r2_poly,5))
 plt.plot(xplt,yplt,label='poly fit \n R^2=%s'%(r))
+
+#guessing count
+y_est=[]
+for i in range(0,len(x_skipped)):
+  xi=np.where(xplt==x_skipped[i])[0][0]
+  y_est.append(int(y_skipped[i])-int(yplt[xi]))
+
+print("estimated number of deltas:",sum(y_est))
 
 plt.title("Invariant Mass of Proton and Pion Pairs in Lab Frame")
 plt.ylabel("Count")
