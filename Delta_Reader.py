@@ -11,19 +11,6 @@ def h_read(header):
   return e_num, numPart
 
 
-#for identifying particles
-def PID(p):
-  prt=0
-  if int(p[0])==2212:
-    prt=0 #proton
-  elif int(p[0])==211:
-    prt=1 #postive pion
-  elif int(p[0])==-211:
-    prt=2 #negative pion
-  elif int(p[0])==2112:
-    prt=3 #neutron
-  return prt
-
 #distance formula: sqrt(x1^2+x2^2+...+xn^2)
 def dist_form(vec):
   vsum2=0
@@ -130,12 +117,12 @@ with open("data.csv",'r') as file:
     eventNum,partNum=h_read(row)
     for i in range(0,partNum):
       rowdata=next(f)
-      identifier=PID(rowdata)
-      if identifier==0:
+      PID=int(rowdata[0]) #identify the particle with PDG codes
+      if PID==2212: #proton
         p_list.append(rowdata[1:])
-      elif identifier==1:
+      elif PID==211: #pion+
         pi_list.append(rowdata[1:])
-    #invariant mass of the p and pi in the event
+    #invariant mass of the p and pi in the event with momentum cut applied
     m_list=IM_method(p_list,pi_list,mc.p_cut)
 
     for kk in range(0,len(m_list)):
@@ -160,10 +147,9 @@ x_start=np.where(hist>0.05*max(hist))[0][0]
 x_end=np.where(hist[x_start:]<0.05*max(hist))[0][0]
 x_new=bins[x_start:x_omit-stp].tolist()+bins[x_omit+stp+1:x_start+x_end].tolist()
 y_new=hist[x_start:x_omit-stp].tolist()+hist[x_omit+stp+1:x_start+x_end].tolist()
-
 #data to be considered for counting the number of deltas
-x_skipped=bins[x_omit-stp:x_omit+stp+1]
-y_skipped=hist[x_omit-stp:x_omit+stp+1]
+x_skipped=bins[x_omit-stp:x_omit+stp]
+y_skipped=hist[x_omit-stp:x_omit+stp]
 print(x_skipped)
 #fitting
 xplt=np.arange(bins[x_start],bins[x_start+x_end],0.5)
@@ -179,7 +165,7 @@ plt.plot(x_skipped,y_skipped,'.')
 y_est=[]
 for i in range(0,len(x_skipped)):
   xi=np.where(xplt==x_skipped[i])[0][0]
-  y_est.append(int(y_skipped[i])-int(yplt[xi]))
+  y_est.append(y_skipped[i]-yplt[xi])
 
 print("estimated number of deltas:",sum(y_est))
 

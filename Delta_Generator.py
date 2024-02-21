@@ -162,6 +162,11 @@ for i in range(0,N_events):
     fw.writerow([int(counter),int(particles)])
     f.close()
 
+  with open("data_bin.bin",'ab') as fb:
+    bheader=array('i',(counter,particles))
+    bheader.tofile(fb)
+    fb.close()
+
   with open("data.csv", 'a', newline='') as file:
     fw=csv.writer(file,delimiter=',')
     fw.writerow([counter,particles])
