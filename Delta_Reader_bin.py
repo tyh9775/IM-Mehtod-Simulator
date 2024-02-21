@@ -108,31 +108,26 @@ def r2_calc(f,x,y,p):
   return 1-(ssr/sst)
 
 
-
-
-#momenta of protons and pions
-p_list=[]
-pi_list=[]
+IM_list=[]
 
 hsize=8
 buffer_size=16
 with open("data_bin.bin",'rb') as file:
-  header=bin_readheader(file,hsize)
-  print(header)
-  f=bin_readline(file,buffer_size)
-  print(f)
-  if PID(f[0])==0:
-    pi_list.append(f[1:])
-  else:
-    p_list.append(f[1:])
-  while f:
-    f=bin_readline(file,buffer_size)
-    if not f:
-      break
-    if PID(f[0])==0:
-      pi_list.append(f[1:])
-    else:
-      p_list.append(f[1:])
+  for row in file:
+    #momenta of protons and pions
+    p_list=[]
+    pi_list=[]
+    header=bin_readheader(file,hsize)
+    print(header)
+    eNum=int(header[0])
+    pNum=int(header[1])
+    for i in range(0,pNum):
+      f=bin_readline(file,buffer_size)
+      PID=f[0]
+      if PID==2212:
+        p_list.append()
+      elif PID==211:
+        pi_list.append(f[1:])
 
   file.close()
 

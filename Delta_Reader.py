@@ -3,6 +3,7 @@ import csv
 from matplotlib import pyplot as plt
 from scipy.optimize import curve_fit
 import myconst as mc
+import random
 
 #for identifiying event number and the number of particles in the event
 def h_read(header):
@@ -123,6 +124,8 @@ with open("data.csv",'r') as file:
       elif PID==211: #pion+
         pi_list.append(rowdata[1:])
     #invariant mass of the p and pi in the event with momentum cut applied
+    #random.shuffle(p_list)
+    #random.shuffle(pi_list)
     m_list=IM_method(p_list,pi_list,mc.p_cut)
 
     for kk in range(0,len(m_list)):
