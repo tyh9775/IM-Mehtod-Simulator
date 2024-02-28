@@ -2,21 +2,23 @@ import numpy as np
 import myconst as mc
 import csv
 from array import array
+import struct
 from matplotlib import pyplot as plt
 from scipy.optimize import curve_fit
 
 
-def bin_readheader(file,hsize):
-  f=array('i')
-  f.frombytes(file.read(hsize))
-  g=list(f)
-  return g
+with open("data_IM_bin.bin",'wb') as fb:
+  fb.close()
 
-def bin_readline(file,bin_size):
-  f=array('f')
-  f.frombytes(file.read(bin_size))
-  g=list(f)
-  return g
+def bin_readheader(buf,hsize):
+  header=struct.unpack('<ii',buf[0:hsize])
+  eNum=int(header[0])
+  pNum=int(header[1])
+  return eNum,pNum
+
+def bin_readline(buf):
+  data=struct.unpack('<fffff',buf)
+  return data
 
 
 #distance formula: sqrt(x1^2+x2^2+...+xn^2)
@@ -111,23 +113,40 @@ def r2_calc(f,x,y,p):
 IM_list=[]
 
 hsize=8
-buffer_size=16
+buffer_size=20
 with open("data_bin.bin",'rb') as file:
-  for row in file:
-    #momenta of protons and pions
+  while file:
     p_list=[]
     pi_list=[]
-    header=bin_readheader(file,hsize)
-    print(header)
-    eNum=int(header[0])
-    pNum=int(header[1])
+    #momenta of protons and pions
+    header=file.read(hsize)
+    if not header:
+      break
+    eNum,pNum=bin_readheader(header,hsize)
+    #print(eNum,pNum)
     for i in range(0,pNum):
-      f=bin_readline(file,buffer_size)
-      PID=f[0]
+      data=file.read(buffer_size)
+      if not data:
+        break
+      p4=bin_readline(data)
+      #print(p4)
+
+      PID=int(p4[0])
       if PID==2212:
-        p_list.append()
+        p_list.append(p4[1:])
       elif PID==211:
-        pi_list.append(f[1:])
+        pi_list.append(p4[1:])
+
+    m_list=IM_method(p_list,pi_list,mc.p_cut)
+
+    for kk in range(0,len(m_list)):
+      IM_list.append(m_list[kk])
+    
+    with open('data_IM_bin.bin','ab') as fb:
+      bdata=array('f',m_list)
+      bdata.tofile(fb)
+      fb.close()    
+
 
   file.close()
 
@@ -174,6 +193,8 @@ plt.xlabel("Mass (MeV/c^2)")
 plt.legend(loc='upper right')
 plt.ylim(0,max(hist)*1.1)
 plt.figtext(0.75,0.65,"m_err=%d \n p_min=%d"%(mc.m_cut,mc.p_cut),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
-plt.savefig("IM_pairs.png")
+plt.savefig("IM_pairs_bin.png")
 plt.show()
 plt.close()
+
+

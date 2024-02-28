@@ -163,7 +163,7 @@ for i in range(0,N_events):
     f.close()
 
   with open("data_bin.bin",'ab') as fb:
-    bheader=array('i',(counter,particles))
+    bheader=array('i',[counter,particles])
     bheader.tofile(fb)
     fb.close()
 
@@ -237,7 +237,11 @@ for i in range(0,N_events):
       g.writerow(datap)
       g.writerow(datapi)
       file.close()
-    
+    #in binary
+    with open("data_bin.bin",'ab') as fb:
+      bdata=array('f',datap+datapi)
+      bdata.tofile(fb)
+      fb.close()    
     #Invariant mass as PID
     pdata1=[mc.m_p,p4pL[1],p4pL[2],p4pL[3]]
     pidata1=[mc.m_pi,p4piL[1],p4piL[2],p4piL[3]]
@@ -247,12 +251,6 @@ for i in range(0,N_events):
       fw.writerow(pdata1)
       fw.writerow(pidata1)
       f.close()
-
-    #in binary
-    with open("data_bin.bin",'ab') as fb:
-      bdata=array('f',pdata1+pidata1)
-      bdata.tofile(fb)
-      fb.close()
 
 
   ########################
@@ -288,6 +286,12 @@ for i in range(0,N_events):
       g.writerow(datap)
       g.writerow(datapi)
       file.close()
+
+    #in binary
+    with open("data_bin.bin",'ab') as fb:
+      bdata=array('f',datap+datapi)
+      bdata.tofile(fb)
+      fb.close()    
     
     #Invariant mass as PID
     pfdata1=[mc.m_p,p4pf[1],p4pf[2],p4pf[3]]
@@ -299,11 +303,7 @@ for i in range(0,N_events):
       fw.writerow(pifdata1)
       f.close()
 
-    #in binary
-    with open("data_bin.bin",'ab') as fb:
-      bdata=array('f',pfdata1+pifdata1)
-      bdata.tofile(fb)
-      fb.close()
+
 
 check=True
 
@@ -314,8 +314,3 @@ if check:
 with open('data1.csv','r') as f:
   lines=f.readlines()
   f.close()
-
-with open('data1s.csv','w') as g:
-  random.shuffle(lines)
-  g.writelines(lines)
-  g.close()
