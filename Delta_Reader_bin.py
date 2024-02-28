@@ -146,7 +146,10 @@ with open("data_bin.bin",'rb') as file:
       bdata=array('f',m_list)
       bdata.tofile(fb)
       fb.close()    
-
+    
+    '''print(m_list)
+    print(len(m_list))
+    quit()'''
 
   file.close()
 

@@ -136,6 +136,11 @@ with open("data.csv",'r') as file:
       g.writerow(m_list)
       fm.close()
 
+    '''print(m_list)
+    print(len(m_list))
+    quit()'''
+
+
   file.close()
   
 #graphing and fitting
