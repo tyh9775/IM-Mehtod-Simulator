@@ -201,3 +201,4 @@ plt.show()
 plt.close()
 
 
+print(np.sum(hist))

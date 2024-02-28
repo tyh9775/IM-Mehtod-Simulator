@@ -187,4 +187,4 @@ plt.savefig("IM_pairs.png")
 plt.show()
 plt.close()
 
-
+print(np.sum(hist))
