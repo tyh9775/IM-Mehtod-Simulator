@@ -201,4 +201,4 @@ plt.show()
 plt.close()
 
 
-print(np.sum(hist))
+print("total number of counted particles after momentum cut:", np.sum(hist))
