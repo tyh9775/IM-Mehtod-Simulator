@@ -187,6 +187,9 @@ for i in range(0,N_events):
       mdel=random.uniform(mc.md_min,mc.md_max)
       ytest=random.uniform(0,max(y_norm))
 
+    #PID of delta:
+    dpid=2224 #delta++
+
     #calculate the momentum, total energy, and the relative velocity
     pdel=bw_mom(mc.rt_s,mdel,mc.m_p)
     Edel=E_solv(pdel,mc.m_del0)
@@ -240,6 +243,11 @@ for i in range(0,N_events):
     for k in range(0, len(p4pL)):
       datap.append(p4pL[k])
       datapi.append(p4piL[k])
+    #give "parent" particle data
+    datap.append(dpid)
+    datapi.append(dpid)
+    datap.append(pdel)
+    datapi.append(pdel)
     
     with open('data.csv','a',newline='') as file:
       g=csv.writer(file, delimiter=',')
@@ -289,7 +297,7 @@ for i in range(0,N_events):
     for k in range(0, len(p4pf)):
       datap.append(p4pf[k])
       datapi.append(p4pif[k])
-    
+          
     with open('data.csv','a',newline='') as file:
       g=csv.writer(file, delimiter=',')
       g.writerow(datap)

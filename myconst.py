@@ -13,8 +13,12 @@ rt_s=2015+Eb #energy at the center of collision (sqrt of s)
 md_min=m_p+m_pi
 md_max=rt_s-m_p 
 
+#maximum momentum from the maximum mass
+pd_max=(md_max**2-m_del0**2)**0.5
+
+
 #number of events
 nevts=1000
 
-p_cut=10
-m_cut=2
+p_cut=10 #momentum restriction on the particles in delta frame
+m_cut=2 #mass error bar for delta 

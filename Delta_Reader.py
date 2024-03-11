@@ -44,7 +44,7 @@ def inv_m(en,p):
   m2=en**2-p**2
   return np.sqrt(m2)
 
-def IM_method(plist,pilist,pcut):
+def IM_method(plist,pilist):
   m_list=[]
   mnt_list=[]
   for i in range(0,len(pilist)):
@@ -79,12 +79,13 @@ def IM_method(plist,pilist,pcut):
       
 
       #momentum cut
-      if pt_mag < pcut:
+      if pt_mag < mc.p_cut:
         mdel_rec=inv_m(Etot,pmag)
         m_list.append(mdel_rec)
         #mass cut
-        if abs(mdel_rec-mc.m_del0)<2 and pmag<500:
+        if abs(mdel_rec-mc.m_del0)<mc.m_cut and pmag<mc.pd_max:
           mnt_list.append(pmag)
+
   return m_list, mnt_list
 
 #for fitting
@@ -123,17 +124,19 @@ with open("data.csv",'r') as file:
     p_list=[]
     pi_list=[]
     eventNum,partNum=h_read(row)
+
     for i in range(0,partNum):
       rowdata=next(f)
       PID=int(rowdata[0]) #identify the particle with PDG codes
       if PID==2212: #proton
-        p_list.append(rowdata[1:])
+        p_list.append(rowdata[1:5])
       elif PID==211: #pion+
-        pi_list.append(rowdata[1:])
+        pi_list.append(rowdata[1:5])
+
     #invariant mass of the p and pi in the event with momentum cut applied
     #random.shuffle(p_list)
     #random.shuffle(pi_list)
-    m_list,mnt_list=IM_method(p_list,pi_list,mc.p_cut)
+    m_list,mnt_list=IM_method(p_list,pi_list)
 
     for kk in range(0,len(m_list)):
       IM_list.append(m_list[kk])
@@ -145,9 +148,6 @@ with open("data.csv",'r') as file:
       g.writerow(m_list)
       fm.close()
 
-    '''print(m_list)
-    print(len(m_list))
-    quit()'''
 
 
   file.close()
@@ -233,7 +233,10 @@ eff_list=[]
 eff_err=[]
 
 for i in range(0,len(bins_act)-1):
-  eff_list.append(hist_act[i]/hist_rec[i])
+  if hist_rec[i] == 0:
+    eff_list.append(0)
+  else:
+    eff_list.append(hist_act[i]/hist_rec[i])
   rec_err=np.sqrt(hist_rec[i]*(1-hist_rec[i]/len(hist_rec)))
   act_err=np.sqrt(hist_act[i]*(1-hist_act[i]/len(hist_act)))
   if hist_act[i]==0 or hist_rec[i]==0:
@@ -244,7 +247,7 @@ for i in range(0,len(bins_act)-1):
 plt.figure()
 plt.plot(bins_rec[:-1],eff_list,'.')
 plt.errorbar(bins_rec[:-1],eff_list,xerr=binsize_new/2,yerr=eff_err,linestyle='none')
-plt.title("Momenta of Actual Deltas")
+plt.title("Efficiency vs Momentum")
 plt.xlabel("Momentum (MeV/c)")
 plt.ylabel("Efficiency (Actual/Recreated)")
 plt.savefig("mnt_eff.png")
