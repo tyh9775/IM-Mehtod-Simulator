@@ -46,6 +46,7 @@ def inv_m(en,p):
 
 def IM_method(plist,pilist,pcut):
   m_list=[]
+  mnt_list=[]
   for i in range(0,len(pilist)):
     for j in range(0,len(plist)):
       Ep=float(plist[j][0]) #total E of p
@@ -79,8 +80,12 @@ def IM_method(plist,pilist,pcut):
 
       #momentum cut
       if pt_mag < pcut:
-        m_list.append(inv_m(Etot,pmag))
-  return m_list
+        mdel_rec=inv_m(Etot,pmag)
+        m_list.append(mdel_rec)
+        #mass cut
+        if abs(mdel_rec-mc.m_del0)<2 and pmag<500:
+          mnt_list.append(pmag)
+  return m_list, mnt_list
 
 #for fitting
 def poly_func(x,c0,c1,c2,c3,c4):
@@ -108,6 +113,8 @@ with open('data_IM.csv','w') as fm:
 
 IM_list=[] #the invariant mass of the pairs from all events
 
+momentum_list=[] #the momenta of recreated deltas
+
 #open data file, do a momentum cut, and calculate the invariant mass of the particle pairs
 with open("data.csv",'r') as file:
   f=csv.reader(file, delimiter=',')
@@ -126,10 +133,12 @@ with open("data.csv",'r') as file:
     #invariant mass of the p and pi in the event with momentum cut applied
     #random.shuffle(p_list)
     #random.shuffle(pi_list)
-    m_list=IM_method(p_list,pi_list,mc.p_cut)
+    m_list,mnt_list=IM_method(p_list,pi_list,mc.p_cut)
 
     for kk in range(0,len(m_list)):
       IM_list.append(m_list[kk])
+    for ll in range(0,len(mnt_list)):
+      momentum_list.append(mnt_list[ll])
     
     with open('data_IM.csv','a',newline='') as fm:
       g=csv.writer(fm,delimiter=',')
@@ -188,3 +197,56 @@ plt.show()
 plt.close()
 
 print("total number of counted particles after momentum cut:", np.sum(hist))
+
+
+
+#efficiency over momentum
+
+act_list=[]
+
+with open("actual_del.csv",'r') as fa:
+  fd=csv.reader(fa, delimiter=',')
+  for row in fd:
+    act_list.append(float(row[1]))
+  fa.close()
+
+binsize_new=5
+plt.figure()
+hist_rec,bins_rec,pack_rec=plt.hist(momentum_list,bins=np.arange(0,int(max(momentum_list))+1,binsize_new))
+plt.title("Momenta of Recreated Deltas")
+plt.xlabel("Momentum (MeV/c)")
+plt.ylabel("Count")
+plt.savefig("del_mnt_rec.png")
+plt.show()
+plt.close()
+
+plt.figure()
+hist_act,bins_act,packages_act=plt.hist(act_list,bins=bins_rec)
+plt.title("Momenta of Actual Deltas")
+plt.xlabel("Momentum (MeV/c)")
+plt.ylabel("Count")
+plt.savefig("del_mnt_act.png")
+plt.show()
+plt.close()
+
+eff_list=[]
+eff_err=[]
+
+for i in range(0,len(bins_act)-1):
+  eff_list.append(hist_act[i]/hist_rec[i])
+  rec_err=np.sqrt(hist_rec[i]*(1-hist_rec[i]/len(hist_rec)))
+  act_err=np.sqrt(hist_act[i]*(1-hist_act[i]/len(hist_act)))
+  if hist_act[i]==0 or hist_rec[i]==0:
+    eff_err.append(0)
+  else:
+    eff_err.append((hist_act[i]/hist_rec[i])*np.sqrt((act_err/hist_act[i])**2+(rec_err/hist_rec[i])**2))
+
+plt.figure()
+plt.plot(bins_rec[:-1],eff_list,'.')
+plt.errorbar(bins_rec[:-1],eff_list,xerr=binsize_new/2,yerr=eff_err,linestyle='none')
+plt.title("Momenta of Actual Deltas")
+plt.xlabel("Momentum (MeV/c)")
+plt.ylabel("Efficiency (Actual/Recreated)")
+plt.savefig("mnt_eff.png")
+plt.show()
+plt.close()

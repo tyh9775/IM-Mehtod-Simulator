@@ -8,8 +8,7 @@ import struct
 #load constants from the file in the repository
 import myconst as mc
 
-#create an output file 
-
+#create output files 
 with open("data.csv", 'w',newline='') as file:
   file.close()
 
@@ -19,6 +18,8 @@ with open("data1.csv",'w') as f:
 with open("data_bin.bin",'wb') as fb:
   fb.close()
 
+with open("actual_del.csv", 'w', newline='') as fd:
+  fd.close()
 
 #Switch for deltas to be generated
 Delta=True
@@ -132,6 +133,7 @@ ND_total=0
 #number of all particles
 NP_total=0
 
+
 for i in range(0,N_events):
   counter = counter+1
   #number of particles per event
@@ -189,6 +191,13 @@ for i in range(0,N_events):
     pdel=bw_mom(mc.rt_s,mdel,mc.m_p)
     Edel=E_solv(pdel,mc.m_del0)
     dgam,dv=gam_calc(Edel,mc.m_del0)
+
+    #calculate the IM of generated delta
+    md_IM=np.sqrt(Edel**2-pdel**2)
+    with open("actual_del.csv",'a',newline='') as fd:
+      fwd=csv.writer(fd,delimiter=",")
+      fwd.writerow([md_IM,pdel])
+      fd.close()
     
     #give the velocity some direction
     vdx,vdy,vdz,dth,dph=vec_gen(dv)
