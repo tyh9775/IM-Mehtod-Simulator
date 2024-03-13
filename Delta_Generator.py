@@ -12,14 +12,9 @@ import myconst as mc
 with open("data.csv", 'w',newline='') as file:
   file.close()
 
-with open("data1.csv",'w') as f:
-  f.close()
-
 with open("data_bin.bin",'wb') as fb:
   fb.close()
 
-with open("actual_del.csv", 'w', newline='') as fd:
-  fd.close()
 
 #Switch for deltas to be generated
 Delta=True
@@ -159,19 +154,15 @@ for i in range(0,N_events):
         
   particles=particles+N_delta*2+N_free*2
   NP_total=NP_total+particles
-  with open("data1.csv", 'a', newline='') as f:
-    fw=csv.writer(f,delimiter=',')
-    fw.writerow([int(counter),int(particles)])
-    f.close()
 
   with open("data_bin.bin",'ab') as fb:
-    bheader=array('i',[counter,particles])
+    bheader=array('i',[counter,particles,N_delta])
     bheader.tofile(fb)
     fb.close()
 
   with open("data.csv", 'a', newline='') as file:
     fw=csv.writer(file,delimiter=',')
-    fw.writerow([counter,particles])
+    fw.writerow([counter,particles,N_delta])
     file.close()
   for j in range(0,N_delta):
     ND_total=ND_total+1
@@ -197,13 +188,13 @@ for i in range(0,N_events):
 
     #calculate the IM of generated delta
     md_IM=np.sqrt(Edel**2-pdel**2)
-    with open("actual_del.csv",'a',newline='') as fd:
-      fwd=csv.writer(fd,delimiter=",")
-      fwd.writerow([md_IM,pdel])
-      fd.close()
-    
+
     #give the velocity some direction
     vdx,vdy,vdz,dth,dph=vec_gen(dv)
+
+    pdx,pdy,pdz=vec_calc(pdel,dth,dph)
+    datadel=[dpid,Edel,pdx,pdy,pdz,j+1]
+    
 
     ############################################
     #LT to the rest frame of the delta resonance
@@ -244,13 +235,12 @@ for i in range(0,N_events):
       datap.append(p4pL[k])
       datapi.append(p4piL[k])
     #give "parent" particle data
-    datap.append(dpid)
-    datapi.append(dpid)
-    datap.append(pdel)
-    datapi.append(pdel)
+    datap.append(j+1)
+    datapi.append(j+1)
     
     with open('data.csv','a',newline='') as file:
       g=csv.writer(file, delimiter=',')
+      g.writerow(datadel)
       g.writerow(datap)
       g.writerow(datapi)
       file.close()
@@ -259,15 +249,7 @@ for i in range(0,N_events):
       bdata=array('f',datap+datapi)
       bdata.tofile(fb)
       fb.close()    
-    #Invariant mass as PID
-    pdata1=[mc.m_p,p4pL[1],p4pL[2],p4pL[3]]
-    pidata1=[mc.m_pi,p4piL[1],p4piL[2],p4piL[3]]
 
-    with open("data1.csv",'a',newline='') as f:
-      fw=csv.writer(f,delimiter=',')
-      fw.writerow(pdata1)
-      fw.writerow(pidata1)
-      f.close()
 
 
   ########################
@@ -297,6 +279,9 @@ for i in range(0,N_events):
     for k in range(0, len(p4pf)):
       datap.append(p4pf[k])
       datapi.append(p4pif[k])
+    
+    datap.append(0)
+    datapi.append(0)
           
     with open('data.csv','a',newline='') as file:
       g=csv.writer(file, delimiter=',')
@@ -310,16 +295,6 @@ for i in range(0,N_events):
       bdata.tofile(fb)
       fb.close()    
     
-    #Invariant mass as PID
-    pfdata1=[mc.m_p,p4pf[1],p4pf[2],p4pf[3]]
-    pifdata1=[mc.m_pi,p4pif[1],p4pif[2],p4pif[3]]      
-
-    with open("data1.csv",'a',newline='') as f:
-      fw=csv.writer(f,delimiter=',')
-      fw.writerow(pfdata1)
-      fw.writerow(pifdata1)
-      f.close()
-
 
 
 check=True
@@ -327,7 +302,3 @@ check=True
 if check:
   print("Number of Delta resonances created:",ND_total)
   print("Number of all particles detected:", NP_total)
-
-with open('data1.csv','r') as f:
-  lines=f.readlines()
-  f.close()

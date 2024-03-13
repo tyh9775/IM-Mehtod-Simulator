@@ -9,14 +9,15 @@ import random
 def h_read(header):
   e_num=int(header[0])
   numPart=int(header[1])
-  return e_num, numPart
+  numDel=int(header[2])
+  return e_num, numPart, numDel
 
 
 #distance formula: sqrt(x1^2+x2^2+...+xn^2)
 def dist_form(vec):
   vsum2=0
   for i in range(0,len(vec)):
-    vsum2+=vec[i]**2
+    vsum2+=float(vec[i])**2
   return np.sqrt(vsum2)  
 
 #sum of two vectors
@@ -114,6 +115,8 @@ with open('data_IM.csv','w') as fm:
 
 IM_list=[] #the invariant mass of the pairs from all events
 
+act_list=[] #momenta of "real" deltas
+
 momentum_list=[] #the momenta of recreated deltas
 
 #open data file, do a momentum cut, and calculate the invariant mass of the particle pairs
@@ -123,11 +126,14 @@ with open("data.csv",'r') as file:
     #momenta of protons and pions
     p_list=[]
     pi_list=[]
-    eventNum,partNum=h_read(row)
+    del_list=[]
+    eventNum,partNum,Ndelta=h_read(row)
 
-    for i in range(0,partNum):
+    for i in range(0,partNum+Ndelta):
       rowdata=next(f)
       PID=int(rowdata[0]) #identify the particle with PDG codes
+      if PID==2224:
+        del_list.append(rowdata[1:5])
       if PID==2212: #proton
         p_list.append(rowdata[1:5])
       elif PID==211: #pion+
@@ -138,6 +144,8 @@ with open("data.csv",'r') as file:
     #random.shuffle(pi_list)
     m_list,mnt_list=IM_method(p_list,pi_list)
 
+    for jj in range(0,len(del_list)):
+      act_list.append(dist_form(del_list[jj][1:]))
     for kk in range(0,len(m_list)):
       IM_list.append(m_list[kk])
     for ll in range(0,len(mnt_list)):
@@ -201,15 +209,6 @@ print("total number of counted particles after momentum cut:", np.sum(hist))
 
 
 #efficiency over momentum
-
-act_list=[]
-
-with open("actual_del.csv",'r') as fa:
-  fd=csv.reader(fa, delimiter=',')
-  for row in fd:
-    act_list.append(float(row[1]))
-  fa.close()
-
 binsize_new=5
 plt.figure()
 hist_rec,bins_rec,pack_rec=plt.hist(momentum_list,bins=np.arange(0,int(max(momentum_list))+1,binsize_new))
@@ -233,15 +232,13 @@ eff_list=[]
 eff_err=[]
 
 for i in range(0,len(bins_act)-1):
-  if hist_rec[i] == 0:
+  if hist_rec[i] == 0 or hist_act[i]==0:
     eff_list.append(0)
-  else:
-    eff_list.append(hist_act[i]/hist_rec[i])
-  rec_err=np.sqrt(hist_rec[i]*(1-hist_rec[i]/len(hist_rec)))
-  act_err=np.sqrt(hist_act[i]*(1-hist_act[i]/len(hist_act)))
-  if hist_act[i]==0 or hist_rec[i]==0:
     eff_err.append(0)
   else:
+    eff_list.append(hist_act[i]/hist_rec[i])
+    rec_err=np.sqrt(hist_rec[i]*(1-hist_rec[i]/len(hist_rec)))
+    act_err=np.sqrt(hist_act[i]*(1-hist_act[i]/len(hist_act)))
     eff_err.append((hist_act[i]/hist_rec[i])*np.sqrt((act_err/hist_act[i])**2+(rec_err/hist_rec[i])**2))
 
 plt.figure()
