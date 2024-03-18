@@ -22,8 +22,12 @@ Delta=True
 #Switch for free particles to be generated with the delta resonances
 Free=True 
 
+#switch for how the momentum of the delta in the lab frame is determined
+Boltz=False
+
 #should output the PID and 4-momentum of every particle generated 
 #header should include the number of events and the total number of particles 
+#also added "parent" particle information
 
 
 if Delta is False and Free is False:
@@ -139,7 +143,7 @@ for i in range(0,N_events):
   ################
 
   if Delta is True:
-    N_delta=2 #number of resonances created per event
+    N_delta=0 #number of resonances created per event
     #N_detla should be randomized according to some distribution eventually
     #consider making it scale with the energy of delta
   else:
@@ -183,6 +187,8 @@ for i in range(0,N_events):
 
     #calculate the momentum, total energy, and the relative velocity
     pdel=bw_mom(mc.rt_s,mdel,mc.m_p)
+    if Boltz is True:
+      pdel=en_dist(2500,100,1)[0]
     Edel=E_solv(pdel,mdel)
     dgam,dv=gam_calc(Edel,mdel)
 

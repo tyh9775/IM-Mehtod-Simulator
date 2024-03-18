@@ -8,14 +8,19 @@ import struct
 #load constants from the file in the repository
 import myconst as mc
 
+
 #Switch for deltas to be generated
 Delta=True
 
 #Switch for free particles to be generated with the delta resonances
 Free=True 
 
+#switch for how the momentum of the delta in the lab frame is determined
+Boltz=True
+
 #should output the PID and 4-momentum of every particle generated 
 #header should include the number of events and the total number of particles 
+#also added "parent" particle information
 
 
 if Delta is False and Free is False:
@@ -38,8 +43,8 @@ def bw_pdf(md,md0,mn,mpi):
   return (4*md0**2*gmd)/((A)*((md**2-md0**2)**2+md0**2*gmd**2))
 
 #calculate the momentum of delta given the center of collision energy, mdel, and mn
-def bw_mom(s,m1,m2):
-  return np.sqrt((s**2+m1**2-m2**2)**2/(4*s**2)-m1**2)
+def bw_mom(rs,m1,m2):
+  return np.sqrt((rs**2+m1**2-m2**2)**2/(4*rs**2)-m1**2)
 
 #given the momentum and the rest mass, solve for the total energy
 def E_solv(p,m):
@@ -109,7 +114,7 @@ T2=100
 a2=T2*300
 
 #number of events
-N_events=1
+N_events=mc.nevts
 
 #event counter
 counter=0
@@ -120,9 +125,6 @@ ND_total=0
 #number of all particles
 NP_total=0
 
-IM_list=[]
-act_mnt_list=[]
-rec_mnt_list=[]
 
 for i in range(0,N_events):
   counter = counter+1
@@ -134,7 +136,7 @@ for i in range(0,N_events):
   ################
 
   if Delta is True:
-    N_delta=1 #number of resonances created per event
+    N_delta=2 #number of resonances created per event
     #N_detla should be randomized according to some distribution eventually
     #consider making it scale with the energy of delta
   else:
@@ -142,13 +144,14 @@ for i in range(0,N_events):
     
     
   if Free is True:
-    N_free=1 #number of free particle pairs per event
+    N_free=10 #number of free particle pairs per event
     #should also be randomized (Boltzmann dist?)
   else:
     N_free=0 
         
   particles=particles+N_delta*2+N_free*2
   NP_total=NP_total+particles
+
 
   for j in range(0,N_delta):
     ND_total=ND_total+1
@@ -169,6 +172,8 @@ for i in range(0,N_events):
 
     #calculate the momentum, total energy, and the relative velocity
     pdel=bw_mom(mc.rt_s,mdel,mc.m_p)
+    if Boltz is True:
+      pdel=en_dist(2500,100,1)[0]
     Edel=E_solv(pdel,mdel)
     dgam,dv=gam_calc(Edel,mdel)
 
@@ -193,8 +198,7 @@ for i in range(0,N_events):
     #solved for p using n online algebraic tool
 
     #momentum of the particles in CoM frame
-    pcm=dec_mom_sol(mc.m_del0,mc.m_p,mc.m_pi)
-    #(use mdel instead?)
+    pcm=dec_mom_sol(mdel,mc.m_p,mc.m_pi)
 
     #total energy of each particle in CoM frame
     Ep=E_solv(pcm,mc.m_p)
@@ -223,15 +227,6 @@ for i in range(0,N_events):
     #give "parent" particle data
     datap.append(j+1)
     datapi.append(j+1)
-    
-    with open('data.csv','a',newline='') as file:
-      g=csv.writer(file, delimiter=',')
-      g.writerow(datadel)
-      g.writerow(datap)
-      g.writerow(datapi)
-      file.close()
-    
-
 
 
   ########################
@@ -264,17 +259,3 @@ for i in range(0,N_events):
     
     datap.append(0)
     datapi.append(0)
-          
-    with open('data.csv','a',newline='') as file:
-      g=csv.writer(file, delimiter=',')
-      g.writerow(datap)
-      g.writerow(datapi)
-      file.close()
-    
-
-
-check=True
-
-if check:
-  print("Number of Delta resonances created:",ND_total)
-  print("Number of all particles detected:", NP_total)

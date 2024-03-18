@@ -167,6 +167,8 @@ with open("data.csv",'r') as file:
 binsize=1 #in MeV/c^2
 plt.figure()
 hist,bins,packages=plt.hist(IM_list,bins=np.arange(int(mc.md_min)-1,int(mc.md_max)+1,binsize))
+plt.show()
+'''
 stp=int(mc.m_cut/binsize) #determines the width of the cut
 x_omit=int(np.where(bins==mc.m_del0)[0][0]) #omit the inv mass of delta
 #data to be consider for the fitting of the "noise"
@@ -178,7 +180,7 @@ y_new=hist[x_start:x_omit-stp].tolist()+hist[x_omit+stp+1:x_start+x_end].tolist(
 x_skipped=bins[x_omit-stp:x_omit+stp]
 y_skipped=hist[x_omit-stp:x_omit+stp]
 print(x_skipped)
-
+'''
 if fitting is True:
   #fitting
   xplt=np.arange(bins[x_start],bins[x_start+x_end],0.5)
