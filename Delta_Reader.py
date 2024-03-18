@@ -86,7 +86,8 @@ def IM_method(plist,pilist):
         #mass cut
         if abs(mdel_rec-mc.m_del0)<mc.m_cut and pmag<mc.pd_max:
           mnt_list.append(pmag)
-
+          
+          
   return m_list, mnt_list
 
 #for fitting
@@ -107,6 +108,7 @@ def r2_calc(f,x,y,p):
   sst=np.sum(ss_tot)
   return 1-(ssr/sst)
 
+fitting=False
 
 #csv file to save invariant mass data of all events
 with open('data_IM.csv','w') as fm:
@@ -176,23 +178,25 @@ y_new=hist[x_start:x_omit-stp].tolist()+hist[x_omit+stp+1:x_start+x_end].tolist(
 x_skipped=bins[x_omit-stp:x_omit+stp]
 y_skipped=hist[x_omit-stp:x_omit+stp]
 print(x_skipped)
-#fitting
-xplt=np.arange(bins[x_start],bins[x_start+x_end],0.5)
-ini_g=[0,0,0,0,0]
-popt,pcov=curve_fit(poly_func, x_new,y_new,ini_g)
-yplt=poly_func(xplt,*popt)
-r2_poly=r2_calc(poly_func,x_new,y_new,popt)
-r=str(round(r2_poly,5))
-plt.plot(xplt,yplt,label='poly fit \n R^2=%s'%(r))
-plt.plot(x_skipped,y_skipped,'.')
-#plt.plot(x_skipped,poly_func(x_skipped,*popt),'.')
-#guessing count
-y_est=[]
-for i in range(0,len(x_skipped)):
-  xi=np.where(xplt==x_skipped[i])[0][0]
-  y_est.append(y_skipped[i]-yplt[xi])
 
-print("estimated number of deltas:",sum(y_est))
+if fitting is True:
+  #fitting
+  xplt=np.arange(bins[x_start],bins[x_start+x_end],0.5)
+  ini_g=[0,0,0,0,0]
+  popt,pcov=curve_fit(poly_func, x_new,y_new,ini_g)
+  yplt=poly_func(xplt,*popt)
+  r2_poly=r2_calc(poly_func,x_new,y_new,popt)
+  r=str(round(r2_poly,5))
+  plt.plot(xplt,yplt,label='poly fit \n R^2=%s'%(r))
+  plt.plot(x_skipped,y_skipped,'.')
+  #plt.plot(x_skipped,poly_func(x_skipped,*popt),'.')
+  #guessing count
+  y_est=[]
+  for i in range(0,len(x_skipped)):
+    xi=np.where(xplt==x_skipped[i])[0][0]
+    y_est.append(y_skipped[i]-yplt[xi])
+
+  print("estimated number of deltas:",sum(y_est))
 
 plt.title("Invariant Mass of Proton and Pion Pairs in Lab Frame")
 plt.ylabel("Count")

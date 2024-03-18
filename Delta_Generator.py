@@ -46,8 +46,8 @@ def bw_pdf(md,md0,mn,mpi):
   return (4*md0**2*gmd)/((A)*((md**2-md0**2)**2+md0**2*gmd**2))
 
 #calculate the momentum of delta given the center of collision energy, mdel, and mn
-def bw_mom(s,m1,m2):
-  return np.sqrt((s**2+m1**2-m2**2)**2/(4*s**2)-m1**2)
+def bw_mom(rs,m1,m2):
+  return np.sqrt((rs**2+m1**2-m2**2)**2/(4*rs**2)-m1**2)
 
 #given the momentum and the rest mass, solve for the total energy
 def E_solv(p,m):
@@ -183,8 +183,8 @@ for i in range(0,N_events):
 
     #calculate the momentum, total energy, and the relative velocity
     pdel=bw_mom(mc.rt_s,mdel,mc.m_p)
-    Edel=E_solv(pdel,mc.m_del0)
-    dgam,dv=gam_calc(Edel,mc.m_del0)
+    Edel=E_solv(pdel,mdel)
+    dgam,dv=gam_calc(Edel,mdel)
 
     #calculate the IM of generated delta
     md_IM=np.sqrt(Edel**2-pdel**2)
@@ -207,8 +207,7 @@ for i in range(0,N_events):
     #solved for p using n online algebraic tool
 
     #momentum of the particles in CoM frame
-    pcm=dec_mom_sol(mc.m_del0,mc.m_p,mc.m_pi)
-    #(use mdel instead?)
+    pcm=dec_mom_sol(mdel,mc.m_p,mc.m_pi)
 
     #total energy of each particle in CoM frame
     Ep=E_solv(pcm,mc.m_p)
