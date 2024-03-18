@@ -151,7 +151,7 @@ for i in range(0,N_events):
     
     
   if Free is True:
-    N_free=10 #number of free particle pairs per event
+    N_free=1 #number of free particle pairs per event
     #should also be randomized (Boltzmann dist?)
   else:
     N_free=0 
