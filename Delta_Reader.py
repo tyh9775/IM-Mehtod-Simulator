@@ -50,6 +50,7 @@ def IM_method(plist,pilist):
   mnt_list=[]
   for i in range(0,len(pilist)):
     for j in range(0,len(plist)):
+      #starting in lab frame
       Ep=float(plist[j][0]) #total E of p
       Epi=float(pilist[i][0]) #total E of pi
       pp=[]
@@ -60,31 +61,34 @@ def IM_method(plist,pilist):
       ptot=v_sum(pp,ppi) #total momentum of the two particles
       pmag=dist_form(ptot) #magnitude of the total momentum
       Etot=Ep+Epi #total energy of the two particles
-      
-      #move to the "delta" frame assuming the pair can create one
-      gam=gam_calc(Etot,mc.m_del0)
+      p4p=[Ep]+pp #4 momentum of p 
+      p4pi=[Epi]+ppi #4 momentum of pi    
+
+      mdel_rec=inv_m(Etot,pmag)
+      gam=gam_calc(Etot,mdel_rec)
       if gam<1:
         continue
       v=np.sqrt(1-1/gam**2)
 
-      vx=ptot[0]/(gam*mc.m_del0)
-      vy=ptot[1]/(gam*mc.m_del0)
-      vz=ptot[2]/(gam*mc.m_del0)
+      vx=ptot[0]/(gam*mdel_rec)
+      vy=ptot[1]/(gam*mdel_rec)
+      vz=ptot[2]/(gam*mdel_rec)
 
-      p4p=[Ep]+pp #4 momentum of p in lab frame
-      p4pi=[Epi]+ppi #4 momentum of pi in lab frame
+      #move to the "delta" frame assuming the pair can create one
       ptest=gam_mat(gam,v,vx,vy,vz,p4p) #4 momentum of p in delta frame
       pitest=gam_mat(gam,v,vx,vy,vz,p4pi) #4 momentum of pi in delta frame
-      pt_tot=v_sum(ptest,pitest)
-      pt_mag=dist_form(pt_tot[1:])
+      pt_tot=v_sum(ptest,pitest) #total 4 momentum of p and pi in delta frame
+      pt_mag=dist_form(pt_tot[1:]) #magnitude of the 3D momentum in delta frame
       
 
       #momentum cut
-      if pt_mag < mc.p_cut:
-        mdel_rec=inv_m(Etot,pmag)
+      if pt_mag < mc.p_cut:        
         m_list.append(mdel_rec)
+        #mnt_list.append(pmag)
         #mass cut
-        if abs(mdel_rec-mc.m_del0)<mc.m_cut and pmag<mc.pd_max:
+        
+        #if abs(mdel_rec-mc.m_del0)<mc.m_cut and pmag<mc.pd_max:
+        if pmag<mc.pd_max:
           mnt_list.append(pmag)
           
           
@@ -158,8 +162,6 @@ with open("data.csv",'r') as file:
       g.writerow(m_list)
       fm.close()
 
-
-
   file.close()
   
 #graphing and fitting
@@ -167,7 +169,6 @@ with open("data.csv",'r') as file:
 binsize=1 #in MeV/c^2
 plt.figure()
 hist,bins,packages=plt.hist(IM_list,bins=np.arange(int(mc.md_min)-1,int(mc.md_max)+1,binsize))
-plt.show()
 if fitting is True:
   stp=int(mc.m_cut/binsize) #determines the width of the cut
   x_omit=int(np.where(bins==mc.m_del0)[0][0]) #omit the inv mass of delta
@@ -209,7 +210,6 @@ plt.show()
 plt.close()
 
 print("total number of counted particles after momentum cut:", np.sum(hist))
-
 
 
 #efficiency over momentum

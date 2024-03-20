@@ -16,25 +16,6 @@ with open("data_bin.bin",'wb') as fb:
   fb.close()
 
 
-#Switch for deltas to be generated
-Delta=True
-
-#Switch for free particles to be generated with the delta resonances
-Free=True 
-
-#switch for how the momentum of the delta in the lab frame is determined
-Boltz=False
-
-#should output the PID and 4-momentum of every particle generated 
-#header should include the number of events and the total number of particles 
-#also added "parent" particle information
-
-
-if Delta is False and Free is False:
-    print("No particles generated!")
-    quit()
-
-
 #Breit_Wigner distribution for the  mass distribution of delta resonances:
 #class bw_dist(st.rv_continuous):
 def bw_pdf(md,md0,mn,mpi):
@@ -113,6 +94,12 @@ for i in range (0,len(x_bw)):
 norm_const=simpson(y=y_bw,x=x_bw)
 y_norm=y_bw/norm_const
 
+'''from matplotlib import pyplot as plt
+plt.figure()
+plt.plot(x_bw,y_bw)
+plt.show()
+plt.close()'''
+
 #constants for free particle generation 
 #KE of pions should be higher than the KE of protons in general since mpi<mp
 #'a' value adjusts the x-axis scale and 'T' value adjusts the slope
@@ -133,6 +120,25 @@ ND_total=0
 #number of all particles
 NP_total=0
 
+#Switch for deltas to be generated
+Delta=True
+
+#Switch for free particles to be generated with the delta resonances
+Free=True 
+
+#switch for how the momentum of the delta in the lab frame is determined
+Boltz=False
+
+#should output the PID and 4-momentum of every particle generated 
+#header should include the number of events and the total number of particles 
+#also added "parent" particle information
+
+
+if Delta is False and Free is False:
+    print("No particles generated!")
+    quit()
+
+
 
 for i in range(0,N_events):
   counter = counter+1
@@ -144,7 +150,7 @@ for i in range(0,N_events):
   ################
 
   if Delta is True:
-    N_delta=0 #number of resonances created per event
+    N_delta=2 #number of resonances created per event
     #N_detla should be randomized according to some distribution eventually
     #consider making it scale with the energy of delta
   else:
@@ -152,7 +158,7 @@ for i in range(0,N_events):
     
     
   if Free is True:
-    N_free=1 #number of free particle pairs per event
+    N_free=10 #number of free particle pairs per event
     #should also be randomized (Boltzmann dist?)
   else:
     N_free=0 
@@ -255,8 +261,6 @@ for i in range(0,N_events):
       bdata=array('f',datap+datapi)
       bdata.tofile(fb)
       fb.close()    
-
-
 
   ########################
   #Free particle generator
