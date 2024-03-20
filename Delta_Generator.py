@@ -84,7 +84,7 @@ def kgam_calc(KE,m0):
   prel=gam*m0*v
   return gam,v,Et,prel
 
-
+plot=True
 
 #build mass distribution 
 x_bw=np.linspace(mc.md_min,mc.md_max,100)
@@ -94,11 +94,7 @@ for i in range (0,len(x_bw)):
 norm_const=simpson(y=y_bw,x=x_bw)
 y_norm=y_bw/norm_const
 
-'''from matplotlib import pyplot as plt
-plt.figure()
-plt.plot(x_bw,y_bw)
-plt.show()
-plt.close()'''
+
 
 #constants for free particle generation 
 #KE of pions should be higher than the KE of protons in general since mpi<mp
@@ -138,7 +134,7 @@ if Delta is False and Free is False:
     print("No particles generated!")
     quit()
 
-
+IM_list=[]
 
 for i in range(0,N_events):
   counter = counter+1
@@ -188,7 +184,7 @@ for i in range(0,N_events):
     while ytest > bw_pdf(mdel,mc.m_del0,mc.m_p,mc.m_pi)/norm_const:
       mdel=random.uniform(mc.md_min,mc.md_max)
       ytest=random.uniform(0,max(y_norm))
-
+    IM_list.append(mdel)
     #PID of delta:
     dpid=2224 #delta++
 
@@ -305,7 +301,14 @@ for i in range(0,N_events):
       bdata.tofile(fb)
       fb.close()    
     
-
+if plot is True:
+  from matplotlib import pyplot as plt
+  
+  plt.figure()
+  plt.plot(x_bw,y_bw)
+  plt.hist(IM_list,bins=np.arange(min(x_bw),max(x_bw),1))
+  plt.show()
+  plt.close()
 
 check=True
 
