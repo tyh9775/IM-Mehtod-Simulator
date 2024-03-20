@@ -17,7 +17,7 @@ md_max=rt_s-m_p
 pd_max=(((rt_s**2+md_min**2-m_p**2)/(2*rt_s))**2-md_min**2)**0.5
 
 #number of events
-nevts=50000
+nevts=10000
 
 p_cut=100 #momentum restriction on the particles in delta frame
 m_cut=200 #mass error bar for delta 

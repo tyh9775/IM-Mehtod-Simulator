@@ -115,10 +115,11 @@ y_norm=y_bw/norm_const
 
 #constants for free particle generation 
 #KE of pions should be higher than the KE of protons in general since mpi<mp
-T1=100
-a1=T1*250
-T2=100
-a2=T2*300
+#'a' value adjusts the x-axis scale and 'T' value adjusts the slope
+T1=200
+a1=25000
+T2=200
+a2=30000
 
 #number of events
 N_events=mc.nevts

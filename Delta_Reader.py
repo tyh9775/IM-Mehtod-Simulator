@@ -168,20 +168,18 @@ binsize=1 #in MeV/c^2
 plt.figure()
 hist,bins,packages=plt.hist(IM_list,bins=np.arange(int(mc.md_min)-1,int(mc.md_max)+1,binsize))
 plt.show()
-'''
-stp=int(mc.m_cut/binsize) #determines the width of the cut
-x_omit=int(np.where(bins==mc.m_del0)[0][0]) #omit the inv mass of delta
-#data to be consider for the fitting of the "noise"
-x_start=np.where(hist>0.05*max(hist))[0][0]
-x_end=np.where(hist[x_start:]<0.05*max(hist))[0][0]
-x_new=bins[x_start:x_omit-stp].tolist()+bins[x_omit+stp+1:x_start+x_end].tolist()
-y_new=hist[x_start:x_omit-stp].tolist()+hist[x_omit+stp+1:x_start+x_end].tolist()
-#data to be considered for counting the number of deltas
-x_skipped=bins[x_omit-stp:x_omit+stp]
-y_skipped=hist[x_omit-stp:x_omit+stp]
-print(x_skipped)
-'''
 if fitting is True:
+  stp=int(mc.m_cut/binsize) #determines the width of the cut
+  x_omit=int(np.where(bins==mc.m_del0)[0][0]) #omit the inv mass of delta
+  #data to be consider for the fitting of the "noise"
+  x_start=np.where(hist>0.05*max(hist))[0][0]
+  x_end=np.where(hist[x_start:]<0.05*max(hist))[0][0]
+  x_new=bins[x_start:x_omit-stp].tolist()+bins[x_omit+stp+1:x_start+x_end].tolist()
+  y_new=hist[x_start:x_omit-stp].tolist()+hist[x_omit+stp+1:x_start+x_end].tolist()
+  #data to be considered for counting the number of deltas
+  x_skipped=bins[x_omit-stp:x_omit+stp]
+  y_skipped=hist[x_omit-stp:x_omit+stp]
+  print(x_skipped)
   #fitting
   xplt=np.arange(bins[x_start],bins[x_start+x_end],0.5)
   ini_g=[0,0,0,0,0]
