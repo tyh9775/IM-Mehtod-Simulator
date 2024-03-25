@@ -1,20 +1,40 @@
-import myconst as mc
 import numpy as np
-from matplotlib import pyplot as plt
+import matplotlib.pyplot as plt
 
+# Constants
+k_J = 1.380649e-23  # Boltzmann constant in J/K
+k_MeV = k_J * 6.242e12  # Boltzmann constant in MeV/K
+T = 300  # Temperature in Kelvin
 
-#to generate n particles according to an (a/T)*e^(-x/T) distribution
-def en_dist(a,T,n):
-  return a*np.random.exponential(scale=1/T,size=n)
+# Energy range
+E_min_J = 0  # Minimum energy in Joules
+E_max_J = 10  # Maximum energy in Joules
 
+# Convert energy range to MeV
+E_min_MeV = E_min_J * 6.242e12
+E_max_MeV = E_max_J * 6.242e12
 
-y=[]
-for i in range(0,10000):
-  y.append(en_dist(10000,100,1)[0])
+# Number of samples
+num_samples = 10000
 
-plt.figure()
-hist,b,p=plt.hist(y,bins=np.arange(0,1001,10))
-plt.show()
-plt.close()
+# Calculate the scale parameter for the exponential distribution
+scale_parameter = 1 / (k_MeV * T)
 
-print(np.sum(hist))
+# Generate random numbers following the Boltzmann distribution
+energies = np.random.exponential(scale=scale_parameter, size=num_samples)
+
+# Filter out energies outside the specified range
+energies = energies[(energies >= E_min_MeV) & (energies <= E_max_MeV)]
+
+# Check if energies array is empty
+if len(energies) > 0:
+    # Plot histogram
+    x=plt.hist(energies, bins=50)
+    plt.title('Boltzmann Distribution')
+    plt.xlabel('Energy (MeV)')
+    plt.ylabel('Probability Density')
+    plt.show()
+else:
+    print("No energies within the specified range.")
+
+print(np.sum(x[0]))

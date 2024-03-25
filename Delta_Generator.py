@@ -3,7 +3,6 @@ import random
 from scipy.integrate import simpson
 import csv
 from array import array
-import struct
 
 #load constants from the file in the repository
 import myconst as mc
@@ -100,9 +99,9 @@ y_norm=y_bw/norm_const
 #KE of pions should be higher than the KE of protons in general since mpi<mp
 #'a' value adjusts the x-axis scale and 'T' value adjusts the slope
 T1=200
-a1=25000
+a1=100*T1
 T2=200
-a2=30000
+a2=150*T2
 
 #number of events
 N_events=mc.nevts
