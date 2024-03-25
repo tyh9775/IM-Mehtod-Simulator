@@ -13,7 +13,6 @@ def h_read(header):
   numDel=int(header[2])
   return e_num, numPart, numDel
 
-
 #distance formula: sqrt(x1^2+x2^2+...+xn^2)
 def dist_form(vec):
   vsum2=0
@@ -91,8 +90,7 @@ def IM_method(plist,pilist):
         #if abs(mdel_rec-mc.m_del0)<mc.m_cut and pmag<mc.pd_max:
         if pmag<mc.pd_max:
           mnt_list.append(pmag)
-          
-          
+                    
   return m_list, mnt_list
 
 #for fitting
@@ -164,13 +162,15 @@ for filename in glob.glob(file_pattern):
       for ll in range(0,len(mnt_list)):
         momentum_list.append(mnt_list[ll])
       
-      with open(f'data_IM_{Ndelta}_{int(partNum/2)}.csv','a',newline='') as fm:
-        g=csv.writer(fm,delimiter=',')
-        g.writerow(m_list)
-        fm.close()
+      with open(new_file_path,'a',newline='') as new_file:
+        nfwriter=csv.writer(new_file,delimiter=',')
+        nfwriter.writerow(m_list)
+        new_file.close()
 
     file.close()
-    
+ 
+ 
+  '''
   #graphing and fitting
   #mass cut done with the fitting
   binsize=1 #in MeV/c^2
@@ -261,3 +261,5 @@ for filename in glob.glob(file_pattern):
   plt.savefig("mnt_eff.png")
   plt.show()
   plt.close()
+  
+  '''
