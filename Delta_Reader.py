@@ -126,7 +126,7 @@ act_list=[] #momenta of "real" deltas
 momentum_list=[] #the momenta of recreated deltas
 
 #open data file, do a momentum cut, and calculate the invariant mass of the particle pairs
-with open("data.csv",'r') as file:
+with open("Delta_5_Free_5.csv",'r') as file:
   f=csv.reader(file, delimiter=',')
   for row in f:
     #momenta of protons and pions
