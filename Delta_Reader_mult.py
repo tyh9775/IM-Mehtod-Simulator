@@ -117,7 +117,7 @@ fitting=False
 file_pattern="Delta_*_Free_*.csv"
 
 #output folder
-graph_folder="graphs"
+graph_folder="results"
 os.makedirs(graph_folder,exist_ok=True)
 
 
@@ -170,7 +170,7 @@ for filename in glob.glob(file_pattern):
     file.close()
  
  
-  '''
+  
   #graphing and fitting
   #mass cut done with the fitting
   binsize=1 #in MeV/c^2
@@ -212,7 +212,8 @@ for filename in glob.glob(file_pattern):
   plt.legend(loc='upper right')
   plt.ylim(0,max(hist)*1.1)
   plt.figtext(0.75,0.65,"m_err=%d \n p_min=%d"%(mc.m_cut,mc.p_cut),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
-  plt.savefig("IM_pairs.png")
+  plot_file_path = os.path.join(graph_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_IM_plot.png")
+  plt.savefig(plot_file_path)
   plt.show()
   plt.close()
 
@@ -226,7 +227,8 @@ for filename in glob.glob(file_pattern):
   plt.title("Momenta of Recreated Deltas")
   plt.xlabel("Momentum (MeV/c)")
   plt.ylabel("Count")
-  plt.savefig("del_mnt_rec.png")
+  plot_file_path = os.path.join(graph_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_rec_plot.png")
+  plt.savefig(plot_file_path)
   plt.show()
   plt.close()
 
@@ -235,7 +237,8 @@ for filename in glob.glob(file_pattern):
   plt.title("Momenta of Actual Deltas")
   plt.xlabel("Momentum (MeV/c)")
   plt.ylabel("Count")
-  plt.savefig("del_mnt_act.png")
+  plot_file_path = os.path.join(graph_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_act_plot.png")
+  plt.savefig(plot_file_path)
   plt.show()
   plt.close()
 
@@ -258,8 +261,9 @@ for filename in glob.glob(file_pattern):
   plt.title("Efficiency vs Momentum")
   plt.xlabel("Momentum (MeV/c)")
   plt.ylabel("Efficiency (Actual/Recreated)")
-  plt.savefig("mnt_eff.png")
+  plot_file_path = os.path.join(graph_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_Eff_plot.png")
+  plt.savefig(plot_file_path)
   plt.show()
   plt.close()
   
-  '''
+  

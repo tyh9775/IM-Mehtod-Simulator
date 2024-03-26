@@ -225,8 +225,8 @@ def generator(numD,numF,filename):
   return 
 
 #numbers of particles/pairs generated
-Delta_num=[0,1,2,5]
-Free_num=[0,1,2,5]
+Delta_num=mc.Dlist
+Free_num=mc.Flist
 
 for delta in Delta_num:
   for free in Free_num:
