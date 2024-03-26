@@ -112,6 +112,7 @@ def r2_calc(f,x,y,p):
   return 1-(ssr/sst)
 
 fitting=False
+show=False
 
 #read files
 file_pattern="Delta_*_Free_*.csv"
@@ -214,7 +215,8 @@ for filename in glob.glob(file_pattern):
   plt.figtext(0.75,0.65,"m_err=%d \n p_min=%d"%(mc.m_cut,mc.p_cut),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
   plot_file_path = os.path.join(graph_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_IM_plot.png")
   plt.savefig(plot_file_path)
-  plt.show()
+  if show is True:
+    plt.show()
   plt.close()
 
   print("total number of counted particles after momentum cut:", np.sum(hist))
@@ -229,7 +231,8 @@ for filename in glob.glob(file_pattern):
   plt.ylabel("Count")
   plot_file_path = os.path.join(graph_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_rec_plot.png")
   plt.savefig(plot_file_path)
-  plt.show()
+  if show is True:
+    plt.show()
   plt.close()
 
   plt.figure()
@@ -239,7 +242,8 @@ for filename in glob.glob(file_pattern):
   plt.ylabel("Count")
   plot_file_path = os.path.join(graph_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_act_plot.png")
   plt.savefig(plot_file_path)
-  plt.show()
+  if show is True:
+    plt.show()
   plt.close()
 
   eff_list=[]
@@ -263,7 +267,8 @@ for filename in glob.glob(file_pattern):
   plt.ylabel("Efficiency (Actual/Recreated)")
   plot_file_path = os.path.join(graph_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_Eff_plot.png")
   plt.savefig(plot_file_path)
-  plt.show()
+  if show is True:
+    plt.show()
   plt.close()
   
   
