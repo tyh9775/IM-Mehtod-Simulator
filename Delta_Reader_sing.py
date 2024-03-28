@@ -7,7 +7,7 @@ import os
 
 #############################
 #set the file to be read#####
-filename="Delta_2_Free_2.csv"
+filename="test.csv"
 #############################
 
 #for identifiying event number and the number of particles in the event
@@ -92,8 +92,8 @@ def IM_method(plist,pilist):
         #mass cut
         
         #if abs(mdel_rec-mc.m_del0)<mc.m_cut and pmag<mc.pd_max:
-        if pmag<mc.pd_max:
-          mnt_list.append(pmag)
+        #if pmag<mc.pd_max:
+        mnt_list.append(pmag)
                     
   return m_list, mnt_list
 
@@ -118,17 +118,21 @@ def r2_calc(f,x,y,p):
 fitting=False
 
 #output folder
-graph_folder="results"
+graph_folder="test folder"
 os.makedirs(graph_folder,exist_ok=True)
 
 
-new_file_path=os.path.join(graph_folder,os.path.basename(filename))
+new_file_path= os.path.join(graph_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_IM.csv")
 with open(new_file_path,"w",newline='') as new_file:
   new_file.close()
 
 IM_list=[] #the invariant mass of the pairs from all events
 act_list=[] #momenta of "real" deltas
 momentum_list=[] #the momenta of recreated deltas
+p_mnt=[] #momenta of detected protons
+pi_mnt=[] #momenta of detected pions
+p_en=[] #energy of protons
+pi_en=[] #energy of pions
 
 #open data file, do a momentum cut, and calculate the invariant mass of the particle pairs
 with open(filename,'r') as file:
@@ -147,9 +151,12 @@ with open(filename,'r') as file:
         del_list.append(rowdata[1:5])
       if PID==2212: #proton
         p_list.append(rowdata[1:5])
+        p_en.append(float(rowdata[1]))
+        p_mnt.append(dist_form(rowdata[2:4]))
       elif PID==211: #pion+
         pi_list.append(rowdata[1:5])
-
+        pi_en.append(float(rowdata[1]))
+        pi_mnt.append(dist_form(rowdata[2:4]))
     #invariant mass of the p and pi in the event with momentum cut applied
     #random.shuffle(p_list)
     #random.shuffle(pi_list)
@@ -219,6 +226,29 @@ plt.close()
 
 print("total number of counted particles after momentum cut:", np.sum(hist))
 
+#momenta and energy of protons and pions
+binsize_new=5
+plt.figure()
+hist_p,bins_p,pack_p=plt.hist(p_mnt,bins=np.arange(0,int(max(p_mnt))+1,binsize_new))
+plt.title("Momenta of Protons")
+plt.xlabel("Momentum (MeV/c)")
+plt.ylabel("Count")
+plot_file_path = os.path.join(graph_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_p_mnt_plot.png")
+plt.savefig(plot_file_path)
+plt.show()
+plt.close()
+
+binsize_new=5
+plt.figure()
+hist_pi,bins_pi,pack_pi=plt.hist(pi_mnt,bins=np.arange(0,int(max(pi_mnt))+1,binsize_new))
+plt.title("Momenta of Pions")
+plt.xlabel("Momentum (MeV/c)")
+plt.ylabel("Count")
+plot_file_path = os.path.join(graph_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_pi_mnt_plot.png")
+plt.savefig(plot_file_path)
+plt.show()
+plt.close()
+
 
 #efficiency over momentum
 binsize_new=5
@@ -241,6 +271,27 @@ plot_file_path = os.path.join(graph_folder, f"{os.path.splitext(os.path.basename
 plt.savefig(plot_file_path)
 plt.show()
 plt.close()
+
+plt.figure()
+hist_pE,bins_pE,pack_pE=plt.hist(p_en,bins=np.arange(0,int(max(p_en))+1,binsize_new))
+plt.title("Energy of Protons")
+plt.xlabel("Energy (MeV/c^2)")
+plt.ylabel("Count")
+plot_file_path = os.path.join(graph_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_p_en_plot.png")
+plt.savefig(plot_file_path)
+plt.show()
+plt.close()
+
+plt.figure()
+hist_piE,bins_piE,pack_piE=plt.hist(pi_en,bins=np.arange(0,int(max(pi_en))+1,binsize_new))
+plt.title("Energy of Pions")
+plt.xlabel("Energy (MeV/c^2)")
+plt.ylabel("Count")
+plot_file_path = os.path.join(graph_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_pi_en_plot.png")
+plt.savefig(plot_file_path)
+plt.show()
+plt.close()
+
 
 eff_list=[]
 eff_err=[]
