@@ -18,6 +18,9 @@ def bw_pdf(md,md0,mn,mpi):
   gmd=(0.47*q**3)/(mpi**2+0.6*q**2)
   return (4*md0**2*gmd)/((A)*((md**2-md0**2)**2+md0**2*gmd**2))
 
+def q_solv(md,mn,mpi):
+  return np.sqrt((md**2-mn**2-mpi**2)**2-4*(mn*mpi)**2)/(2*md)
+
 #calculate the momentum of delta given the center of collision energy, mdel, and mn
 def bw_mom(rs,m1,m2):
   return np.sqrt((rs**2+m1**2-m2**2)**2/(4*rs**2)-m1**2)
@@ -94,7 +97,7 @@ def generator(numD,numF,filename):
     particles=0
     N_delta=numD
     N_free=numF
-          
+    
     particles=particles+N_delta*2+N_free*2
     NP_total=NP_total+particles
 
@@ -138,14 +141,12 @@ def generator(numD,numF,filename):
       #LT to the rest frame of the delta resonance
       ############################################
 
-      #decay the delta into a proton and a pion
-      #a->b+c decay
-      #can use energy conservation to solve for momentum of b and c in CoM frame
-      #E=m_a=sqrt(p^2+mb^2)+sqrt(p^2+mc^2)
-      #solved for p using n online algebraic tool
-
-      #momentum of the particles in CoM frame
+      #momentum of the particles in CoM frame (decay equation solved with algebraic solver)
       pcm=dec_mom_sol(mdel,mc.m_p,mc.m_pi)
+
+      #momentum of the pion in the delta frame according to bw_dist
+      #pcm=q_solv(mdel,mc.m_p,mc.m_pi)
+      #the same as before after checking
 
       #total energy of each particle in CoM frame
       Ep=E_solv(pcm,mc.m_p)
