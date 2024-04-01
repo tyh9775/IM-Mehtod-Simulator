@@ -25,6 +25,11 @@ def q_solv(md,mn,mpi):
 def bw_mnt(rs,m1,m2):
   return np.sqrt((rs**2+m1**2-m2**2)**2/(4*rs**2)-m1**2)
 
+#for varying rs (center of collision energy)
+#0<sig<20
+def sqrt_s(sig):
+  return 1000*(2.015+np.sqrt((0.015*sig)/(20-sig)))
+
 #given the momentum and the rest mass, solve for the total energy
 def E_solv(p,m):
   return np.sqrt(p**2+m**2)

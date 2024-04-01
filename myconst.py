@@ -23,5 +23,5 @@ nevts=10000
 Dlist=[0,1,2,5]
 Flist=[0,1,2,5]
 
-p_cut=10 #momentum restriction on the particles in delta frame
+p_cut=1 #momentum restriction on the particles in delta frame
 m_cut=2 #mass error bar for delta 

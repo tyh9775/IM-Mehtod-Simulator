@@ -226,7 +226,7 @@ plt.close()
 
 print("total number of counted particles after momentum cut:", np.sum(hist))
 
-#momenta and energy of protons and pions
+#momenta of protons and pions
 binsize_new=5
 plt.figure()
 hist_p,bins_p,pack_p=plt.hist(p_mnt,bins=np.arange(0,int(max(p_mnt))+1,binsize_new))
@@ -249,8 +249,7 @@ plt.savefig(plot_file_path)
 plt.show()
 plt.close()
 
-
-#efficiency over momentum
+#mnt of deltas
 binsize_new=5
 plt.figure()
 hist_rec,bins_rec,pack_rec=plt.hist(momentum_list,bins=np.arange(0,int(max(momentum_list))+1,binsize_new))
@@ -272,6 +271,7 @@ plt.savefig(plot_file_path)
 plt.show()
 plt.close()
 
+#energy of protons and pions
 plt.figure()
 hist_pE,bins_pE,pack_pE=plt.hist(p_en,bins=np.arange(0,int(max(p_en))+1,binsize_new))
 plt.title("Energy of Protons")
@@ -292,7 +292,7 @@ plt.savefig(plot_file_path)
 plt.show()
 plt.close()
 
-
+#efficiency over mnt
 eff_list=[]
 eff_err=[]
 
