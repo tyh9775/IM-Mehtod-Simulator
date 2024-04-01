@@ -19,7 +19,7 @@ def bw_pdf(md,md0,mn,mpi):
   return (4*md0**2*gmd)/((A)*((md**2-md0**2)**2+md0**2*gmd**2))
 
 #calculate the momentum of delta given the center of collision energy, mdel, and mn
-def bw_mom(rs,m1,m2):
+def bw_mnt(rs,m1,m2):
   return np.sqrt((rs**2+m1**2-m2**2)**2/(4*rs**2)-m1**2)
 
 #given the momentum and the rest mass, solve for the total energy
@@ -73,7 +73,7 @@ norm_const=simpson(y=y_bw,x=x_bw)
 y_norm=y_bw/norm_const
 
 #def generator(numD,numF,tmpD,tmpN,tmpPi,filename):
-def generator(numD,numF,filename):
+def generator(numD,numF,filename,mnt_switch):
 
   if numD==0 and numF==0:
     print("numD,numF:",0,0)
@@ -121,7 +121,10 @@ def generator(numD,numF,filename):
       dpid=2224 #delta++
       
       #give delta a random momentum
-      pdel=exp_dist(300,1)[0]
+      if mnt_switch is True:
+        pdel=exp_dist(300,1)[0]
+      else:
+        pdel=bw_mnt(mc.rt_s,mdel,mc.m_p)
       Edel=E_solv(pdel,mdel)
       dgam,dv=gam_calc(Edel,mdel)
 
@@ -228,7 +231,14 @@ def generator(numD,numF,filename):
 Delta_num=mc.Dlist
 Free_num=mc.Flist
 
+#exp dist for the delta mnt in lab (center of collision)
 for delta in Delta_num:
   for free in Free_num:
-    filename=f"Delta_{delta}_Free_{free}.csv"
-    generator(delta,free,filename)
+    filename=f"Exp_dst_D_{delta}_F_{free}.csv"
+    generator(delta,free,filename,True)
+
+#delta mnt based on mdel
+for delta in Delta_num:
+  for free in Free_num:
+    filename=f"BW_dst_D_{delta}_F_{free}.csv"
+    generator(delta,free,filename,False)

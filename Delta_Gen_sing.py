@@ -22,7 +22,7 @@ def q_solv(md,mn,mpi):
   return np.sqrt((md**2-mn**2-mpi**2)**2-4*(mn*mpi)**2)/(2*md)
 
 #calculate the momentum of delta given the center of collision energy, mdel, and mn
-def bw_mom(rs,m1,m2):
+def bw_mnt(rs,m1,m2):
   return np.sqrt((rs**2+m1**2-m2**2)**2/(4*rs**2)-m1**2)
 
 #given the momentum and the rest mass, solve for the total energy
@@ -76,7 +76,7 @@ norm_const=simpson(y=y_bw,x=x_bw)
 y_norm=y_bw/norm_const
 
 #def generator(numD,numF,tmpD,tmpN,tmpPi,filename):
-def generator(numD,numF,filename):
+def generator(numD,numF,filename,mnt_switch):
 
   if numD==0 and numF==0:
     print("numD,numF:",0,0)
@@ -124,7 +124,10 @@ def generator(numD,numF,filename):
       dpid=2224 #delta++
       
       #give delta a random momentum
-      pdel=exp_dist(300,1)[0]
+      if mnt_switch is True:
+        pdel=exp_dist(300,1)[0]
+      else:
+        pdel=bw_mnt(mc.rt_s,mdel,mc.m_p)
       Edel=E_solv(pdel,mdel)
       dgam,dv=gam_calc(Edel,mdel)
 
@@ -229,5 +232,8 @@ def generator(numD,numF,filename):
 Delta_num=2
 Free_num=2
 
+#switch for deciding if delta mnt has exp dist
+Exp=True
+
 filename=f"test.csv"
-generator(Delta_num,Free_num,filename)
+generator(Delta_num,Free_num,filename,Exp)
