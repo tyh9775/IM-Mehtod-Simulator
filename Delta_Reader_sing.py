@@ -31,11 +31,6 @@ def v_sum(v1,v2):
     vtot.append(v1[i]+v2[i]) 
   return vtot
 
-#given total energy and rest mass, calculate the Lorentz factor and relative velocity
-def gam_calc(En,m0):
-  gam=En/m0
-  return gam
-
 #LT in 3D space in matrix form
 def gam_mat(gam,v,vx,vy,vz,p4):
     A=np.array([[gam,-gam*vx,-gam*vy,-gam*vz],
@@ -46,8 +41,7 @@ def gam_mat(gam,v,vx,vy,vz,p4):
 
 #find the invariant mass given the total energy and the momentum
 def inv_m(en,p):
-  m2=en**2-p**2
-  return np.sqrt(m2)
+  return np.sqrt(en**2-p**2)
 
 def IM_method(plist,pilist):
   m_list=[]
@@ -67,34 +61,25 @@ def IM_method(plist,pilist):
       Etot=Ep+Epi #total energy of the two particles
       p4p=[Ep]+pp #4 momentum of p 
       p4pi=[Epi]+ppi #4 momentum of pi    
-
       mdel_rec=inv_m(Etot,pmag)
-      gam=gam_calc(Etot,mdel_rec)
+      gam=Etot/mdel_rec
       if gam<1:
-        continue
+        print("negative energy or mass detected")
+        quit()
       v=np.sqrt(1-1/gam**2)
 
       vx=ptot[0]/(gam*mdel_rec)
       vy=ptot[1]/(gam*mdel_rec)
       vz=ptot[2]/(gam*mdel_rec)
-
       #move to the "delta" frame assuming the pair can create one
       ptest=gam_mat(gam,v,vx,vy,vz,p4p) #4 momentum of p in delta frame
       pitest=gam_mat(gam,v,vx,vy,vz,p4pi) #4 momentum of pi in delta frame
       pt_tot=v_sum(ptest,pitest) #total 4 momentum of p and pi in delta frame
       pt_mag=dist_form(pt_tot[1:]) #magnitude of the 3D momentum in delta frame
-      
-
       #momentum cut
       if pt_mag < mc.p_cut:        
         m_list.append(mdel_rec)
-        #mnt_list.append(pmag)
-        #mass cut
-        
-        #if abs(mdel_rec-mc.m_del0)<mc.m_cut and pmag<mc.pd_max:
-        #if pmag<mc.pd_max:
         mnt_list.append(pmag)
-                    
   return m_list, mnt_list
 
 #for fitting
@@ -161,7 +146,7 @@ with open(filename,'r') as file:
     #random.shuffle(p_list)
     #random.shuffle(pi_list)
     m_list,mnt_list=IM_method(p_list,pi_list)
-
+    
     for jj in range(0,len(del_list)):
       act_list.append(dist_form(del_list[jj][1:]))
     for kk in range(0,len(m_list)):
@@ -306,7 +291,7 @@ for i in range(0,len(bins_act)-1):
     act_err=np.sqrt(hist_act[i]*(1-hist_act[i]/len(hist_act)))
     eff_err.append((hist_act[i]/hist_rec[i])*np.sqrt((act_err/hist_act[i])**2+(rec_err/hist_rec[i])**2))
 
-plt.figure()
+'''plt.figure()
 plt.plot(bins_rec[:-1],eff_list,'.')
 plt.errorbar(bins_rec[:-1],eff_list,xerr=binsize_new/2,yerr=eff_err,linestyle='none')
 plt.title("Efficiency vs Momentum")
@@ -316,5 +301,5 @@ plot_file_path = os.path.join(graph_folder, f"{os.path.splitext(os.path.basename
 plt.savefig(plot_file_path)
 plt.show()
 plt.close()
-
+'''
 

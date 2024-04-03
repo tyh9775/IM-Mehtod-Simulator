@@ -40,6 +40,14 @@ def gam_calc(En,m0):
   v=np.sqrt(1-1/gam**2)
   return gam, v
 
+#given KE and rest mass, calculate Lorentz factor, rel v, total E, and rel p
+def kgam_calc(KE,m0):
+  gam=1+KE/m0
+  v=np.sqrt(1-1/gam**2)
+  Et=KE+m0
+  prel=gam*m0*v
+  return gam,v,Et,prel
+
 #generate a random direction for a given vector and output the x,y,z components
 def vec_gen(r):
   rdm1=np.random.uniform(0,1)
@@ -81,7 +89,7 @@ norm_const=simpson(y=y_bw,x=x_bw)
 y_norm=y_bw/norm_const
 
 #def generator(numD,numF,tmpD,tmpN,tmpPi,filename):
-def generator(numD,numF,filename,mnt_switch):
+def generator(numD,numF,filename,mnt_switch,m_switch):
 
   if numD==0 and numF==0:
     print("numD,numF:",0,0)
@@ -118,23 +126,28 @@ def generator(numD,numF,filename,mnt_switch):
       #starting in center of collision frame
       ######################################
 
-      #randomly choose the mass of the delta resonance according to bw dist
-      #using monte carlo method
-      mdel=random.uniform(mc.md_min,mc.md_max)
-      ytest=random.uniform(0,max(y_norm))
-      while ytest > bw_pdf(mdel,mc.m_del0,mc.m_p,mc.m_pi)/norm_const:
+      if Gaus is True:
+        #randomly choose a mass based on a normal distribution
+        mdel=np.random.normal(1232,60,1)
+      else:
+        #randomly choose the mass of the delta resonance according to bw dist
+        #using monte carlo method
         mdel=random.uniform(mc.md_min,mc.md_max)
         ytest=random.uniform(0,max(y_norm))
+        while ytest > bw_pdf(mdel,mc.m_del0,mc.m_p,mc.m_pi)/norm_const:
+          mdel=random.uniform(mc.md_min,mc.md_max)
+          ytest=random.uniform(0,max(y_norm))
       #PID of delta:
       dpid=2224 #delta++
       
       #give delta a random momentum
       if mnt_switch is True:
-        pdel=exp_dist(300,1)[0]
+        ke_del=exp_dist(300,1)[0]
+        dgam,dv,Edel,pdel=kgam_calc(ke_del,mdel)
       else:
         pdel=bw_mnt(mc.rt_s,mdel,mc.m_p)
-      Edel=E_solv(pdel,mdel)
-      dgam,dv=gam_calc(Edel,mdel)
+        Edel=E_solv(pdel,mdel)
+        dgam,dv=gam_calc(Edel,mdel)
 
       #md_IM=np.sqrt(Edel**2-pdel**2)
 
@@ -198,12 +211,14 @@ def generator(numD,numF,filename,mnt_switch):
     #In lab frame
 
     #generate the momenta of the particles in lab frame according to exp dist
-    pN=exp_dist(150,N_free)
-    pPi=exp_dist(200,N_free)  
+    ke_N=exp_dist(150,N_free)
+    ke_Pi=exp_dist(200,N_free)  
 
-    #pN=exp_dist(150,N_free)
-    #pPi=exp_dist(200,N_free)  
-    
+    pN=[]
+    pPi=[]
+    for k in range(0,len(ke_N)):
+      pN.append(kgam_calc(ke_N[k],mc.m_p)[3])
+      pPi.append(kgam_calc(ke_Pi[k],mc.m_pi)[3])
     for k in range(0,len(pN)):
       #give the particles a direction and write the 4 momenta
       pxp,pyp,pzp,th_p,ph_p=vec_gen(pN[k])
@@ -239,6 +254,7 @@ Free_num=2
 
 #switch for deciding if delta mnt has exp dist
 Exp=True
+Gaus=True
 
 filename=f"test.csv"
-generator(Delta_num,Free_num,filename,Exp)
+generator(Delta_num,Free_num,filename,Exp,Gaus)
