@@ -119,6 +119,11 @@ pi_mnt=[] #momenta of detected pions
 p_en=[] #energy of protons
 pi_en=[] #energy of pions
 
+p_cr_mnt=[]
+pi_cr_mnt=[]
+
+
+
 #open data file, do a momentum cut, and calculate the invariant mass of the particle pairs
 with open(filename,'r') as file:
   f=csv.reader(file, delimiter=',')
@@ -129,19 +134,31 @@ with open(filename,'r') as file:
     del_list=[]
     eventNum,partNum,Ndelta=h_read(row)
 
+    p1_list=[]
+    pi1_list=[]
+    p2_list=[]
+    pi2_list=[]
+
     for i in range(0,partNum+Ndelta):
       rowdata=next(f)
       PID=int(rowdata[0]) #identify the particle with PDG codes
+      Par_ID=int(rowdata[5])
       if PID==2224:
         del_list.append(rowdata[1:5])
-      if PID==2212: #proton
+      elif PID==2212: #proton
         p_list.append(rowdata[1:5])
         p_en.append(float(rowdata[1]))
         p_mnt.append(dist_form(rowdata[2:4]))
+        if Par_ID==1:
+          p1_list.append(rowdata[1:5])
+          p_cr_mnt.append(dist_form(rowdata[2:4]))
       elif PID==211: #pion+
         pi_list.append(rowdata[1:5])
         pi_en.append(float(rowdata[1]))
         pi_mnt.append(dist_form(rowdata[2:4]))
+        if Par_ID==1:
+          pi1_list.append(rowdata[1:5])
+          pi_cr_mnt.append(dist_form(rowdata[2:4]))        
     #invariant mass of the p and pi in the event with momentum cut applied
     #random.shuffle(p_list)
     #random.shuffle(pi_list)

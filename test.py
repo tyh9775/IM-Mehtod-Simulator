@@ -24,7 +24,7 @@ y=[]
 z=[]
 th=[]
 ph=[]
-for i in range(0,1000000):
+for i in range(0,10000):
   xi,yi,zi,thi,phi=vec_gen(r)
   x.append(xi)
   y.append(yi)
@@ -40,11 +40,11 @@ plt.show()
 plt.close()
 
 
-'''fig = plt.figure()
+fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
 ax.scatter(x, y, z, c='b', marker='.')
 ax.set_xlabel('X')
 ax.set_ylabel('Y')
 ax.set_zlabel('Z')
 plt.show()
-plt.close()'''
+plt.close()

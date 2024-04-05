@@ -15,7 +15,8 @@ def bw_pdf(md,md0,mn,mpi):
     quit()
   else:
     q=np.sqrt((md**2-mn**2-mpi**2)**2-4*(mn*mpi)**2)/(2*md)
-  gmd=(0.47*q**3)/(mpi**2+0.6*q**2)
+  gmd=(0.1*q**3)/(mpi**2+0.6*q**2)
+  
   return (4*md0**2*gmd)/((A)*((md**2-md0**2)**2+md0**2*gmd**2))
 
 def q_solv(md,mn,mpi):
@@ -128,7 +129,7 @@ def generator(numD,numF,filename,mnt_switch,m_switch):
 
       if Gaus is True:
         #randomly choose a mass based on a normal distribution
-        mdel=np.random.normal(1232,60,1)
+        mdel=np.random.normal(1232,5,1)[0]
       else:
         #randomly choose the mass of the delta resonance according to bw dist
         #using monte carlo method
@@ -249,12 +250,12 @@ def generator(numD,numF,filename,mnt_switch,m_switch):
   return 
 
 #numbers of particles/pairs generated
-Delta_num=2
-Free_num=2
+Delta_num=1
+Free_num=0
 
 #switch for deciding if delta mnt has exp dist
 Exp=True
-Gaus=True
+Gaus=False
 
 filename=f"test.csv"
 generator(Delta_num,Free_num,filename,Exp,Gaus)
