@@ -119,10 +119,8 @@ pi_mnt=[] #momenta of detected pions
 p_en=[] #energy of protons
 pi_en=[] #energy of pions
 
-p_cr_mnt=[]
-pi_cr_mnt=[]
-
-
+cr_IM=[] #IM of related pairs
+cr_mnt=[] #mnt of related pairs
 
 #open data file, do a momentum cut, and calculate the invariant mass of the particle pairs
 with open(filename,'r') as file:
@@ -134,10 +132,14 @@ with open(filename,'r') as file:
     del_list=[]
     eventNum,partNum,Ndelta=h_read(row)
 
-    p1_list=[]
-    pi1_list=[]
-    p2_list=[]
-    pi2_list=[]
+    plist={}
+    pilist={}
+
+    for j in range(0,Ndelta):
+      pname=f'p{j}_list'
+      piname=f'pi{j}_list'
+      plist[pname]=[]
+      pilist[piname]=[]
 
     for i in range(0,partNum+Ndelta):
       rowdata=next(f)
@@ -149,28 +151,45 @@ with open(filename,'r') as file:
         p_list.append(rowdata[1:5])
         p_en.append(float(rowdata[1]))
         p_mnt.append(dist_form(rowdata[2:4]))
-        if Par_ID==1:
-          p1_list.append(rowdata[1:5])
-          p_cr_mnt.append(dist_form(rowdata[2:4]))
+        if Par_ID==0:
+          continue
+        else:
+          plist[f'p{Par_ID}_list'].append(rowdata[1:5])
       elif PID==211: #pion+
         pi_list.append(rowdata[1:5])
         pi_en.append(float(rowdata[1]))
         pi_mnt.append(dist_form(rowdata[2:4]))
-        if Par_ID==1:
-          pi1_list.append(rowdata[1:5])
-          pi_cr_mnt.append(dist_form(rowdata[2:4]))        
+        if Par_ID==0:
+          continue
+        else:
+          pilist[f'pi{Par_ID}_list'].append(rowdata[1:5])       
     #invariant mass of the p and pi in the event with momentum cut applied
     #random.shuffle(p_list)
     #random.shuffle(pi_list)
     m_list,mnt_list=IM_method(p_list,pi_list)
-    
+
+    m_cr_list=[]
+    mnt_cr_list=[]
+
+    for i in range(0,Ndelta):
+      m_cr,mnt_cr=IM_method(plist[f'p{i+1}_list'],pilist[f'pi{i+1}_list'])
+      m_cr_list.append(m_cr)
+      mnt_cr_list.append(mnt_cr)
+
     for jj in range(0,len(del_list)):
       act_list.append(dist_form(del_list[jj][1:]))
     for kk in range(0,len(m_list)):
       IM_list.append(m_list[kk])
     for ll in range(0,len(mnt_list)):
       momentum_list.append(mnt_list[ll])
-    
+
+
+    for ii in range(0,len(m_cr_list)):
+      for kk in range(0,len(m_cr_list[ii])):
+        cr_IM.append(m_cr_list[kk])
+      for ll in range(0,len(mnt_list[ii])):
+        cr_mnt.append(mnt_cr_list[ll])
+      
     with open(new_file_path,'a',newline='') as new_file:
       nfwriter=csv.writer(new_file,delimiter=',')
       nfwriter.writerow(m_list)
@@ -227,6 +246,29 @@ plt.show()
 plt.close()
 
 print("total number of counted particles after momentum cut:", np.sum(hist))
+
+#related pairs
+binsize_new=5
+plt.figure()
+hist_cr,bins_cr,pack_cr=plt.hist(cr_IM,bins=np.arange(0,int(max(cr_IM))+1,binsize_new))
+plt.title("IM of Related Pairs")
+plt.xlabel("Mass (MeV/c^2)")
+plt.ylabel("Count")
+plot_file_path = os.path.join(graph_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_cr_IM_plot.png")
+plt.savefig(plot_file_path)
+plt.show()
+plt.close()
+
+plt.figure()
+hist_cr_mnt,bins_cr_mnt,pack_cr_mnt=plt.hist(cr_mnt,bins=np.arange(0,int(max(cr_mnt))+1,binsize_new))
+plt.title("Momenta of Related Pairs")
+plt.xlabel("Momentum (MeV/c)")
+plt.ylabel("Count")
+plot_file_path = os.path.join(graph_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_cr_mnt_plot.png")
+plt.savefig(plot_file_path)
+plt.show()
+plt.close()
+
 
 #momenta of protons and pions
 binsize_new=5

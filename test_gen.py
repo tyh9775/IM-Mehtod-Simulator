@@ -2,31 +2,7 @@ import numpy as np
 import random
 from scipy.integrate import simpson
 import csv
-from array import array
-import struct
-
-#load constants from the file in the repository
 import myconst as mc
-
-
-#Switch for deltas to be generated
-Delta=True
-
-#Switch for free particles to be generated with the delta resonances
-Free=True 
-
-#switch for how the momentum of the delta in the lab frame is determined
-Boltz=True
-
-#should output the PID and 4-momentum of every particle generated 
-#header should include the number of events and the total number of particles 
-#also added "parent" particle information
-
-
-if Delta is False and Free is False:
-    print("No particles generated!")
-    quit()
-
 
 #Breit_Wigner distribution for the  mass distribution of delta resonances:
 #class bw_dist(st.rv_continuous):
@@ -39,12 +15,21 @@ def bw_pdf(md,md0,mn,mpi):
     quit()
   else:
     q=np.sqrt((md**2-mn**2-mpi**2)**2-4*(mn*mpi)**2)/(2*md)
-  gmd=(0.47*q**3)/(mpi**2+0.6*q**2)
+  gmd=(0.1*q**3)/(mpi**2+0.6*q**2)
+  
   return (4*md0**2*gmd)/((A)*((md**2-md0**2)**2+md0**2*gmd**2))
 
+def q_solv(md,mn,mpi):
+  return np.sqrt((md**2-mn**2-mpi**2)**2-4*(mn*mpi)**2)/(2*md)
+
 #calculate the momentum of delta given the center of collision energy, mdel, and mn
-def bw_mom(rs,m1,m2):
+def bw_mnt(rs,m1,m2):
   return np.sqrt((rs**2+m1**2-m2**2)**2/(4*rs**2)-m1**2)
+
+#for varying rs (center of collision energy)
+#0<sig<20
+def sqrt_s(sig):
+  return 1000*(2.015+np.sqrt((0.015*sig)/(20-sig)))
 
 #given the momentum and the rest mass, solve for the total energy
 def E_solv(p,m):
@@ -55,6 +40,14 @@ def gam_calc(En,m0):
   gam=En/m0
   v=np.sqrt(1-1/gam**2)
   return gam, v
+
+#given KE and rest mass, calculate Lorentz factor, rel v, total E, and rel p
+def kgam_calc(KE,m0):
+  gam=1+KE/m0
+  v=np.sqrt(1-1/gam**2)
+  Et=KE+m0
+  prel=gam*m0*v
+  return gam,v,Et,prel
 
 #generate a random direction for a given vector and output the x,y,z components
 def vec_gen(r):
@@ -84,19 +77,9 @@ def gam_mat(gam,v,vx,vy,vz,p4):
                 [-gam*vz,(gam-1)*vx*vz/v**2,(gam-1)*vy*vz/v**2,1+(gam-1)*vz**2/v**2]])
     return np.dot(A,p4)
 
-#to generate n particles according to an (a/T)*e^(-x/T) distribution
-def en_dist(a,T,n):
-  return a*np.random.exponential(scale=1/T,size=n)
-
-#given KE and rest mass, calculate Lorentz factor, rel v, total E, and rel p
-def kgam_calc(KE,m0):
-  gam=1+KE/m0
-  v=np.sqrt(1-1/gam**2)
-  Et=KE+m0
-  prel=gam*m0*v
-  return gam,v,Et,prel
-
-
+#to generate n particles according to an exponential distribution
+def exp_dist(scl,n):
+  return np.random.exponential(scale=scl,size=n)
 
 #build mass distribution 
 x_bw=np.linspace(mc.md_min,mc.md_max,100)
@@ -106,156 +89,173 @@ for i in range (0,len(x_bw)):
 norm_const=simpson(y=y_bw,x=x_bw)
 y_norm=y_bw/norm_const
 
-#constants for free particle generation 
-#KE of pions should be higher than the KE of protons in general since mpi<mp
-T1=100
-a1=T1*250
-T2=100
-a2=T2*300
+#def generator(numD,numF,tmpD,tmpN,tmpPi,filename):
+def generator(numD,numF,filename,mnt_switch,m_switch):
 
-#number of events
-N_events=mc.nevts
-
-#event counter
-counter=0
-
-#number of created delta resonances
-ND_total=0
-
-#number of all particles
-NP_total=0
-
-
-for i in range(0,N_events):
-  counter = counter+1
-  #number of particles per event
-  particles=0
-
-  ################
-  #Delta Generator
-  ################
-
-  if Delta is True:
-    N_delta=2 #number of resonances created per event
-    #N_detla should be randomized according to some distribution eventually
-    #consider making it scale with the energy of delta
-  else:
-    N_delta=0
-    
-    
-  if Free is True:
-    N_free=10 #number of free particle pairs per event
-    #should also be randomized (Boltzmann dist?)
-  else:
-    N_free=0 
-        
-  particles=particles+N_delta*2+N_free*2
-  NP_total=NP_total+particles
-
-
-  for j in range(0,N_delta):
-    ND_total=ND_total+1
-    ######################################
-    #starting in center of collision frame
-    ######################################
-
-    #randomly choose the mass of the delta resonance according to bw dist
-    #using monte carlo method
-    mdel=random.uniform(mc.md_min,mc.md_max)
-    ytest=random.uniform(0,max(y_norm))
-    while ytest > bw_pdf(mdel,mc.m_del0,mc.m_p,mc.m_pi)/norm_const:
-      mdel=random.uniform(mc.md_min,mc.md_max)
-      ytest=random.uniform(0,max(y_norm))
-
-    #PID of delta:
-    dpid=2224 #delta++
-
-    #calculate the momentum, total energy, and the relative velocity
-    pdel=bw_mom(mc.rt_s,mdel,mc.m_p)
-    if Boltz is True:
-      pdel=en_dist(2500,100,1)[0]
-    Edel=E_solv(pdel,mdel)
-    dgam,dv=gam_calc(Edel,mdel)
-
-    #calculate the IM of generated delta
-    md_IM=np.sqrt(Edel**2-pdel**2)
-
-    #give the velocity some direction
-    vdx,vdy,vdz,dth,dph=vec_gen(dv)
-
-    pdx,pdy,pdz=vec_calc(pdel,dth,dph)
-    datadel=[dpid,Edel,pdx,pdy,pdz,j+1]
-    
-
-    ############################################
-    #LT to the rest frame of the delta resonance
-    ############################################
-
-    #decay the delta into a proton and a pion
-    #a->b+c decay
-    #can use energy conservation to solve for momentum of b and c in CoM frame
-    #E=m_a=sqrt(p^2+mb^2)+sqrt(p^2+mc^2)
-    #solved for p using n online algebraic tool
-
-    #momentum of the particles in CoM frame
-    pcm=dec_mom_sol(mdel,mc.m_p,mc.m_pi)
-
-    #total energy of each particle in CoM frame
-    Ep=E_solv(pcm,mc.m_p)
-    Epi=E_solv(pcm,mc.m_pi)
-
-    #give the proton and pion momenta direction in the delta frame
-    ppx,ppy,ppz,pth,pph=vec_gen(pcm)
-
-    #write the 4 momenta of p and pi in delta frame
-    p4pD=[Ep,ppx,ppy,ppz]
-    p4piD=[Epi,-ppx,-ppy,-ppz]
-
-    #####################
-    #LT back to lab frame
-    #####################
-
-    #4 momenta of p and pi in lab frame and use write to output file
-    p4pL=gam_mat(dgam,dv,-vdx,-vdy,-vdz,p4pD)
-    p4piL=gam_mat(dgam,dv,-vdx,-vdy,-vdz,p4piD)
-
-    datap=[2212]
-    datapi=[211]
-    for k in range(0, len(p4pL)):
-      datap.append(p4pL[k])
-      datapi.append(p4piL[k])
-    #give "parent" particle data
-    datap.append(j+1)
-    datapi.append(j+1)
-
-
-  ########################
-  #Free particle generator
-  ########################
-        
-  #In lab frame
-
-  #generate the kinetic energy of the particles in lab frame
-  p_k=en_dist(a1,T1,N_free)
-  pi_k=en_dist(a2,T2,N_free)  
+  if numD==0 and numF==0:
+    print("numD,numF:",0,0)
+    print("No particles detected")
+    print()
+    return
   
-  for k in range(0,len(p_k)):
-    #calculate L factor, rel v, total E, and rel momenta of p an pi
-    gam1,v1,pEt,ppr=kgam_calc(p_k[k],mc.m_p)
-    gam2,v2,piEt,pipr=kgam_calc(pi_k[k],mc.m_pi)
+  with open(filename, 'w', newline='') as file:
+    file.close()
 
+  N_events=mc.nevts
+  counter=0
+  ND_total=0
+  NP_total=0
 
-    #give the particles a direction and write the 4 momenta
-    pxp,pyp,pzp,th_p,ph_p=vec_gen(ppr)
-    p4pf=[pEt,pxp,pyp,pzp]
-    pxpi,pypi,pzpi,th_pi,ph_pi=vec_gen(pipr) 
-    p4pif=[piEt,pxpi,pypi,pzpi]
-
-    datap=[2212]
-    datapi=[211]
-    for k in range(0, len(p4pf)):
-      datap.append(p4pf[k])
-      datapi.append(p4pif[k])
+  for i in range(0,N_events):
+    counter = counter+1
+    particles=0
+    N_delta=numD
+    N_free=numF
     
-    datap.append(0)
-    datapi.append(0)
+    particles=particles+N_delta*2+N_free*2
+    NP_total=NP_total+particles
+
+    with open(filename, 'a', newline='') as file:
+      writer = csv.writer(file)
+      writer.writerow([counter,particles,N_delta])
+      file.close()
+
+    for j in range(0,N_delta):
+      ND_total=ND_total+1
+
+      ######################################
+      #starting in center of collision frame
+      ######################################
+
+      if Gaus is True:
+        #randomly choose a mass based on a normal distribution
+        mdel=np.random.normal(1232,5,1)[0]
+      else:
+        #randomly choose the mass of the delta resonance according to bw dist
+        #using monte carlo method
+        mdel=random.uniform(mc.md_min,mc.md_max)
+        ytest=random.uniform(0,max(y_norm))
+        while ytest > bw_pdf(mdel,mc.m_del0,mc.m_p,mc.m_pi)/norm_const:
+          mdel=random.uniform(mc.md_min,mc.md_max)
+          ytest=random.uniform(0,max(y_norm))
+      #PID of delta:
+      dpid=2224 #delta++
+      
+      #give delta a random momentum
+      if mnt_switch is True:
+        ke_del=exp_dist(300,1)[0]
+        dgam,dv,Edel,pdel=kgam_calc(ke_del,mdel)
+      else:
+        pdel=bw_mnt(mc.rt_s,mdel,mc.m_p)
+        Edel=E_solv(pdel,mdel)
+        dgam,dv=gam_calc(Edel,mdel)
+
+      #md_IM=np.sqrt(Edel**2-pdel**2)
+
+      #give the velocity some direction
+      vdx,vdy,vdz,dth,dph=vec_gen(dv)
+
+      pdx,pdy,pdz=vec_calc(pdel,dth,dph)
+      datadel=[dpid,Edel,pdx,pdy,pdz,j+1]
+      
+
+      ############################################
+      #LT to the rest frame of the delta resonance
+      ############################################
+
+      #momentum of the particles in CoM frame (decay equation solved with algebraic solver)
+      pcm=dec_mom_sol(mdel,mc.m_p,mc.m_pi)
+
+      #momentum of the pion in the delta frame according to bw_dist
+      #pcm=q_solv(mdel,mc.m_p,mc.m_pi)
+      #the same as before after checking
+
+      #total energy of each particle in CoM frame
+      Ep=E_solv(pcm,mc.m_p)
+      Epi=E_solv(pcm,mc.m_pi)
+
+      #give the proton and pion momenta direction in the delta frame
+      ppx,ppy,ppz,pth,pph=vec_gen(pcm)
+
+      #write the 4 momenta of p and pi in delta frame
+      p4pD=[Ep,ppx,ppy,ppz]
+      p4piD=[Epi,-ppx,-ppy,-ppz]
+
+      #####################
+      #LT back to lab frame
+      #####################
+
+      #4 momenta of p and pi in lab frame and use write to output file
+      p4pL=gam_mat(dgam,dv,-vdx,-vdy,-vdz,p4pD)
+      p4piL=gam_mat(dgam,dv,-vdx,-vdy,-vdz,p4piD)
+
+      datap=[2212]
+      datapi=[211]
+      for k in range(0, len(p4pL)):
+        datap.append(p4pL[k])
+        datapi.append(p4piL[k])
+      #give "parent" particle data
+      datap.append(j+1)
+      datapi.append(j+1)
+      
+      with open(filename,'a',newline='') as file:
+        g=csv.writer(file, delimiter=',')
+        g.writerow(datadel)
+        g.writerow(datap)
+        g.writerow(datapi)
+        file.close()
+
+    ########################
+    #Free particle generator
+    ########################
+          
+    #In lab frame
+
+    #generate the momenta of the particles in lab frame according to exp dist
+    ke_N=exp_dist(150,N_free)
+    ke_Pi=exp_dist(200,N_free)  
+
+    pN=[]
+    pPi=[]
+    for k in range(0,len(ke_N)):
+      pN.append(kgam_calc(ke_N[k],mc.m_p)[3])
+      pPi.append(kgam_calc(ke_Pi[k],mc.m_pi)[3])
+    for k in range(0,len(pN)):
+      #give the particles a direction and write the 4 momenta
+      pxp,pyp,pzp,th_p,ph_p=vec_gen(pN[k])
+      pxpi,pypi,pzpi,th_pi,ph_pi=vec_gen(pPi[k]) 
+      Etp=E_solv(pN[k],mc.m_p)
+      Etpi=E_solv(pPi[k],mc.m_pi)
+      p4pf=[Etp,pxp,pyp,pzp]
+      p4pif=[Etpi,pxpi,pypi,pzpi]
+
+      datap=[2212]
+      datapi=[211]
+      for kk in range(0, len(p4pf)):
+        datap.append(p4pf[kk])
+        datapi.append(p4pif[kk])
+      
+      datap.append(0)
+      datapi.append(0)
+            
+      with open(filename,'a',newline='') as file:
+        g=csv.writer(file, delimiter=',')
+        g.writerow(datap)
+        g.writerow(datapi)
+        file.close()
+  print("numD,numF:",numD,numF)
+  print("Number of Delta resonances created:",ND_total)
+  print("Number of all particles detected:", NP_total)
+  print()
+  return 
+
+#numbers of particles/pairs generated
+Delta_num=1
+Free_num=0
+
+#switch for deciding if delta mnt has exp dist
+Exp=True
+Gaus=False
+
+filename=f"test.csv"
+generator(Delta_num,Free_num,filename,Exp,Gaus)
