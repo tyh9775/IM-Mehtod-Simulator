@@ -25,3 +25,6 @@ Flist=[0,1,2,5]
 
 p_cut=1 #momentum restriction on the particles in delta frame
 m_cut=2 #mass error bar for delta 
+
+#width of the mass generated via BW dist (gamma)
+bw_mw=50
