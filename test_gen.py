@@ -6,7 +6,7 @@ import myconst as mc
 
 #Breit_Wigner distribution for the  mass distribution of delta resonances:
 #class bw_dist(st.rv_continuous):
-def bw_pdf(md,md0,mn,mpi):
+def bw_pdf(md,md0,mn,mpi,bw_width=None):
   A=0.95 
   if md==mn+mpi:
     q=0
@@ -15,7 +15,10 @@ def bw_pdf(md,md0,mn,mpi):
     quit()
   else:
     q=np.sqrt((md**2-mn**2-mpi**2)**2-4*(mn*mpi)**2)/(2*md)
-  gmd=(0.1*q**3)/(mpi**2+0.6*q**2)
+  if bw_width is not None:
+    gmd=bw_width
+  else:
+    gmd=(0.1*q**3)/(mpi**2+0.6*q**2)
   
   return (4*md0**2*gmd)/((A)*((md**2-md0**2)**2+md0**2*gmd**2))
 
@@ -89,8 +92,9 @@ for i in range (0,len(x_bw)):
 norm_const=simpson(y=y_bw,x=x_bw)
 y_norm=y_bw/norm_const
 
-#def generator(numD,numF,tmpD,tmpN,tmpPi,filename):
-def generator(numD,numF,filename,mnt_switch,m_switch):
+#in order: # deltas, # free pairs, name of output file, temp of delta when 
+#generated with exponential KE, norm m dist width, bw m dist width
+def generator(numD,numF,filename,norm_w=None,bw_w=None,DT=None):
 
   if numD==0 and numF==0:
     print("numD,numF:",0,0)
@@ -127,10 +131,13 @@ def generator(numD,numF,filename,mnt_switch,m_switch):
       #starting in center of collision frame
       ######################################
 
-      if Gaus is True:
+      if norm_w is not None and bw_w is None:
         #randomly choose a mass based on a normal distribution
-        mdel=np.random.normal(1232,5,1)[0]
-      else:
+        mdel=np.random.normal(1232,norm_w,1)[0]
+      elif norm_w is not None and bw_w is not None:
+        print('choose either normal or bw dist, not both')
+        return
+      elif norm_w is None and bw_w is None:
         #randomly choose the mass of the delta resonance according to bw dist
         #using monte carlo method
         mdel=random.uniform(mc.md_min,mc.md_max)
@@ -138,12 +145,18 @@ def generator(numD,numF,filename,mnt_switch,m_switch):
         while ytest > bw_pdf(mdel,mc.m_del0,mc.m_p,mc.m_pi)/norm_const:
           mdel=random.uniform(mc.md_min,mc.md_max)
           ytest=random.uniform(0,max(y_norm))
+      elif norm_w is None and bw_w is not None:
+        mdel=random.uniform(mc.md_min,mc.md_max)
+        ytest=random.uniform(0,max(y_norm))
+        while ytest > bw_pdf(mdel,mc.m_del0,mc.m_p,mc.m_pi,bw_width=bw_w)/norm_const:
+          mdel=random.uniform(mc.md_min,mc.md_max)
+          ytest=random.uniform(0,max(y_norm))
       #PID of delta:
       dpid=2224 #delta++
       
       #give delta a random momentum
-      if mnt_switch is True:
-        ke_del=exp_dist(300,1)[0]
+      if DT is not None:
+        ke_del=exp_dist(DT,1)[0]
         dgam,dv,Edel,pdel=kgam_calc(ke_del,mdel)
       else:
         pdel=bw_mnt(mc.rt_s,mdel,mc.m_p)
@@ -250,12 +263,17 @@ def generator(numD,numF,filename,mnt_switch,m_switch):
   return 
 
 #numbers of particles/pairs generated
-Delta_num=1
+Delta_num=2
 Free_num=0
 
-#switch for deciding if delta mnt has exp dist
-Exp=True
-Gaus=False
+#set constants/parameters
+dnorm_w=10
+dbw_w=10
+delta_temp=300
 
-filename=f"test.csv"
-generator(Delta_num,Free_num,filename,Exp,Gaus)
+
+filename=f"test_ndist.csv"
+generator(Delta_num,Free_num,filename,DT=delta_temp,norm_w=dnorm_w)
+
+filename=f"test_bwdist.csv"
+generator(Delta_num,Free_num,filename,bw_w=dbw_w,DT=delta_temp)
