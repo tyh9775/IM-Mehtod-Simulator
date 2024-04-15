@@ -13,10 +13,10 @@ filename="test_bwdist.csv"
 
 #for identifiying event number and the number of particles in the event
 def h_read(header):
-  e_num=int(header[0])
-  numPart=int(header[1])
-  numDel=int(header[2])
-  return e_num, numPart, numDel
+  hdr=[]
+  for i in range(0,len(header)):
+    hdr.append(header[i])
+  return hdr
 
 #distance formula: sqrt(x1^2+x2^2+...+xn^2)
 def dist_form(vec):
@@ -113,6 +113,11 @@ file_pattern="test_bw_*.csv"
 graph_folder="test_bw folder"
 os.makedirs(graph_folder,exist_ok=True)
 
+#for comparing different widths
+IM_all=[]
+cr_all=[]
+mnt_all=[]
+
 for filename in glob.glob(file_pattern):
   new_file_path= os.path.join(graph_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_IM.csv")
   with open(new_file_path,"w",newline='') as new_file:
@@ -137,7 +142,13 @@ for filename in glob.glob(file_pattern):
       p_list=[]
       pi_list=[]
       del_list=[]
-      eventNum,partNum,Ndelta=h_read(row)
+      #eventNum,partNum,Ndelta
+      header=h_read(row)
+      eventNum=int(header[0])
+      partNum=int(header[1])
+      Ndelta=int(header[2])
+      if len(header)>3:
+        gamW=float(header[3])
 
       plist={}
       pilist={}
@@ -208,6 +219,9 @@ for filename in glob.glob(file_pattern):
 
     file.close()
 
+  IM_all.append([gamW,IM_list])
+  cr_all.append([gamW,cr_IM])
+  mnt_all.append([gamW,mnt_list])
 
   #graphing and fitting
   #mass cut done with the fitting
@@ -262,6 +276,7 @@ for filename in glob.glob(file_pattern):
 
   print("total number of counted particles after momentum cut:", np.sum(hist))
 
+  rlt=False
   #related pairs
   binsize_new=2
   plt.figure()
@@ -276,7 +291,8 @@ for filename in glob.glob(file_pattern):
   plt.ylabel("Count")
   plot_file_path = os.path.join(graph_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_cr_IM_plot.png")
   plt.savefig(plot_file_path)
-  plt.show()
+  if rlt is True:
+    plt.show()
   plt.close()
 
 
@@ -287,10 +303,11 @@ for filename in glob.glob(file_pattern):
   plt.ylabel("Count")
   plot_file_path = os.path.join(graph_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_cr_mnt_plot.png")
   plt.savefig(plot_file_path)
-  plt.show()
+  if rlt is True:
+    plt.show()
   plt.close()
 
-
+  indv_mnt=False
   #momenta of protons and pions
   binsize_new=5
   plt.figure()
@@ -300,7 +317,8 @@ for filename in glob.glob(file_pattern):
   plt.ylabel("Count")
   plot_file_path = os.path.join(graph_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_p_mnt_plot.png")
   plt.savefig(plot_file_path)
-  plt.show()
+  if indv_mnt is True:
+    plt.show()
   plt.close()
 
   binsize_new=5
@@ -311,9 +329,11 @@ for filename in glob.glob(file_pattern):
   plt.ylabel("Count")
   plot_file_path = os.path.join(graph_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_pi_mnt_plot.png")
   plt.savefig(plot_file_path)
-  plt.show()
+  if indv_mnt is True:
+    plt.show()
   plt.close()
 
+  dmnt=False
   #mnt of deltas
   binsize_new=5
   plt.figure()
@@ -323,7 +343,8 @@ for filename in glob.glob(file_pattern):
   plt.ylabel("Count")
   plot_file_path = os.path.join(graph_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_rec_plot.png")
   plt.savefig(plot_file_path)
-  plt.show()
+  if dmnt is True:
+    plt.show()
   plt.close()
 
   plt.figure()
@@ -333,7 +354,8 @@ for filename in glob.glob(file_pattern):
   plt.ylabel("Count")
   plot_file_path = os.path.join(graph_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_act_plot.png")
   plt.savefig(plot_file_path)
-  plt.show()
+  if dmnt is True:
+    plt.show()
   plt.close()
 
   #energy of protons and pions
@@ -385,3 +407,20 @@ for filename in glob.glob(file_pattern):
   plt.show()
   plt.close()
   '''
+
+#comparison
+comparison=True
+plt.figure()
+for gam,data in IM_all:
+  hst,bn,pck=plt.hist(data,bins=np.arange(mc.md_min,mc.md_max,1),label=f'Width gam: {gam}')
+  popt,pcov=curve_fit(gaus_func,bn[:-1],hst,p0=[max(hst),mc.m_del0,1])
+  xfit=np.arange(min(bn),max(bn),0.5)
+  yfit=gaus_func(xfit,*popt)
+  fwhm=popt[2]*2*(2*np.log(2))**0.5
+  print(f"fwhm of gam {gam}:", fwhm)
+  plt.plot(xfit,yfit,label=f'fit on gam: {gam}')
+plt.legend()
+if comparison is True:
+  plt.show()
+plot_file_path = os.path.join(graph_folder, f"comparison.png")
+plt.close()

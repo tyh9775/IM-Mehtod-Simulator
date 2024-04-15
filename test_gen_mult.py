@@ -121,7 +121,10 @@ def generator(numD,numF,filename,norm_w=None,bw_w=None,DT=None):
 
     with open(filename, 'a', newline='') as file:
       writer = csv.writer(file)
-      writer.writerow([counter,particles,N_delta])
+      if bw_w is not None:
+        writer.writerow([counter,particles,N_delta,bw_w])
+      else:
+        writer.writerow([counter,particles,N_delta])
       file.close()
 
     for j in range(0,N_delta):
