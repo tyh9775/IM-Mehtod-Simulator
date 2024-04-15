@@ -263,17 +263,19 @@ def generator(numD,numF,filename,norm_w=None,bw_w=None,DT=None):
   return 
 
 #numbers of particles/pairs generated
-Delta_num=1
-Free_num=0
+Delta_num=[1,2,3]
+Free_num=[0,1,2,3]
 
 #set constants/parameters
-dnorm_w=10
-dbw_w=10
+dnorm_w=[5,10,20]
+dbw_w=[5,10,20]
 delta_temp=300
 
 
-filename=f"test_ndist.csv"
+'''filename=f"test_ndist.csv"
 generator(Delta_num,Free_num,filename,DT=delta_temp,norm_w=dnorm_w)
+'''
 
-filename=f"test_bwdist.csv"
-generator(Delta_num,Free_num,filename,bw_w=dbw_w,DT=delta_temp)
+for gamma in dbw_w:
+  filename=f"test_bw_{gamma}.csv"
+  generator(Delta_num[0],Free_num[0],filename,bw_w=gamma,DT=delta_temp)

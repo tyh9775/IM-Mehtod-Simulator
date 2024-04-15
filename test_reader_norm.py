@@ -86,6 +86,9 @@ def IM_method(plist,pilist):
 def poly_func(x,c0,c1,c2,c3,c4):
   return c0+c1*x+c2*x**2+c3*x**3+c4*x**4
 
+def gaus_func(x,A,x0,sig):
+  return A*np.exp(-((x-x0)**2)/(2*sig**2))/(np.sqrt(2*np.pi)*sig)
+
 def r2_calc(f,x,y,p):
   res=[]
   ss_res=[]
@@ -237,23 +240,33 @@ if fitting is True:
 
   print("estimated number of deltas:",sum(y_est))
 
+param_norm,cov_norm=curve_fit(gaus_func,bins[:-1],hist,p0=[max(hist),mc.m_del0,1])
+xfitnorm=np.arange(min(bins),max(bins),0.5)
+yfitnorm=gaus_func(xfitnorm,*param_norm)
+fwhm=param_norm[2]*2*(2*np.log(2))**0.5
+plt.plot(xfitnorm,yfitnorm,label='normal fit')
 plt.title("Invariant Mass of Proton and Pion Pairs in Lab Frame")
 plt.ylabel("Count")
 plt.xlabel("Mass (MeV/c^2)")
 plt.legend(loc='upper right')
 plt.ylim(0,max(hist)*1.1)
-plt.figtext(0.75,0.65,"m_err=%d \n p_min=%d"%(mc.m_cut,mc.p_cut),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
+plt.figtext(0.75,0.65,"m_err=%d \n p_min=%d \n mu=%s \n std=%s \n fwhm=%s"%(mc.m_cut,mc.p_cut,round(param_norm[1],3),round(param_norm[2],3),round(fwhm,3)),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
 plot_file_path = os.path.join(graph_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_IM_plot.png")
 plt.savefig(plot_file_path)
-#plt.show()
+plt.show()
 plt.close()
 
 print("total number of counted particles after momentum cut:", np.sum(hist))
 
 #related pairs
-binsize_new=5
+binsize_new=2
 plt.figure()
-hist_cr,bins_cr,pack_cr=plt.hist(cr_IM,bins=np.arange(0,int(max(cr_IM))+1,binsize_new))
+hist_cr,bins_cr,pack_cr=plt.hist(cr_IM,bins=np.arange(int(min(cr_IM))-1,int(max(cr_IM))+1,binsize_new))
+param_norm_cr,cov_norm_cr=curve_fit(gaus_func,bins_cr[:-1],hist_cr,p0=[max(hist_cr),mc.m_del0,1])
+xfitnorm_cr=np.arange(min(bins_cr),max(bins_cr),0.5)
+yfitnorm_cr=gaus_func(xfitnorm_cr,*param_norm_cr)
+plt.plot(xfitnorm_cr,yfitnorm_cr,label='normal fit')
+plt.figtext(0.75,0.65,str("mu=%s \n std=%s"%(round(param_norm_cr[1],3),round(param_norm_cr[2],3))).rstrip('0').rstrip('.'),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
 plt.title("IM of Related Pairs")
 plt.xlabel("Mass (MeV/c^2)")
 plt.ylabel("Count")
@@ -261,6 +274,7 @@ plot_file_path = os.path.join(graph_folder, f"{os.path.splitext(os.path.basename
 plt.savefig(plot_file_path)
 plt.show()
 plt.close()
+
 
 plt.figure()
 hist_cr_mnt,bins_cr_mnt,pack_cr_mnt=plt.hist(cr_mnt,bins=np.arange(0,int(max(cr_mnt))+1,binsize_new))
@@ -319,6 +333,7 @@ plt.show()
 plt.close()
 
 #energy of protons and pions
+indv_E=False
 plt.figure()
 hist_pE,bins_pE,pack_pE=plt.hist(p_en,bins=np.arange(0,int(max(p_en))+1,binsize_new))
 plt.title("Energy of Protons")
@@ -326,7 +341,8 @@ plt.xlabel("Energy (MeV/c^2)")
 plt.ylabel("Count")
 plot_file_path = os.path.join(graph_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_p_en_plot.png")
 plt.savefig(plot_file_path)
-plt.show()
+if indv_E is True:
+  plt.show()
 plt.close()
 
 plt.figure()
@@ -336,7 +352,8 @@ plt.xlabel("Energy (MeV/c^2)")
 plt.ylabel("Count")
 plot_file_path = os.path.join(graph_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_pi_en_plot.png")
 plt.savefig(plot_file_path)
-plt.show()
+if indv_E is True:
+  plt.show()
 plt.close()
 
 #efficiency over mnt
