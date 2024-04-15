@@ -121,7 +121,7 @@ def generator(numD,numF,filename,norm_w=None,bw_w=None,DT=None):
 
     with open(filename, 'a', newline='') as file:
       writer = csv.writer(file)
-      if bw_w is not None:
+      if bw_w is not None and counter<=1:
         writer.writerow([counter,particles,N_delta,bw_w])
       else:
         writer.writerow([counter,particles,N_delta])
@@ -282,3 +282,4 @@ generator(Delta_num,Free_num,filename,DT=delta_temp,norm_w=dnorm_w)
 for gamma in dbw_w:
   filename=f"test_bw_{gamma}.csv"
   generator(Delta_num[0],Free_num[0],filename,bw_w=gamma,DT=delta_temp)
+

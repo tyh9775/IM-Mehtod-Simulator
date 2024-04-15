@@ -6,17 +6,6 @@ import myconst as mc
 import os
 import glob
 
-#############################
-#set the file to be read#####
-filename="test_bwdist.csv"
-#############################
-
-#for identifiying event number and the number of particles in the event
-def h_read(header):
-  hdr=[]
-  for i in range(0,len(header)):
-    hdr.append(header[i])
-  return hdr
 
 #distance formula: sqrt(x1^2+x2^2+...+xn^2)
 def dist_form(vec):
@@ -118,6 +107,9 @@ IM_all=[]
 cr_all=[]
 mnt_all=[]
 
+table1=[]
+table2=[]
+
 for filename in glob.glob(file_pattern):
   new_file_path= os.path.join(graph_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_IM.csv")
   with open(new_file_path,"w",newline='') as new_file:
@@ -143,7 +135,7 @@ for filename in glob.glob(file_pattern):
       pi_list=[]
       del_list=[]
       #eventNum,partNum,Ndelta
-      header=h_read(row)
+      header=row
       eventNum=int(header[0])
       partNum=int(header[1])
       Ndelta=int(header[2])
@@ -222,7 +214,7 @@ for filename in glob.glob(file_pattern):
   IM_all.append([gamW,IM_list])
   cr_all.append([gamW,cr_IM])
   mnt_all.append([gamW,mnt_list])
-
+  
   #graphing and fitting
   #mass cut done with the fitting
   binsize=1 #in MeV/c^2
@@ -282,6 +274,7 @@ for filename in glob.glob(file_pattern):
   plt.figure()
   hist_cr,bins_cr,pack_cr=plt.hist(cr_IM,bins=np.arange(int(min(cr_IM))-1,int(max(cr_IM))+1,binsize_new))
   param_norm_cr,cov_norm_cr=curve_fit(gaus_func,bins_cr[:-1],hist_cr,p0=[max(hist_cr),mc.m_del0,1])
+  fwhm_cr=param_norm_cr[2]*2*(2*np.log(2))**0.5
   xfitnorm_cr=np.arange(min(bins_cr),max(bins_cr),0.5)
   yfitnorm_cr=gaus_func(xfitnorm_cr,*param_norm_cr)
   plt.plot(xfitnorm_cr,yfitnorm_cr,label='normal fit')
@@ -381,7 +374,11 @@ for filename in glob.glob(file_pattern):
   if indv_E is True:
     plt.show()
   plt.close()
-
+  
+  table1.append([gamW,param_norm[2],fwhm])
+  table2.append([gamW,param_norm_cr[2],fwhm_cr])
+  
+  
   #efficiency over mnt
   eff_list=[]
   eff_err=[]
@@ -409,18 +406,28 @@ for filename in glob.glob(file_pattern):
   '''
 
 #comparison
+table3=[]
 comparison=True
 plt.figure()
 for gam,data in IM_all:
-  hst,bn,pck=plt.hist(data,bins=np.arange(mc.md_min,mc.md_max,1),label=f'Width gam: {gam}')
+  hst,bn,pck=plt.hist(data,bins=np.arange(mc.md_min,mc.md_max,1),label=f'gam={gam}')
   popt,pcov=curve_fit(gaus_func,bn[:-1],hst,p0=[max(hst),mc.m_del0,1])
   xfit=np.arange(min(bn),max(bn),0.5)
   yfit=gaus_func(xfit,*popt)
   fwhm=popt[2]*2*(2*np.log(2))**0.5
+  table3.append([gam,popt[2],fwhm])
   print(f"fwhm of gam {gam}:", fwhm)
-  plt.plot(xfit,yfit,label=f'fit on gam: {gam}')
+  plt.plot(xfit,yfit,label=f'{gam}_fit')
 plt.legend()
+plt.title("Comparison Graph of Various Constant BW Widths")
+plt.xlabel("Mass (Mev/c^2)")
+plt.ylabel("count")
 if comparison is True:
   plt.show()
 plot_file_path = os.path.join(graph_folder, f"comparison.png")
 plt.close()
+
+
+print(table1)
+print(table2)
+print(table3)
