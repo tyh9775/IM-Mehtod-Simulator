@@ -26,7 +26,7 @@ def bw_pdf(md,md0,mn,mpi,bw_width=None,A=None,a=None,b=None):
       a=0.47
     if b is None:
       b=0.6
-    gmd=(a*q**3)/(mpi**2+0.6*q**2)
+    gmd=(a*q**3)/(mpi**2+b*q**2)
   
   return (4*md0**2*gmd)/((A)*((md**2-md0**2)**2+md0**2*gmd**2))
 
@@ -92,6 +92,17 @@ def gam_mat(gam,v,vx,vy,vz,p4):
 def exp_dist(scl,n):
   return np.random.exponential(scale=scl,size=n)
 
+def fwhm_calc(data,bins):
+  max_value=np.max(data)
+  max_ind=np.argmax(data)
+  half_max_val=max_value/2
+  #find where the data crosses the half piont on the left and right of the peak
+  left_ind=np.argmin(np.abs(data[0:max_ind]-half_max_val))
+  right_ind=np.argmin(np.abs(data[max_ind:]-half_max_val))+max_ind
+  fwhm=bins[right_ind]-bins[left_ind]
+
+  return fwhm,half_max_val,left_ind,right_ind
+
 show=False
 show_all=True
 
@@ -105,39 +116,42 @@ def generator(numD,numF,filename,norm_w=None,bw_w=None,DT=None,A=None,a=None,b=N
   norm_const=simpson(y=y_bw,x=x_bw)
   y_norm=y_bw/norm_const
 
+  fwhm,hlf_val,lft,rgt=fwhm_calc(y_bw,x_bw)
 
   plt.figure()
   plt.plot(x_bw,y_bw,'.')
+  plt.hline(y=hlf_val,xmin=x_bw[lft],xmax=x_bw[rgt],label=f'fwhm={fwhm}')
   plt.xlabel("Mass (Mev/c^2)")
   #plt.ylabel("Probability")
   plt.title("Breit-Wigner Distribution")
   if output_folder is not None:
     if A is None and a is None:
       plot_path=os.path.join(output_folder,f'BW_{b}.png')
-      plt.figtext(0.75,0.75,f"A=0.95 \n a=0.47 \n b={b}")
+      plt.figtext(0.75,0.75,f"A=0.95 \n a=0.47 \n b={b}",horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
     elif A is None and b is None:
       plot_path=os.path.join(output_folder,f'BW_{a}.png')
-      plt.figtext(0.75,0.75,f"A=0.95 \n a={a} \n b=0.6")
+      plt.figtext(0.75,0.75,f"A=0.95 \n a={a} \n b=0.6",horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
     elif a is None and b is None:
       plot_path=os.path.join(output_folder,f'BW_{A}.png')
-      plt.figtext(0.75,0.75,f"A={A} \n a=0.47 \n b=0.6")
+      plt.figtext(0.75,0.75,f"A={A} \n a=0.47 \n b=0.6",horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
     else:
       plot_path=os.path.join(output_folder,f'BW_0.95_0.47_0.6.png')
-      plt.figtext(0.75,0.75,f"A=0.95 \n a=0.47 \n b=0.6")
+      plt.figtext(0.75,0.75,f"A=0.95 \n a=0.47 \n b=0.6",horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
   else:
     plot_path=f'BW_{A}_{a}_{b}.png'
     if A is None and a is None:
       plot_path=output_folder,f'BW_{b}.png'
-      plt.figtext(0.75,0.75,f"A=0.95 \n a=0.47 \n b={b}")
+      plt.figtext(0.75,0.75,f"A=0.95 \n a=0.47 \n b={b}",horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
     elif A is None and b is None:
       plot_path=output_folder,f'BW_{a}.png'
-      plt.figtext(0.75,0.75,f"A=0.95 \n a={a} \n b=0.6")
+      plt.figtext(0.75,0.75,f"A=0.95 \n a={a} \n b=0.6",horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
     elif a is None and b is None:
       plot_path=output_folder,f'BW_{A}.png'
-      plt.figtext(0.75,0.75,f"A={A} \n a=0.47 \n b=0.6")
+      plt.figtext(0.75,0.75,f"A={A} \n a=0.47 \n b=0.6",horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
     else:
       plot_path=output_folder,f'BW_0.95_0.47_0.6.png'
-      plt.figtext(0.75,0.75,f"A=0.95 \n a=0.47 \n b=0.6")
+      plt.figtext(0.75,0.75,f"A=0.95 \n a=0.47 \n b=0.6",horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
+  plt.legend(loc='upper left')
   plt.savefig(plot_path)
   if show is True:
     plt.show()
@@ -351,17 +365,19 @@ dbw_w=[5,10,20]
 delta_temp=300
 A=[0.1,0.5,2,4]
 a=[0.1,1,2,4]
-b=[0.1,1,2,4,100,-10]
+b=[0.1,1,2,4]
 
 output_folderA=os.path.join("param_test","bw_A")
 os.makedirs(output_folderA,exist_ok=True)
 xlistA=[]
 ylistA=[]
+fwhm_listA=[]
 for Ai in A:
   filename=f"BW_A_{Ai}.csv"
   x,y=generator(Delta_num[0],Free_num[0],filename,DT=delta_temp,A=Ai,output_folder=output_folderA)
   xlistA.append(x)
   ylistA.append(y)
+
 
 plt.figure()
 for i in range(0,len(xlistA)):
