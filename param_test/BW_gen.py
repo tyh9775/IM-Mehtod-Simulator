@@ -101,10 +101,10 @@ def fwhm_calc(data,bins):
   right_ind=np.argmin(np.abs(data[max_ind:]-half_max_val))+max_ind
   fwhm=bins[right_ind]-bins[left_ind]
 
-  return fwhm,half_max_val,left_ind,right_ind
+  return fwhm,half_max_val,left_ind,right_ind,max_ind
 
 show=False
-show_all=True
+show_all=False
 
 def generator(numD,numF,filename,norm_w=None,bw_w=None,DT=None,A=None,a=None,b=None,output_folder=None):
 
@@ -116,11 +116,11 @@ def generator(numD,numF,filename,norm_w=None,bw_w=None,DT=None,A=None,a=None,b=N
   norm_const=simpson(y=y_bw,x=x_bw)
   y_norm=y_bw/norm_const
 
-  fwhm,hlf_val,lft,rgt=fwhm_calc(y_bw,x_bw)
+  fwhm,hlf_val,lft,rgt,mxi=fwhm_calc(y_bw,x_bw)
 
   plt.figure()
   plt.plot(x_bw,y_bw,'.')
-  plt.hline(y=hlf_val,xmin=x_bw[lft],xmax=x_bw[rgt],label=f'fwhm={fwhm}')
+  plt.hlines(y=hlf_val,xmin=x_bw[lft],xmax=x_bw[rgt],label=f'fwhm={round(fwhm,3)}')
   plt.xlabel("Mass (Mev/c^2)")
   #plt.ylabel("Probability")
   plt.title("Breit-Wigner Distribution")
@@ -352,7 +352,7 @@ def generator(numD,numF,filename,norm_w=None,bw_w=None,DT=None,A=None,a=None,b=N
   print("Number of Delta resonances created:",ND_total)
   print("Number of all particles detected:", NP_total)
   print()
-  return x_bw,y_bw
+  return x_bw,y_bw,fwhm,mxi
 
 
 #numbers of particles/pairs generated
@@ -363,21 +363,25 @@ Free_num=[0,1,2,3]
 dnorm_w=[5,10,20]
 dbw_w=[5,10,20]
 delta_temp=300
-A=[0.1,0.5,2,4]
-a=[0.1,1,2,4]
-b=[0.1,1,2,4]
+A=[0.1,0.5,2,4,10]
+a=[0.1,1,2,4,10]
+b=[0.1,1,2,4,10]
 
 output_folderA=os.path.join("param_test","bw_A")
 os.makedirs(output_folderA,exist_ok=True)
 xlistA=[]
 ylistA=[]
 fwhm_listA=[]
+max_listA=[]
+ver_listA=[]
 for Ai in A:
   filename=f"BW_A_{Ai}.csv"
-  x,y=generator(Delta_num[0],Free_num[0],filename,DT=delta_temp,A=Ai,output_folder=output_folderA)
+  x,y,fwhm,mxi=generator(Delta_num[0],Free_num[0],filename,DT=delta_temp,A=Ai,output_folder=output_folderA)
   xlistA.append(x)
   ylistA.append(y)
-
+  fwhm_listA.append(fwhm)
+  max_listA.append(x[mxi])
+  ver_listA.append(y[mxi])
 
 plt.figure()
 for i in range(0,len(xlistA)):
@@ -389,15 +393,22 @@ if show_all is True:
   plt.show()
 plt.close()
 
+
 xlista=[]
-ylista=[] 
+ylista=[]
+fwhm_lista=[] 
+max_lista=[]
+ver_lista=[]
 output_foldera=os.path.join("param_test","bw_qa")
 os.makedirs(output_foldera,exist_ok=True)
 for ai in a:
   filename=f"BW_a_{ai}.csv"
-  x,y=generator(Delta_num[0],Free_num[0],filename,DT=delta_temp,a=ai,output_folder=output_foldera)
+  x,y,fwhm,mxi=generator(Delta_num[0],Free_num[0],filename,DT=delta_temp,a=ai,output_folder=output_foldera)
   xlista.append(x)
   ylista.append(y)
+  fwhm_lista.append(fwhm)
+  max_lista.append(x[mxi])
+  ver_lista.append(y[mxi])
 
 plt.figure()
 for i in range(0,len(xlista)):
@@ -411,13 +422,19 @@ plt.close()
 
 xlistb=[]
 ylistb=[] 
+fwhm_listb=[]
+max_listb=[]
+ver_listb=[]
 output_folderb=os.path.join("param_test","bw_qb")
 os.makedirs(output_folderb,exist_ok=True)
 for bi in b:
   filename=f"BW_b_{bi}.csv"
-  x,y=generator(Delta_num[0],Free_num[0],filename,DT=delta_temp,b=bi,output_folder=output_folderb)
+  x,y,fwhm,mxi=generator(Delta_num[0],Free_num[0],filename,DT=delta_temp,b=bi,output_folder=output_folderb)
   xlistb.append(x)
   ylistb.append(y)
+  fwhm_listb.append(fwhm)
+  max_listb.append(x[mxi])
+  ver_listb.append(y[mxi])
 
 plt.figure()
 for i in range(0,len(xlistb)):
@@ -425,6 +442,46 @@ for i in range(0,len(xlistb)):
 plt.legend()
 plt.title("BW Dist. with Varying 'b' Values")
 plt.savefig(os.path.join(output_folderb,"BW_all.png"))
+if show_all is True:
+  plt.show()
+plt.close()
+
+
+plt.figure()
+plt.plot(A,fwhm_listA,label="A")
+plt.plot(a,fwhm_lista,label="a")
+plt.plot(b,fwhm_listb,label="b")
+plt.legend()
+plt.xlabel("Numerical Value")
+plt.ylabel("FWHM")
+plt.title('FWHM vs Various Parameters')
+plt.savefig(os.path.join("param_test","FWHM_comp.png"))
+if show_all is True:
+  plt.show()
+plt.close()
+
+plt.figure()
+plt.plot(A,max_listA,label="A")
+plt.plot(a,max_lista,label="a")
+plt.plot(b,max_listb,label="b")
+plt.legend()
+plt.xlabel("Numerical Value")
+plt.ylabel("X Value of Peak")
+plt.title('X of Peak vs Various Parameters')
+plt.savefig(os.path.join("param_test","xpeak_comp.png"))
+if show_all is True:
+  plt.show()
+plt.close()
+
+plt.figure()
+plt.plot(A,ver_listA,label="A")
+plt.plot(a,ver_lista,label="a")
+plt.plot(b,ver_listb,label="b")
+plt.legend()
+plt.xlabel("Numerical Value")
+plt.ylabel("Y Value of Peak")
+plt.title('Y of Peak vs Various Parameters')
+plt.savefig(os.path.join("param_test","ypeak_comp.png"))
 if show_all is True:
   plt.show()
 plt.close()

@@ -96,12 +96,15 @@ def r2_calc(f,x,y,p):
 fitting=False
 
 #read files
-file_patternA="BW_A_*.csv"
+file_pattern="BW_A_*.csv"
 
 #output folder
-graph_folder=os.path.join("param_test","bw_A","results")
-os.makedirs(graph_folder,exist_ok=True)
+graph_folder=os.path.join("bw_A","results")
 
+print(graph_folder)
+
+os.makedirs(graph_folder,exist_ok=True)
+quit()
 #for comparing different widths
 IM_all=[]
 cr_all=[]
@@ -110,7 +113,7 @@ mnt_all=[]
 table1=[]
 table2=[]
 
-for filename in glob.glob(file_patternA):
+for filename in glob.glob(file_pattern):
   new_file_path= os.path.join(graph_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_IM.csv")
   with open(new_file_path,"w",newline='') as new_file:
     new_file.close()
