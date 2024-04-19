@@ -258,17 +258,18 @@ def reader(directory,file_pattern,output_folder):
 
       print("estimated number of deltas:",sum(y_est))
 
-    param_norm,cov_norm=curve_fit(gaus_func,bins[:-1],hist,p0=[max(hist),mc.m_del0,1])
-    xfitnorm=np.arange(min(bins),max(bins),0.5)
-    yfitnorm=gaus_func(xfitnorm,*param_norm)
-    fwhm=param_norm[2]*2*(2*np.log(2))**0.5
-    plt.plot(xfitnorm,yfitnorm,label='normal fit')
+    popt,pcov=curve_fit(bw_func,bins[:-1],hist,p0=[0.95,0.47,0.6])
+    xfitbw=np.arange(min(bins),max(bins),0.5)
+    yfitbw=bw_func(xfitbw,*popt)
+    fwhm,hlf_val,lft,rgt,mxi=fwhm_calc(yfitbw,xfitbw)
+    plt.plot(xfitbw,yfitbw,label='BW fit')
+    plt.hlines(y=hlf_val,xmin=xfitbw[lft],xmax=xfitbw[rgt],label=f'fwhm={round(fwhm,3)}')
     plt.title("Invariant Mass of Proton and Pion Pairs in Lab Frame")
     plt.ylabel("Count")
     plt.xlabel("Mass (MeV/c^2)")
-    plt.legend(loc='upper right')
+    plt.legend(loc='upper left')
     plt.ylim(0,max(hist)*1.1)
-    plt.figtext(0.75,0.65,"m_err=%d \n p_min=%d \n mu=%s \n std=%s \n fwhm=%s"%(mc.m_cut,mc.p_cut,round(param_norm[1],3),round(param_norm[2],3),round(fwhm,3)),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
+    plt.figtext(0.75,0.75,"m_err=%d \n p_min=%d \n A=%s \n a=%s \n b=%s \n fwhm=%s"%(mc.m_cut,mc.p_cut,round(popt[0],3),round(popt[1],3),round(popt[2],3),round(fwhm,3)),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
     plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_IM_plot.png")
     plt.savefig(plot_file_path)
     plt.show()
@@ -400,9 +401,9 @@ def reader(directory,file_pattern,output_folder):
   return IM_all,act_all,cr_all,mnt_all
 
 #read files
-directoryA='param_test/bw_A'
-directorya='param_test/bw_qa'
-directoryb='param_test/bw_qb'
+directoryA='/param_test/bw_A'
+directorya='/param_test/bw_qa'
+directoryb='/param_test/bw_qb'
 file_patternA="BW_A_*.csv"
 file_patterna="BW_a_*.csv"
 file_patternb="BW_b_*.csv"
@@ -413,4 +414,3 @@ graph_folderb=os.path.join("param_test","bw_qb","results")
 os.makedirs(graph_folderA,exist_ok=True)
 os.makedirs(graph_foldera,exist_ok=True)
 os.makedirs(graph_folderb,exist_ok=True)
-reader(directoryA,file_patternA,graph_folderA)
