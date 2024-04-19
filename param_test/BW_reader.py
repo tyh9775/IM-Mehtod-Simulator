@@ -401,9 +401,13 @@ def reader(directory,file_pattern,output_folder):
   return IM_all,act_all,cr_all,mnt_all
 
 #read files
-directoryA='/param_test/bw_A'
-directorya='/param_test/bw_qa'
-directoryb='/param_test/bw_qb'
+abs_path=os.path.dirname(__file__)
+rel_pathA='bw_A'
+directory=os.path.join(abs_path,rel_pathA)
+rel_patha='bw_qa'
+directorya=os.path.join(abs_path,rel_patha)
+rel_pathb='bw_b'
+directoryb=os.path.join(abs_path,rel_pathb)
 file_patternA="BW_A_*.csv"
 file_patterna="BW_a_*.csv"
 file_patternb="BW_b_*.csv"
