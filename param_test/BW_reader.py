@@ -79,6 +79,22 @@ def poly_func(x,c0,c1,c2,c3,c4):
 def gaus_func(x,A,x0,sig):
   return A*np.exp(-((x-x0)**2)/(2*sig**2))/(np.sqrt(2*np.pi)*sig)
 
+def bw_func(x,A,a,b):
+  q=np.sqrt((x**2-mc.m_n**2-mc.m_pi**2)**2-4*(mc.m_n*mc.m_pi)**2)/(2*x)
+  gam=(a*q**3)/(mc.m_pi**2+b*q**2)
+  return (4*gam*mc.m_del0**2)/(A*(x**2-mc.m_del0**2)**2+(mc.m_del0*gam)**2)
+
+def fwhm_calc(data,bins):
+  max_value=np.max(data)
+  max_ind=np.argmax(data)
+  half_max_val=max_value/2
+  #find where the data crosses the half piont on the left and right of the peak
+  left_ind=np.argmin(np.abs(data[0:max_ind]-half_max_val))
+  right_ind=np.argmin(np.abs(data[max_ind:]-half_max_val))+max_ind
+  fwhm=bins[right_ind]-bins[left_ind]
+
+  return fwhm,half_max_val,left_ind,right_ind,max_ind
+
 def r2_calc(f,x,y,p):
   res=[]
   ss_res=[]
@@ -95,22 +111,21 @@ def r2_calc(f,x,y,p):
 
 fitting=False
 
-def reader(file_pattern,output_folder):
+def reader(directory,file_pattern,output_folder):
 #for comparing different widths
   IM_all=[]
+  act_all=[]
   cr_all=[]
   mnt_all=[]
 
-  table1=[]
-  table2=[]
-
-  for filename in glob.glob(file_pattern):
+  for filename in glob.glob(os.path.join(directory,file_pattern)):
     new_file_path= os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_IM.csv")
     with open(new_file_path,"w",newline='') as new_file:
       new_file.close()
 
-    IM_list=[] #the invariant mass of the pairs from all events
+    IM_list=[] #the invariant mass of the recreated deltas from all events
     act_list=[] #momenta of "real" deltas
+    act_IM=[] #inv mass of "real" deltas
     momentum_list=[] #the momenta of recreated deltas
     p_mnt=[] #momenta of detected protons
     pi_mnt=[] #momenta of detected pions
@@ -124,17 +139,17 @@ def reader(file_pattern,output_folder):
     with open(filename,'r') as file:
       f=csv.reader(file, delimiter=',')
       for row in f:
-        #momenta of protons and pions
+        #4 momenta of protons and pions
         p_list=[]
         pi_list=[]
-        del_list=[]
+
+        del_list=[] #4 mnt of 'real' delta
+        
         #eventNum,partNum,Ndelta
         header=row
         eventNum=int(header[0])
         partNum=int(header[1])
         Ndelta=int(header[2])
-        if len(header)>3:
-          gamW=float(header[3])
 
         plist={}
         pilist={}
@@ -151,6 +166,9 @@ def reader(file_pattern,output_folder):
           Par_ID=int(rowdata[5])
           if PID==2224:
             del_list.append(rowdata[1:5])
+            dpmag=dist_form(rowdata[2:4])
+            dm=inv_m(float(rowdata[1]),dpmag)
+            act_IM.append(dm)
           elif PID==2212: #proton
             p_list.append(rowdata[1:5])
             p_en.append(float(rowdata[1]))
@@ -175,29 +193,25 @@ def reader(file_pattern,output_folder):
         m_cr_list=[]
         mnt_cr_list=[]
 
-
         for i in range(0,Ndelta):
           m_cr,mnt_cr=IM_method(plist[f'p{i+1}_list'],pilist[f'pi{i+1}_list'])
           m_cr_list.append(m_cr)
           mnt_cr_list.append(mnt_cr)
-
-
-
+        
         for jj in range(0,len(del_list)):
           act_list.append(dist_form(del_list[jj][1:]))
+
         for kk in range(0,len(m_list)):
           IM_list.append(m_list[kk])
         for ll in range(0,len(mnt_list)):
           momentum_list.append(mnt_list[ll])
-
 
         for ii in range(0,len(m_cr_list)):
           for kk in range(0,len(m_cr_list[ii])):
             cr_IM.append(m_cr_list[ii][kk])
           for ll in range(0,len(mnt_cr_list[ii])):
             cr_mnt.append(mnt_cr_list[ii][ll])
-
-          
+        
         with open(new_file_path,'a',newline='') as new_file:
           nfwriter=csv.writer(new_file,delimiter=',')
           nfwriter.writerow(m_list)
@@ -205,9 +219,9 @@ def reader(file_pattern,output_folder):
 
       file.close()
 
-    IM_all.append([gamW,IM_list])
-    cr_all.append([gamW,cr_IM])
-    mnt_all.append([gamW,mnt_list])
+    IM_all.append(IM_list)
+    cr_all.append(cr_IM)
+    mnt_all.append(mnt_list)
     
     #graphing and fitting
     #mass cut done with the fitting
@@ -367,11 +381,7 @@ def reader(file_pattern,output_folder):
     plt.savefig(plot_file_path)
     if indv_E is True:
       plt.show()
-    plt.close()
-    
-    table1.append([gamW,param_norm[2],fwhm])
-    table2.append([gamW,param_norm_cr[2],fwhm_cr])
-    
+    plt.close()   
     
     #efficiency over mnt
     eff_list=[]
@@ -387,24 +397,20 @@ def reader(file_pattern,output_folder):
         act_err=np.sqrt(hist_act[i]*(1-hist_act[i]/len(hist_act)))
         eff_err.append((hist_act[i]/hist_rec[i])*np.sqrt((act_err/hist_act[i])**2+(rec_err/hist_rec[i])**2))
 
-    '''plt.figure()
-    plt.plot(bins_rec[:-1],eff_list,'.')
-    plt.errorbar(bins_rec[:-1],eff_list,xerr=binsize_new/2,yerr=eff_err,linestyle='none')
-    plt.title("Efficiency vs Momentum")
-    plt.xlabel("Momentum (MeV/c)")
-    plt.ylabel("Efficiency (Actual/Recreated)")
-    plot_file_path = os.path.join(graph_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_Eff_plot.png")
-    plt.savefig(plot_file_path)
-    plt.show()
-    plt.close()
-    '''
-  return
+  return IM_all,act_all,cr_all,mnt_all
 
 #read files
+directoryA='param_test/bw_A'
+directorya='param_test/bw_qa'
+directoryb='param_test/bw_qb'
 file_patternA="BW_A_*.csv"
 file_patterna="BW_a_*.csv"
+file_patternb="BW_b_*.csv"
 #output folder
 graph_folderA=os.path.join("param_test","bw_A","results")
+graph_foldera=os.path.join("param_test","bw_qa","results")
+graph_folderb=os.path.join("param_test","bw_qb","results")
 os.makedirs(graph_folderA,exist_ok=True)
-
-#reader(file_patternA,graph_folderA)
+os.makedirs(graph_foldera,exist_ok=True)
+os.makedirs(graph_folderb,exist_ok=True)
+reader(directoryA,file_patternA,graph_folderA)
