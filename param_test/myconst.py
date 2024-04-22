@@ -11,13 +11,13 @@ rt_s=2015+Eb #energy at the center of collision (sqrt of s)
 
 #bounds for the Breit-Wigner distribution of the delta mass in lab frame
 md_min=m_p+m_pi
-md_max=rt_s-m_p 
+md_max=rt_s-m_p
 
 #maximum momentum from the maximum mass
 pd_max=(((rt_s**2+md_min**2-m_p**2)/(2*rt_s))**2-md_min**2)**0.5
 
 #number of events
-nevts=20000
+nevts=100000
 
 #numbers of particles/pairs generated
 Dlist=[0,1,2,5]

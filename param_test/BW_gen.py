@@ -164,7 +164,8 @@ def generator(numD,numF,filename,norm_w=None,bw_w=None,DT=None,A=None,a=None,b=N
     return
   
   if output_folder is not None:
-    with open(os.path.join(output_folder,filename), 'w', newline='') as file:
+    abs_path=os.path.dirname(__file__)
+    with open(os.path.join(abs_path,output_folder,filename), 'w', newline='') as file:
       file.close()
   else:
     with open(filename, 'w', newline='') as file:
@@ -363,11 +364,11 @@ Free_num=[0,1,2,3]
 dnorm_w=[5,10,20]
 dbw_w=[5,10,20]
 delta_temp=300
-A=[0.1,0.5,2,4,10]
-a=[0.1,1,2,4,10]
-b=[0.1,1,2,4,10]
+A=[0.1,0.5,1,2]
+a=[0.1,0.5,1,2]
+b=[0.1,0.5,1,2]
 
-output_folderA=os.path.join("param_test","bw_A")
+output_folderA="bw_A"
 os.makedirs(output_folderA,exist_ok=True)
 xlistA=[]
 ylistA=[]
@@ -399,7 +400,7 @@ ylista=[]
 fwhm_lista=[] 
 max_lista=[]
 ver_lista=[]
-output_foldera=os.path.join("param_test","bw_qa")
+output_foldera="bw_qa"
 os.makedirs(output_foldera,exist_ok=True)
 for ai in a:
   filename=f"BW_a_{ai}.csv"
@@ -425,7 +426,7 @@ ylistb=[]
 fwhm_listb=[]
 max_listb=[]
 ver_listb=[]
-output_folderb=os.path.join("param_test","bw_qb")
+output_folderb="bw_qb"
 os.makedirs(output_folderb,exist_ok=True)
 for bi in b:
   filename=f"BW_b_{bi}.csv"
@@ -455,7 +456,7 @@ plt.legend()
 plt.xlabel("Numerical Value")
 plt.ylabel("FWHM")
 plt.title('FWHM vs Various Parameters')
-plt.savefig(os.path.join("param_test","FWHM_comp.png"))
+plt.savefig("FWHM_comp.png")
 if show_all is True:
   plt.show()
 plt.close()
@@ -468,7 +469,7 @@ plt.legend()
 plt.xlabel("Numerical Value")
 plt.ylabel("X Value of Peak")
 plt.title('X of Peak vs Various Parameters')
-plt.savefig(os.path.join("param_test","xpeak_comp.png"))
+plt.savefig("xpeak_comp.png")
 if show_all is True:
   plt.show()
 plt.close()
@@ -481,7 +482,7 @@ plt.legend()
 plt.xlabel("Numerical Value")
 plt.ylabel("Y Value of Peak")
 plt.title('Y of Peak vs Various Parameters')
-plt.savefig(os.path.join("param_test","ypeak_comp.png"))
+plt.savefig("ypeak_comp.png")
 if show_all is True:
   plt.show()
 plt.close()

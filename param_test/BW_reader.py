@@ -448,7 +448,7 @@ file_patternb="BW_b_*.csv"
 #output folders
 graph_folderA=os.path.join(directoryA,"results")
 graph_foldera=os.path.join(directorya,"results")
-graph_folderb=os.path.join("param_test","bw_qb","results")
+graph_folderb=os.path.join(directoryb,"results")
 os.makedirs(graph_folderA,exist_ok=True)
 os.makedirs(graph_foldera,exist_ok=True)
 os.makedirs(graph_folderb,exist_ok=True)
