@@ -17,7 +17,7 @@ md_max=rt_s-m_p
 pd_max=(((rt_s**2+md_min**2-m_p**2)/(2*rt_s))**2-md_min**2)**0.5
 
 #number of events
-nevts=10000
+nevts=20000
 
 #numbers of particles/pairs generated
 Dlist=[0,1,2,5]

@@ -1,35 +1,17 @@
-import numpy as np
 import matplotlib.pyplot as plt
-from scipy.stats import norm
+import numpy as np
+import myconst as mc
 
-# Generate some sample data
-mean = 0
-std_dev = 1
-x = np.linspace(-5, 5, 1000)
-pdf = norm.pdf(x, mean, std_dev)
+def bw_func(x,A,a,b):
+  q=np.sqrt((x**2-mc.m_n**2-mc.m_pi**2)**2-4*(mc.m_n*mc.m_pi)**2)/(2*x)
+  gam=(a*q**3)/(mc.m_pi**2+b*q**2)
+  return 100*(4*gam*mc.m_del0**2)/(A*(x**2-mc.m_del0**2)**2+(mc.m_del0*gam)**2)
 
-# Find the maximum value and its index
-max_value = np.max(pdf)
-max_index = np.argmax(pdf)
+print(mc.m_n+mc.m_pi)
+print(bw_func(1080,0.1,0.47,0.6))
+x=np.arange(1000,1400,1)
+y=bw_func(x,0.1,0.47,0.6)
+print(x[0],y[0])
 
-# Find the points where the PDF reaches half of the maximum value
-half_max_value = max_value / 2
-# Points to the left and right of the peak where PDF crosses half maximum
-left_index = np.argmin(np.abs(pdf[:max_index] - half_max_value))
-right_index = np.argmin(np.abs(pdf[max_index:] - half_max_value)) + max_index
-# FWHM is the distance between these points
-fwhm = x[right_index] - x[left_index]
-
-# Plot the PDF along with the FWHM
-plt.plot(x, pdf, label='PDF')
-plt.axhline(half_max_value, color='red', linestyle='--', xmin=(x[left_index] - x[0]) / (x[-1] - x[0]), xmax=(x[right_index] - x[0]) / (x[-1] - x[0]))
-plt.axvline(x[left_index], color='green', linestyle='--')
-plt.axvline(x[right_index], color='green', linestyle='--', label='FWHM')
-plt.legend()
-plt.xlabel('x')
-plt.ylabel('PDF')
-plt.title('PDF with Full Width Half Maximum (FWHM)')
-plt.grid(True)
+plt.plot(x,y,".")
 plt.show()
-
-print("Full Width Half Maximum (FWHM):", fwhm)

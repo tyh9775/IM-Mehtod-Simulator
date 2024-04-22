@@ -84,6 +84,12 @@ def bw_func(x,A,a,b):
   gam=(a*q**3)/(mc.m_pi**2+b*q**2)
   return (4*gam*mc.m_del0**2)/(A*(x**2-mc.m_del0**2)**2+(mc.m_del0*gam)**2)
 
+def scl_up(f,scl):
+  y=[]
+  for i in range(0,len(f)):
+    y.append(f[i]*scl)
+  return y
+
 def fwhm_calc(data,bins):
   max_value=np.max(data)
   max_ind=np.argmax(data)
@@ -225,9 +231,10 @@ def reader(directory,file_pattern,output_folder):
     
     #graphing and fitting
     #mass cut done with the fitting
-    binsize=1 #in MeV/c^2
+    binsize=5 #in MeV/c^2
     plt.figure()
-    hist,bins,packages=plt.hist(IM_list,bins=np.arange(int(mc.md_min)-1,int(mc.md_max)+1,binsize))
+    hist,bins,packages=plt.hist(IM_list,bins=np.arange(int(mc.md_min),int(mc.md_max),binsize))
+    bins_cntr=0.5*(bins[:-1]+bins[1:])
     if fitting is True:
       stp=int(mc.m_cut/binsize) #determines the width of the cut
       x_omit=int(np.where(bins==mc.m_del0)[0][0]) #omit the inv mass of delta
@@ -258,11 +265,18 @@ def reader(directory,file_pattern,output_folder):
 
       print("estimated number of deltas:",sum(y_est))
 
-    popt,pcov=curve_fit(bw_func,bins[:-1],hist,p0=[0.95,0.47,0.6])
-    xfitbw=np.arange(min(bins),max(bins),0.5)
+    plt.plot(bins_cntr,hist,'.')
+    hist_err=np.sqrt(hist)
+    plt.errorbar(bins_cntr,hist,yerr=hist_err,fmt='o')
+    popt,pcov=curve_fit(bw_func,bins_cntr,hist,p0=[0.95,0.47,0.6])
+    print(popt)
+    quit()
+    xfitbw=np.arange(min(bins_cntr),max(bins_cntr),0.5)
     yfitbw=bw_func(xfitbw,*popt)
     fwhm,hlf_val,lft,rgt,mxi=fwhm_calc(yfitbw,xfitbw)
-    plt.plot(xfitbw,yfitbw,label='BW fit')
+    plt.plot(xfitbw,yfitbw,'.',label='BW fit')
+    plt.show()
+    quit()
     plt.hlines(y=hlf_val,xmin=xfitbw[lft],xmax=xfitbw[rgt],label=f'fwhm={round(fwhm,3)}')
     plt.title("Invariant Mass of Proton and Pion Pairs in Lab Frame")
     plt.ylabel("Count")
@@ -323,7 +337,6 @@ def reader(directory,file_pattern,output_folder):
       plt.show()
     plt.close()
 
-    binsize_new=5
     plt.figure()
     hist_pi,bins_pi,pack_pi=plt.hist(pi_mnt,bins=np.arange(0,int(max(pi_mnt))+1,binsize_new))
     plt.title("Momenta of Pions")
@@ -337,7 +350,6 @@ def reader(directory,file_pattern,output_folder):
 
     dmnt=False
     #mnt of deltas
-    binsize_new=5
     plt.figure()
     hist_rec,bins_rec,pack_rec=plt.hist(momentum_list,bins=np.arange(0,int(max(momentum_list))+1,binsize_new))
     plt.title("Momenta of Recreated Deltas")
@@ -403,18 +415,20 @@ def reader(directory,file_pattern,output_folder):
 #read files
 abs_path=os.path.dirname(__file__)
 rel_pathA='bw_A'
-directory=os.path.join(abs_path,rel_pathA)
+directoryA=os.path.join(abs_path,rel_pathA)
 rel_patha='bw_qa'
 directorya=os.path.join(abs_path,rel_patha)
-rel_pathb='bw_b'
+rel_pathb='bw_qb'
 directoryb=os.path.join(abs_path,rel_pathb)
 file_patternA="BW_A_*.csv"
 file_patterna="BW_a_*.csv"
 file_patternb="BW_b_*.csv"
-#output folder
-graph_folderA=os.path.join("param_test","bw_A","results")
-graph_foldera=os.path.join("param_test","bw_qa","results")
+#output folders
+graph_folderA=os.path.join(directoryA,"results")
+graph_foldera=os.path.join(directorya,"results")
 graph_folderb=os.path.join("param_test","bw_qb","results")
 os.makedirs(graph_folderA,exist_ok=True)
 os.makedirs(graph_foldera,exist_ok=True)
 os.makedirs(graph_folderb,exist_ok=True)
+
+reader(directoryA,file_patternA,graph_folderA)
