@@ -79,16 +79,10 @@ def poly_func(x,c0,c1,c2,c3,c4):
 def gaus_func(x,A,x0,sig):
   return A*np.exp(-((x-x0)**2)/(2*sig**2))/(np.sqrt(2*np.pi)*sig)
 
-def bw_func(x,A,a,b):
+def bw_func(x,A,a,b,scl):
   q=np.sqrt((x**2-mc.m_n**2-mc.m_pi**2)**2-4*(mc.m_n*mc.m_pi)**2)/(2*x)
   gam=(a*q**3)/(mc.m_pi**2+b*q**2)
-  return (4*gam*mc.m_del0**2)/(A*(x**2-mc.m_del0**2)**2+(mc.m_del0*gam)**2)
-
-def scl_up(f,scl):
-  y=[]
-  for i in range(0,len(f)):
-    y.append(f[i]*scl)
-  return y
+  return scl*(4*gam*mc.m_del0**2)/(A*((x**2-mc.m_del0**2)**2+(mc.m_del0*gam)**2))
 
 def fwhm_calc(data,bins):
   max_value=np.max(data)
@@ -123,6 +117,7 @@ def reader(directory,file_pattern,output_folder):
   act_all=[]
   cr_all=[]
   mnt_all=[]
+
 
   for filename in glob.glob(os.path.join(directory,file_pattern)):
     new_file_path= os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_IM.csv")
@@ -172,7 +167,7 @@ def reader(directory,file_pattern,output_folder):
           Par_ID=int(rowdata[5])
           if PID==2224:
             del_list.append(rowdata[1:5])
-            dpmag=dist_form(rowdata[2:4])
+            dpmag=dist_form(rowdata[2:5])
             dm=inv_m(float(rowdata[1]),dpmag)
             act_IM.append(dm)
           elif PID==2212: #proton
@@ -228,13 +223,15 @@ def reader(directory,file_pattern,output_folder):
     IM_all.append(IM_list)
     cr_all.append(cr_IM)
     mnt_all.append(mnt_list)
-    
+
+
     #graphing and fitting
     #mass cut done with the fitting
     binsize=5 #in MeV/c^2
     plt.figure()
-    hist,bins,packages=plt.hist(IM_list,bins=np.arange(int(mc.md_min),int(mc.md_max),binsize))
+    hist,bins,packages=plt.hist(IM_list,bins=np.arange(int(min(IM_list)-1),int(max(IM_list)+1),binsize))
     bins_cntr=0.5*(bins[:-1]+bins[1:])
+    
     if fitting is True:
       stp=int(mc.m_cut/binsize) #determines the width of the cut
       x_omit=int(np.where(bins==mc.m_del0)[0][0]) #omit the inv mass of delta
@@ -264,21 +261,16 @@ def reader(directory,file_pattern,output_folder):
         y_est.append(y_skipped[i]-yplt[xi])
 
       print("estimated number of deltas:",sum(y_est))
-
-    plt.plot(bins_cntr,hist,'.')
+    
     hist_err=np.sqrt(hist)
-    plt.errorbar(bins_cntr,hist,yerr=hist_err,fmt='o')
-    popt,pcov=curve_fit(bw_func,bins_cntr,hist,p0=[0.95,0.47,0.6])
-    print(popt)
-    quit()
+    plt.errorbar(bins_cntr,hist,xerr=binsize/2,yerr=hist_err,fmt='.')
+    popt,pcov=curve_fit(bw_func,bins_cntr,hist,p0=[0.95,0.47,0.6,mc.nevts*10])
     xfitbw=np.arange(min(bins_cntr),max(bins_cntr),0.5)
     yfitbw=bw_func(xfitbw,*popt)
     fwhm,hlf_val,lft,rgt,mxi=fwhm_calc(yfitbw,xfitbw)
-    plt.plot(xfitbw,yfitbw,'.',label='BW fit')
-    plt.show()
-    quit()
-    plt.hlines(y=hlf_val,xmin=xfitbw[lft],xmax=xfitbw[rgt],label=f'fwhm={round(fwhm,3)}')
-    plt.title("Invariant Mass of Proton and Pion Pairs in Lab Frame")
+    plt.plot(xfitbw,yfitbw,label='BW fit')
+    plt.hlines(y=hlf_val,xmin=xfitbw[lft],xmax=xfitbw[rgt],label=f'fwhm={round(fwhm,3)}',colors='red')
+    plt.title("Invariant Mass of Recreated Delta in Lab Frame")
     plt.ylabel("Count")
     plt.xlabel("Mass (MeV/c^2)")
     plt.legend(loc='upper left')
@@ -286,32 +278,61 @@ def reader(directory,file_pattern,output_folder):
     plt.figtext(0.75,0.75,"m_err=%d \n p_min=%d \n A=%s \n a=%s \n b=%s \n fwhm=%s"%(mc.m_cut,mc.p_cut,round(popt[0],3),round(popt[1],3),round(popt[2],3),round(fwhm,3)),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
     plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_IM_plot.png")
     plt.savefig(plot_file_path)
-    plt.show()
+    #plt.show()
     plt.close()
 
     print("total number of counted particles after momentum cut:", np.sum(hist))
 
+    #"actual" deltas
+    actual=False
+    plt.figure()
+    hist_act,bins_act,pack_act=plt.hist(act_IM,bins=bins)
+    bins_cntr_act=0.5*(bins_act[:-1]+bins_act[1:])
+    act_err=np.sqrt(hist_act)
+    popt_act,pcov_act=curve_fit(bw_func,bins_cntr_act,hist_act,p0=[0.95,0.47,0.6,mc.nevts*10])
+    xfitbw_act=np.arange(min(bins_cntr_act),max(bins_cntr_act),0.5)
+    yfitbw_act=bw_func(xfitbw_act,*popt_act)
+    fwhm_act,hlf_val,lft,rgt,mxi=fwhm_calc(yfitbw_act,xfitbw_act)
+    plt.plot(xfitbw_act,yfitbw_act,label='BW fit')
+    plt.errorbar(bins_cntr_act,hist_act,xerr=binsize/2,yerr=act_err,fmt='.')
+    plt.hlines(y=hlf_val,xmin=xfitbw_act[lft],xmax=xfitbw_act[rgt],label=f'fwhm={round(fwhm_act,3)}',colors='red')
+    plt.figtext(0.75,0.75,"m_err=%d \n p_min=%d \n A=%s \n a=%s \n b=%s \n fwhm=%s"%(mc.m_cut,mc.p_cut,round(popt_act[0],3),round(popt_act[1],3),round(popt_act[2],3),round(fwhm_act,3)),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
+    plt.title("IM of Real Deltas")
+    plt.xlabel("Mass (MeV/c^2)")
+    plt.ylabel("Count")
+    plt.legend(loc='upper left')
+    plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_act_IM_plot.png")
+    plt.savefig(plot_file_path)
+    if actual is True:
+      plt.show()
+    plt.close()
+
     rlt=False
     #related pairs
-    binsize_new=2
+    binsize_new=5
     plt.figure()
     hist_cr,bins_cr,pack_cr=plt.hist(cr_IM,bins=np.arange(int(min(cr_IM))-1,int(max(cr_IM))+1,binsize_new))
-    param_norm_cr,cov_norm_cr=curve_fit(gaus_func,bins_cr[:-1],hist_cr,p0=[max(hist_cr),mc.m_del0,1])
-    fwhm_cr=param_norm_cr[2]*2*(2*np.log(2))**0.5
-    xfitnorm_cr=np.arange(min(bins_cr),max(bins_cr),0.5)
-    yfitnorm_cr=gaus_func(xfitnorm_cr,*param_norm_cr)
-    plt.plot(xfitnorm_cr,yfitnorm_cr,label='normal fit')
-    plt.figtext(0.75,0.65,str("mu=%s \n std=%s"%(round(param_norm_cr[1],3),round(param_norm_cr[2],3))).rstrip('0').rstrip('.'),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
+    bins_cntr_cr=0.5*(bins_cr[:-1]+bins_cr[1:])
+    cr_err=np.sqrt(hist_cr)
+    popt_cr,pcov_cr=curve_fit(bw_func,bins_cntr_cr,hist_cr,p0=[0.95,0.47,0.6,mc.nevts*10])
+    xfitbw_cr=np.arange(min(bins_cntr_cr),max(bins_cntr_cr),0.5)
+    yfitbw_cr=bw_func(xfitbw_cr,*popt_cr)
+    fwhm_cr,hlf_val,lft,rgt,mxi=fwhm_calc(yfitbw_cr,xfitbw_cr)
+    plt.plot(xfitbw_cr,yfitbw_cr,label='BW fit')
+    plt.errorbar(bins_cntr_cr,hist_cr,xerr=binsize_new/2,yerr=cr_err,fmt='.')
+    plt.hlines(y=hlf_val,xmin=xfitbw_cr[lft],xmax=xfitbw_cr[rgt],label=f'fwhm={round(fwhm_cr,3)}',colors='red')
+    plt.figtext(0.75,0.75,"m_err=%d \n p_min=%d \n A=%s \n a=%s \n b=%s \n fwhm=%s"%(mc.m_cut,mc.p_cut,round(popt_cr[0],3),round(popt_cr[1],3),round(popt_cr[2],3),round(fwhm_cr,3)),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
     plt.title("IM of Related Pairs")
     plt.xlabel("Mass (MeV/c^2)")
     plt.ylabel("Count")
+    plt.legend(loc='upper left')
     plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_cr_IM_plot.png")
     plt.savefig(plot_file_path)
     if rlt is True:
       plt.show()
     plt.close()
 
-
+    rmnt=False
     plt.figure()
     hist_cr_mnt,bins_cr_mnt,pack_cr_mnt=plt.hist(cr_mnt,bins=np.arange(0,int(max(cr_mnt))+1,binsize_new))
     plt.title("Momenta of Related Pairs")
@@ -319,15 +340,15 @@ def reader(directory,file_pattern,output_folder):
     plt.ylabel("Count")
     plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_cr_mnt_plot.png")
     plt.savefig(plot_file_path)
-    if rlt is True:
+    if rmnt is True:
       plt.show()
     plt.close()
 
     indv_mnt=False
     #momenta of protons and pions
-    binsize_new=5
+    binsize_indv=5
     plt.figure()
-    hist_p,bins_p,pack_p=plt.hist(p_mnt,bins=np.arange(0,int(max(p_mnt))+1,binsize_new))
+    hist_p,bins_p,pack_p=plt.hist(p_mnt,bins=np.arange(0,int(max(p_mnt))+1,binsize_indv))
     plt.title("Momenta of Protons")
     plt.xlabel("Momentum (MeV/c)")
     plt.ylabel("Count")
@@ -338,7 +359,7 @@ def reader(directory,file_pattern,output_folder):
     plt.close()
 
     plt.figure()
-    hist_pi,bins_pi,pack_pi=plt.hist(pi_mnt,bins=np.arange(0,int(max(pi_mnt))+1,binsize_new))
+    hist_pi,bins_pi,pack_pi=plt.hist(pi_mnt,bins=np.arange(0,int(max(pi_mnt))+1,binsize_indv))
     plt.title("Momenta of Pions")
     plt.xlabel("Momentum (MeV/c)")
     plt.ylabel("Count")
@@ -351,7 +372,7 @@ def reader(directory,file_pattern,output_folder):
     dmnt=False
     #mnt of deltas
     plt.figure()
-    hist_rec,bins_rec,pack_rec=plt.hist(momentum_list,bins=np.arange(0,int(max(momentum_list))+1,binsize_new))
+    hist_rec,bins_rec,pack_rec=plt.hist(momentum_list,bins=np.arange(0,int(max(momentum_list))+1,binsize_indv))
     plt.title("Momenta of Recreated Deltas")
     plt.xlabel("Momentum (MeV/c)")
     plt.ylabel("Count")
@@ -373,9 +394,10 @@ def reader(directory,file_pattern,output_folder):
     plt.close()
 
     #energy of protons and pions
+    binsize_E=2
     indv_E=False
     plt.figure()
-    hist_pE,bins_pE,pack_pE=plt.hist(p_en,bins=np.arange(0,int(max(p_en))+1,binsize_new))
+    hist_pE,bins_pE,pack_pE=plt.hist(p_en,bins=np.arange(0,int(max(p_en))+1,binsize_E))
     plt.title("Energy of Protons")
     plt.xlabel("Energy (MeV/c^2)")
     plt.ylabel("Count")
@@ -386,7 +408,7 @@ def reader(directory,file_pattern,output_folder):
     plt.close()
 
     plt.figure()
-    hist_piE,bins_piE,pack_piE=plt.hist(pi_en,bins=np.arange(0,int(max(pi_en))+1,binsize_new))
+    hist_piE,bins_piE,pack_piE=plt.hist(pi_en,bins=np.arange(0,int(max(pi_en))+1,binsize_E))
     plt.title("Energy of Pions")
     plt.xlabel("Energy (MeV/c^2)")
     plt.ylabel("Count")
@@ -432,3 +454,5 @@ os.makedirs(graph_foldera,exist_ok=True)
 os.makedirs(graph_folderb,exist_ok=True)
 
 reader(directoryA,file_patternA,graph_folderA)
+reader(directorya,file_patterna,graph_foldera)
+reader(directoryb,file_patternb,graph_folderb)

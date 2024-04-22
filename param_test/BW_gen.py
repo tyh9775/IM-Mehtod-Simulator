@@ -28,7 +28,7 @@ def bw_pdf(md,md0,mn,mpi,bw_width=None,A=None,a=None,b=None):
       b=0.6
     gmd=(a*q**3)/(mpi**2+b*q**2)
   
-  return (4*md0**2*gmd)/((A)*((md**2-md0**2)**2+md0**2*gmd**2))
+  return (4*md0**2*gmd)/(A*((md**2-md0**2)**2+md0**2*gmd**2))
 
 def q_solv(md,mn,mpi):
   return np.sqrt((md**2-mn**2-mpi**2)**2-4*(mn*mpi)**2)/(2*md)
