@@ -5,7 +5,7 @@ from scipy.optimize import curve_fit
 import myconst as mc
 import os
 import glob
-
+import re
 
 #distance formula: sqrt(x1^2+x2^2+...+xn^2)
 def dist_form(vec):
@@ -95,6 +95,27 @@ def fwhm_calc(data,bins):
 
   return fwhm,half_max_val,left_ind,right_ind,max_ind
 
+def param_reader(filename):
+  numbers=re.findall(r'\d+\.\d+|\d+', filename)
+  A=re.findall(r'_A_', filename)
+  a=re.findall(r'_a_', filename)
+  b=re.findall(r'_b_', filename)
+  numbers=[float(num) for num in numbers]
+  if len(A) != 0:
+    A=numbers[0]
+  else:
+    A=0.95
+  if len(a) != 0:
+    a=numbers[0]
+  else:
+    a=0.47
+  if len(b) != 0:
+    b=numbers[0]
+  else:
+    b=0.6
+  param=[A,a,b]
+  return param
+
 def r2_calc(f,x,y,p):
   res=[]
   ss_res=[]
@@ -120,6 +141,7 @@ def reader(directory,file_pattern,output_folder):
 
 
   for filename in glob.glob(os.path.join(directory,file_pattern)):
+    param=param_reader(filename)
     new_file_path= os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_IM.csv")
     with open(new_file_path,"w",newline='') as new_file:
       new_file.close()
@@ -229,7 +251,7 @@ def reader(directory,file_pattern,output_folder):
     #mass cut done with the fitting
     binsize=5 #in MeV/c^2
     plt.figure()
-    hist,bins,packages=plt.hist(IM_list,bins=np.arange(int(min(IM_list)-1),int(max(IM_list)+1),binsize))
+    hist,bins,packages=plt.hist(IM_list,bins=np.arange(int(min(IM_list)),int(max(IM_list)),binsize),alpha=0)
     bins_cntr=0.5*(bins[:-1]+bins[1:])
     
     if fitting is True:
@@ -264,39 +286,44 @@ def reader(directory,file_pattern,output_folder):
     
     hist_err=np.sqrt(hist)
     plt.errorbar(bins_cntr,hist,xerr=binsize/2,yerr=hist_err,fmt='.')
-    popt,pcov=curve_fit(bw_func,bins_cntr,hist,p0=[0.95,0.47,0.6,mc.nevts*10])
     xfitbw=np.arange(min(bins_cntr),max(bins_cntr),0.5)
+    ydef=bw_func(xfitbw,*param,scl=1)
+    sclr=max(hist)/max(ydef)
+    yfit_par=bw_func(xfitbw,*param,scl=sclr)
+    print(*param)
+    print(sclr)
+    popt,pcov=curve_fit(bw_func,bins_cntr,hist,p0=[*param,sclr])
     yfitbw=bw_func(xfitbw,*popt)
     fwhm,hlf_val,lft,rgt,mxi=fwhm_calc(yfitbw,xfitbw)
     plt.plot(xfitbw,yfitbw,label='BW fit')
+    plt.plot(xfitbw,yfit_par,'--',label='Fit w/ given param')
     plt.hlines(y=hlf_val,xmin=xfitbw[lft],xmax=xfitbw[rgt],label=f'fwhm={round(fwhm,3)}',colors='red')
     plt.title("Invariant Mass of Recreated Delta in Lab Frame")
     plt.ylabel("Count")
     plt.xlabel("Mass (MeV/c^2)")
     plt.legend(loc='upper left')
     plt.ylim(0,max(hist)*1.1)
-    plt.figtext(0.75,0.75,"m_err=%d \n p_min=%d \n A=%s \n a=%s \n b=%s \n fwhm=%s"%(mc.m_cut,mc.p_cut,round(popt[0],3),round(popt[1],3),round(popt[2],3),round(fwhm,3)),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
+    plt.figtext(0.75,0.75,"gen_par=%s \n A=%s \n a=%s \n b=%s"%(param,round(popt[0],3),round(popt[1],3),round(popt[2],3)),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
     plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_IM_plot.png")
     plt.savefig(plot_file_path)
     #plt.show()
     plt.close()
-
     print("total number of counted particles after momentum cut:", np.sum(hist))
 
     #"actual" deltas
     actual=False
     plt.figure()
-    hist_act,bins_act,pack_act=plt.hist(act_IM,bins=bins)
+    hist_act,bins_act,pack_act=plt.hist(act_IM,bins=bins,alpha=0)
     bins_cntr_act=0.5*(bins_act[:-1]+bins_act[1:])
     act_err=np.sqrt(hist_act)
-    popt_act,pcov_act=curve_fit(bw_func,bins_cntr_act,hist_act,p0=[0.95,0.47,0.6,mc.nevts*10])
+    popt_act,pcov_act=curve_fit(bw_func,bins_cntr_act,hist_act,p0=[0.95,0.47,0.6,max(hist_act)*100])
     xfitbw_act=np.arange(min(bins_cntr_act),max(bins_cntr_act),0.5)
     yfitbw_act=bw_func(xfitbw_act,*popt_act)
     fwhm_act,hlf_val,lft,rgt,mxi=fwhm_calc(yfitbw_act,xfitbw_act)
     plt.plot(xfitbw_act,yfitbw_act,label='BW fit')
     plt.errorbar(bins_cntr_act,hist_act,xerr=binsize/2,yerr=act_err,fmt='.')
     plt.hlines(y=hlf_val,xmin=xfitbw_act[lft],xmax=xfitbw_act[rgt],label=f'fwhm={round(fwhm_act,3)}',colors='red')
-    plt.figtext(0.75,0.75,"m_err=%d \n p_min=%d \n A=%s \n a=%s \n b=%s \n fwhm=%s"%(mc.m_cut,mc.p_cut,round(popt_act[0],3),round(popt_act[1],3),round(popt_act[2],3),round(fwhm_act,3)),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
+    plt.figtext(0.75,0.75,"gen_par=%s \n A=%s \n a=%s \n b=%s"%(param,round(popt_act[0],3),round(popt_act[1],3),round(popt_act[2],3)),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
     plt.title("IM of Real Deltas")
     plt.xlabel("Mass (MeV/c^2)")
     plt.ylabel("Count")
@@ -311,17 +338,17 @@ def reader(directory,file_pattern,output_folder):
     #related pairs
     binsize_new=5
     plt.figure()
-    hist_cr,bins_cr,pack_cr=plt.hist(cr_IM,bins=np.arange(int(min(cr_IM))-1,int(max(cr_IM))+1,binsize_new))
+    hist_cr,bins_cr,pack_cr=plt.hist(cr_IM,bins=np.arange(int(min(cr_IM)),int(max(cr_IM)),binsize_new),alpha=0)
     bins_cntr_cr=0.5*(bins_cr[:-1]+bins_cr[1:])
     cr_err=np.sqrt(hist_cr)
-    popt_cr,pcov_cr=curve_fit(bw_func,bins_cntr_cr,hist_cr,p0=[0.95,0.47,0.6,mc.nevts*10])
+    popt_cr,pcov_cr=curve_fit(bw_func,bins_cntr_cr,hist_cr,p0=[0.95,0.47,0.6,max(hist_cr)*100])
     xfitbw_cr=np.arange(min(bins_cntr_cr),max(bins_cntr_cr),0.5)
     yfitbw_cr=bw_func(xfitbw_cr,*popt_cr)
     fwhm_cr,hlf_val,lft,rgt,mxi=fwhm_calc(yfitbw_cr,xfitbw_cr)
     plt.plot(xfitbw_cr,yfitbw_cr,label='BW fit')
     plt.errorbar(bins_cntr_cr,hist_cr,xerr=binsize_new/2,yerr=cr_err,fmt='.')
     plt.hlines(y=hlf_val,xmin=xfitbw_cr[lft],xmax=xfitbw_cr[rgt],label=f'fwhm={round(fwhm_cr,3)}',colors='red')
-    plt.figtext(0.75,0.75,"m_err=%d \n p_min=%d \n A=%s \n a=%s \n b=%s \n fwhm=%s"%(mc.m_cut,mc.p_cut,round(popt_cr[0],3),round(popt_cr[1],3),round(popt_cr[2],3),round(fwhm_cr,3)),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
+    plt.figtext(0.75,0.75,"gen_par=%s \n A=%s \n a=%s \n b=%s"%(param,round(popt_cr[0],3),round(popt_cr[1],3),round(popt_cr[2],3)),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
     plt.title("IM of Related Pairs")
     plt.xlabel("Mass (MeV/c^2)")
     plt.ylabel("Count")

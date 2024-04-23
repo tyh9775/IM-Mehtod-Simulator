@@ -10,7 +10,7 @@ rt_s=2015+Eb #energy at the center of collision (sqrt of s)
 #may have to come up with a more dynamic way to adjust rt_s
 
 #bounds for the Breit-Wigner distribution of the delta mass in lab frame
-md_min=m_p+m_pi
+md_min=m_n+m_pi
 md_max=rt_s-m_p
 
 #maximum momentum from the maximum mass
