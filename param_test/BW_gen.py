@@ -349,7 +349,8 @@ A=[0.1,0.5,1,2]
 a=[0.1,0.5,1,2]
 b=[0.1,0.5,1,2]
 
-output_folderA="bw_A"
+abs_path=os.path.dirname(__file__)
+output_folderA=os.path.join(abs_path,"bw_A")
 os.makedirs(output_folderA,exist_ok=True)
 xlistA=[]
 ylistA=[]
@@ -381,7 +382,7 @@ ylista=[]
 fwhm_lista=[] 
 max_lista=[]
 ver_lista=[]
-output_foldera="bw_qa"
+output_foldera=os.path.join(abs_path,"bw_qa")
 os.makedirs(output_foldera,exist_ok=True)
 for ai in a:
   filename=f"BW_a_{ai}.csv"
@@ -407,7 +408,7 @@ ylistb=[]
 fwhm_listb=[]
 max_listb=[]
 ver_listb=[]
-output_folderb="bw_qb"
+output_folderb=os.path.join(abs_path,"bw_qb")
 os.makedirs(output_folderb,exist_ok=True)
 for bi in b:
   filename=f"BW_b_{bi}.csv"
