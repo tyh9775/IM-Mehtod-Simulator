@@ -9,9 +9,13 @@ import os
 
 #Breit_Wigner distribution for the  mass distribution of delta resonances:
 #class bw_dist(st.rv_continuous):
-def bw_pdf(md,md0,mn,mpi,bw_width=None,A=None,a=None,b=None):
+def bw_pdf(md,md0,mn,mpi,A=None,a=None,b=None):
   if A is None:
-    A=0.95 
+    A=0.95
+  if a is None:
+    a=0.47
+  if b is None:
+    b=0.6 
   if md==mn+mpi:
     q=0
   elif md<mn+mpi:
@@ -19,14 +23,7 @@ def bw_pdf(md,md0,mn,mpi,bw_width=None,A=None,a=None,b=None):
     quit()
   else:
     q=np.sqrt((md**2-mn**2-mpi**2)**2-4*(mn*mpi)**2)/(2*md)
-  if bw_width is not None:
-    gmd=bw_width
-  else:
-    if a is None:
-      a=0.47
-    if b is None:
-      b=0.6
-    gmd=(a*q**3)/(mpi**2+b*q**2)
+  gmd=(a*q**3)/(mpi**2+b*q**2)
   
   return (4*md0**2*gmd)/(A*((md**2-md0**2)**2+md0**2*gmd**2))
 
@@ -106,13 +103,13 @@ def fwhm_calc(data,bins):
 show=False
 show_all=False
 
-def generator(numD,numF,filename,norm_w=None,bw_w=None,DT=None,A=None,a=None,b=None,output_folder=None):
+def generator(numD,numF,filename,norm_w=None,DT=None,A=None,a=None,b=None,output_folder=None):
 
   #build mass distribution 
   x_bw=np.linspace(mc.md_min,mc.md_max,100)
   y_bw=[]
-  for i in range (0,len(x_bw)):
-    y_bw.append(bw_pdf(x_bw[i],mc.m_del0,mc.m_p,mc.m_pi,bw_width=bw_w,A=A,a=a,b=b))
+  for i in range(0,len(x_bw)):
+    y_bw.append(bw_pdf(x_bw[i],mc.m_del0,mc.m_p,mc.m_pi,A=A,a=a,b=b))
   norm_const=simpson(y=y_bw,x=x_bw)
   y_norm=y_bw/norm_const
 
@@ -188,19 +185,13 @@ def generator(numD,numF,filename,norm_w=None,bw_w=None,DT=None,A=None,a=None,b=N
     if output_folder is None:
       with open(filename, 'a', newline='') as file:
         writer = csv.writer(file)
-        if bw_w is not None and counter<=1:
-          writer.writerow([counter,particles,N_delta,bw_w])
-        else:
-          writer.writerow([counter,particles,N_delta])
+        writer.writerow([counter,particles,N_delta])
         file.close()
     
     else:
       with open(os.path.join(output_folder,filename), 'a', newline='') as file:
         writer = csv.writer(file)
-        if bw_w is not None and counter<=1:
-          writer.writerow([counter,particles,N_delta,bw_w])
-        else:
-          writer.writerow([counter,particles,N_delta])
+        writer.writerow([counter,particles,N_delta])
         file.close()
 
     for j in range(0,N_delta):
@@ -210,24 +201,15 @@ def generator(numD,numF,filename,norm_w=None,bw_w=None,DT=None,A=None,a=None,b=N
       #starting in center of collision frame
       ######################################
 
-      if norm_w is not None and bw_w is None:
+      if norm_w is not None:
         #randomly choose a mass based on a normal distribution
         mdel=np.random.normal(1232,norm_w,1)[0]
-      elif norm_w is not None and bw_w is not None:
-        print('choose either normal or bw dist, not both')
-        return
-      elif norm_w is None and bw_w is None:
+      else:
         #randomly choose the mass of the delta resonance according to bw dist
         #using monte carlo method
         mdel=random.uniform(mc.md_min,mc.md_max)
         ytest=random.uniform(0,max(y_norm))
-        while ytest > bw_pdf(mdel,mc.m_del0,mc.m_p,mc.m_pi)/norm_const:
-          mdel=random.uniform(mc.md_min,mc.md_max)
-          ytest=random.uniform(0,max(y_norm))
-      elif norm_w is None and bw_w is not None:
-        mdel=random.uniform(mc.md_min,mc.md_max)
-        ytest=random.uniform(0,max(y_norm))
-        while ytest > bw_pdf(mdel,mc.m_del0,mc.m_p,mc.m_pi,bw_width=bw_w)/norm_const:
+        while ytest > bw_pdf(mdel,mc.m_del0,mc.m_p,mc.m_pi,A=A,a=a,b=b)/norm_const:
           mdel=random.uniform(mc.md_min,mc.md_max)
           ytest=random.uniform(0,max(y_norm))
       #PID of delta:
@@ -362,7 +344,6 @@ Free_num=[0,1,2,3]
 
 #set constants/parameters
 dnorm_w=[5,10,20]
-dbw_w=[5,10,20]
 delta_temp=300
 A=[0.1,0.5,1,2]
 a=[0.1,0.5,1,2]
