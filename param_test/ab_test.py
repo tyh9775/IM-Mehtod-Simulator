@@ -231,44 +231,67 @@ def simp_gen(numD,numF,DT,A=None,a=None,b=None):
       p_list.append(datap)
   return p_list, pi_list
 
-def IM_method(plist,pilist):
+def IM_method_simp(plist,pilist):
+  mdel=0
+  mntdel=0
+  Ep=float(plist[0]) #total E of p
+  Epi=float(pilist[0]) #total E of pi
+  pp=[]
+  ppi=[]
+  for k in range(0,3):
+    pp.append(float(plist[k+1])) #3D momentum of p
+    ppi.append(float(pilist[k+1])) #3D momentum of pi
+  ptot=v_sum(pp,ppi) #total momentum of the two particles
+  pmag=dist_form(ptot) #magnitude of the total momentum
+  Etot=Ep+Epi #total energy of the two particles
+  p4p=[Ep]+pp #4 momentum of p 
+  p4pi=[Epi]+ppi #4 momentum of pi    
+  mdel_rec=inv_m(Etot,pmag)
+  gam=Etot/mdel_rec
+  if gam<1:
+    print("negative energy or mass detected")
+    quit()
+  v=np.sqrt(1-1/gam**2)
+
+  vx=ptot[0]/(gam*mdel_rec)
+  vy=ptot[1]/(gam*mdel_rec)
+  vz=ptot[2]/(gam*mdel_rec)
+  #move to the "delta" frame assuming the pair can create one
+  ptest=gam_mat(gam,v,vx,vy,vz,p4p) #4 momentum of p in delta frame
+  pitest=gam_mat(gam,v,vx,vy,vz,p4pi) #4 momentum of pi in delta frame
+  pt_tot=v_sum(ptest,pitest) #total 4 momentum of p and pi in delta frame
+  pt_mag=dist_form(pt_tot[1:]) #magnitude of the 3D momentum in delta frame
+  #momentum cut
+  if pt_mag < mc.p_cut:        
+    mdel=mdel_rec
+    mntdel=pmag
+  return mdel, mntdel
+
+def row_read(data):
+  PID=data[0]
+  p4p=[]
+  pi4p=[]
+  if PID==2212:
+    p4p=data[1:5]
+    return p4p
+  if PID==211:
+    pi4p=data[1:5]
+    return pi4p
+  else:
+    return
+    
+def simp_reader(p_all,pi_all):
   m_list=[]
   mnt_list=[]
-  for i in range(0,len(pilist)):
-    for j in range(0,len(plist)):
-      #starting in lab frame
-      Ep=float(plist[j][0]) #total E of p
-      Epi=float(pilist[i][0]) #total E of pi
-      pp=[]
-      ppi=[]
-      for k in range(0,3):
-        pp.append(float(plist[j][k+1])) #3D momentum of p
-        ppi.append(float(pilist[i][k+1])) #3D momentum of pi
-      ptot=v_sum(pp,ppi) #total momentum of the two particles
-      pmag=dist_form(ptot) #magnitude of the total momentum
-      Etot=Ep+Epi #total energy of the two particles
-      p4p=[Ep]+pp #4 momentum of p 
-      p4pi=[Epi]+ppi #4 momentum of pi    
-      mdel_rec=inv_m(Etot,pmag)
-      gam=Etot/mdel_rec
-      if gam<1:
-        print("negative energy or mass detected")
-        quit()
-      v=np.sqrt(1-1/gam**2)
-
-      vx=ptot[0]/(gam*mdel_rec)
-      vy=ptot[1]/(gam*mdel_rec)
-      vz=ptot[2]/(gam*mdel_rec)
-      #move to the "delta" frame assuming the pair can create one
-      ptest=gam_mat(gam,v,vx,vy,vz,p4p) #4 momentum of p in delta frame
-      pitest=gam_mat(gam,v,vx,vy,vz,p4pi) #4 momentum of pi in delta frame
-      pt_tot=v_sum(ptest,pitest) #total 4 momentum of p and pi in delta frame
-      pt_mag=dist_form(pt_tot[1:]) #magnitude of the 3D momentum in delta frame
-      #momentum cut
-      if pt_mag < mc.p_cut:        
-        m_list.append(mdel_rec)
-        mnt_list.append(pmag)
+  for i in range(0,len(pi_all)):
+    p4p=row_read(pi_all[i])
+    pi4p=row_read(p_all[i])
+    mdel,mntdel=IM_method_simp(p4p,pi4p)
+    m_list.append(mdel)
+    mnt_list.append(mntdel)
+  
   return m_list, mnt_list
+
 
 #numbers of particles/pairs generated
 Delta_num=[1,2,3]
@@ -281,8 +304,13 @@ a=np.random.uniform(0.1,2)
 b=np.random.uniform(0.1,2)
 
 plist1,pilist1=simp_gen(1,0,300,a=a,b=b)
+mlist1,mntlist1=simp_reader(plist1,pilist1)
 
 
+plt.figure()
+plt.hist(mlist1,bins=100)
+plt.show()
+plt.close()
 
 '''
 N_samples=10000
