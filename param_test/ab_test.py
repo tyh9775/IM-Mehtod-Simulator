@@ -27,12 +27,24 @@ def bw_pdf(md,md0,mn,mpi,A=None,a=None,b=None):
   
   return (4*md0**2*gmd)/(A*((md**2-md0**2)**2+md0**2*gmd**2))
 
-def q_solv(md,mn,mpi):
-  return np.sqrt((md**2-mn**2-mpi**2)**2-4*(mn*mpi)**2)/(2*md)
 
-#calculate the momentum of delta given the center of collision energy, mdel, and mn
-def bw_mnt(rs,m1,m2):
-  return np.sqrt((rs**2+m1**2-m2**2)**2/(4*rs**2)-m1**2)
+#distance formula: sqrt(x1^2+x2^2+...+xn^2)
+def dist_form(vec):
+  vsum2=0
+  for i in range(0,len(vec)):
+    vsum2+=float(vec[i])**2
+  return np.sqrt(vsum2)  
+
+#sum of two vectors
+def v_sum(v1,v2):
+  vtot=[]
+  for i in range (0,len(v1)):
+    vtot.append(v1[i]+v2[i]) 
+  return vtot
+
+#find the invariant mass given the total energy and the momentum
+def inv_m(en,p):
+  return np.sqrt(en**2-p**2)
 
 #for varying rs (center of collision energy)
 #0<sig<20
@@ -89,22 +101,10 @@ def gam_mat(gam,v,vx,vy,vz,p4):
 def exp_dist(scl,n):
   return np.random.exponential(scale=scl,size=n)
 
-def fwhm_calc(data,bins):
-  max_value=np.max(data)
-  max_ind=np.argmax(data)
-  half_max_val=max_value/2
-  #find where the data crosses the half piont on the left and right of the peak
-  left_ind=np.argmin(np.abs(data[0:max_ind]-half_max_val))
-  right_ind=np.argmin(np.abs(data[max_ind:]-half_max_val))+max_ind
-  fwhm=bins[right_ind]-bins[left_ind]
 
-  return fwhm,half_max_val,left_ind,right_ind,max_ind
-
-show=False
-show_all=False
-
-def generator(numD,numF,filename,norm_w=None,DT=None,A=None,a=None,b=None,output_folder=None):
-
+def simp_gen(numD,numF,DT,A=None,a=None,b=None):
+  p_list=[]
+  pi_list=[]
   #build mass distribution 
   x_bw=np.linspace(mc.md_min,mc.md_max,100)
   y_bw=[]
@@ -113,46 +113,6 @@ def generator(numD,numF,filename,norm_w=None,DT=None,A=None,a=None,b=None,output
   norm_const=simpson(y=y_bw,x=x_bw)
   y_norm=y_bw/norm_const
 
-  fwhm,hlf_val,lft,rgt,mxi=fwhm_calc(y_bw,x_bw)
-
-  plt.figure()
-  plt.plot(x_bw,y_bw,'.')
-  plt.hlines(y=hlf_val,xmin=x_bw[lft],xmax=x_bw[rgt],label=f'fwhm={round(fwhm,3)}')
-  plt.xlabel("Mass (Mev/c^2)")
-  #plt.ylabel("Probability")
-  plt.title("Breit-Wigner Distribution")
-  if output_folder is not None:
-    if A is None and a is None:
-      plot_path=os.path.join(output_folder,f'BW_{b}.png')
-      plt.figtext(0.75,0.75,f"A=0.95 \n a=0.47 \n b={b}",horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
-    elif A is None and b is None:
-      plot_path=os.path.join(output_folder,f'BW_{a}.png')
-      plt.figtext(0.75,0.75,f"A=0.95 \n a={a} \n b=0.6",horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
-    elif a is None and b is None:
-      plot_path=os.path.join(output_folder,f'BW_{A}.png')
-      plt.figtext(0.75,0.75,f"A={A} \n a=0.47 \n b=0.6",horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
-    else:
-      plot_path=os.path.join(output_folder,f'BW_0.95_0.47_0.6.png')
-      plt.figtext(0.75,0.75,f"A=0.95 \n a=0.47 \n b=0.6",horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
-  else:
-    plot_path=f'BW_{A}_{a}_{b}.png'
-    if A is None and a is None:
-      plot_path=output_folder,f'BW_{b}.png'
-      plt.figtext(0.75,0.75,f"A=0.95 \n a=0.47 \n b={b}",horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
-    elif A is None and b is None:
-      plot_path=output_folder,f'BW_{a}.png'
-      plt.figtext(0.75,0.75,f"A=0.95 \n a={a} \n b=0.6",horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
-    elif a is None and b is None:
-      plot_path=output_folder,f'BW_{A}.png'
-      plt.figtext(0.75,0.75,f"A={A} \n a=0.47 \n b=0.6",horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
-    else:
-      plot_path=output_folder,f'BW_0.95_0.47_0.6.png'
-      plt.figtext(0.75,0.75,f"A=0.95 \n a=0.47 \n b=0.6",horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
-  plt.legend(loc='upper left')
-  plt.savefig(plot_path)
-  if show is True:
-    plt.show()
-  plt.close()
 
   if numD==0 and numF==0:
     print("numD,numF:",0,0)
@@ -160,69 +120,31 @@ def generator(numD,numF,filename,norm_w=None,DT=None,A=None,a=None,b=None,output
     print()
     return
   
-  if output_folder is not None:
-    abs_path=os.path.dirname(__file__)
-    with open(os.path.join(abs_path,output_folder,filename), 'w', newline='') as file:
-      file.close()
-  else:
-    with open(filename, 'w', newline='') as file:
-      file.close()
-
   N_events=mc.nevts
-  counter=0
-  ND_total=0
-  NP_total=0
 
   for i in range(0,N_events):
-    counter = counter+1
-    particles=0
     N_delta=numD
     N_free=numF
-    
-    particles=particles+N_delta*2+N_free*2
-    NP_total=NP_total+particles
-
-    if output_folder is None:
-      with open(filename, 'a', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow([counter,particles,N_delta])
-        file.close()
-    
-    else:
-      with open(os.path.join(output_folder,filename), 'a', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow([counter,particles,N_delta])
-        file.close()
-
+        
     for j in range(0,N_delta):
-      ND_total=ND_total+1
 
       ######################################
       #starting in center of collision frame
       ######################################
 
-      if norm_w is not None:
-        #randomly choose a mass based on a normal distribution
-        mdel=np.random.normal(1232,norm_w,1)[0]
-      else:
-        #randomly choose the mass of the delta resonance according to bw dist
-        #using monte carlo method
+      #randomly choose the mass of the delta resonance according to bw dist
+      #using monte carlo method
+      mdel=random.uniform(mc.md_min,mc.md_max)
+      ytest=random.uniform(0,max(y_norm))
+      while ytest > bw_pdf(mdel,mc.m_del0,mc.m_p,mc.m_pi,A=A,a=a,b=b)/norm_const:
         mdel=random.uniform(mc.md_min,mc.md_max)
         ytest=random.uniform(0,max(y_norm))
-        while ytest > bw_pdf(mdel,mc.m_del0,mc.m_p,mc.m_pi,A=A,a=a,b=b)/norm_const:
-          mdel=random.uniform(mc.md_min,mc.md_max)
-          ytest=random.uniform(0,max(y_norm))
       #PID of delta:
       dpid=2224 #delta++
       
       #give delta a random momentum
-      if DT is not None:
-        ke_del=exp_dist(DT,1)[0]
-        dgam,dv,Edel,pdel=kgam_calc(ke_del,mdel)
-      else:
-        pdel=bw_mnt(mc.rt_s,mdel,mc.m_p)
-        Edel=E_solv(pdel,mdel)
-        dgam,dv=gam_calc(Edel,mdel)
+      ke_del=exp_dist(DT,1)[0]
+      dgam,dv,Edel,pdel=kgam_calc(ke_del,mdel)
 
       #md_IM=np.sqrt(Edel**2-pdel**2)
 
@@ -231,7 +153,6 @@ def generator(numD,numF,filename,norm_w=None,DT=None,A=None,a=None,b=None,output
 
       pdx,pdy,pdz=vec_calc(pdel,dth,dph)
       datadel=[dpid,Edel,pdx,pdy,pdz,j+1]
-      
 
       ############################################
       #LT to the rest frame of the delta resonance
@@ -272,20 +193,8 @@ def generator(numD,numF,filename,norm_w=None,DT=None,A=None,a=None,b=None,output
       datap.append(j+1)
       datapi.append(j+1)
       
-      if output_folder is None:
-        with open(filename,'a',newline='') as file:
-          g=csv.writer(file, delimiter=',')
-          g.writerow(datadel)
-          g.writerow(datap)
-          g.writerow(datapi)
-          file.close()
-      else:
-        with open(os.path.join(output_folder,filename),'a',newline='') as file:
-          g=csv.writer(file, delimiter=',')
-          g.writerow(datadel)
-          g.writerow(datap)
-          g.writerow(datapi)
-          file.close()
+      pi_list.append(datapi)
+      p_list.append(datap)
     ########################
     #Free particle generator
     ########################
@@ -318,40 +227,106 @@ def generator(numD,numF,filename,norm_w=None,DT=None,A=None,a=None,b=None,output
       
       datap.append(0)
       datapi.append(0)
-      
-      if output_folder is None:
-        with open(filename,'a',newline='') as file:
-          g=csv.writer(file, delimiter=',')
-          g.writerow(datap)
-          g.writerow(datapi)
-          file.close()
-      else:
-        with open(os.path.join(output_folder,filename),'a',newline='') as file:
-          g=csv.writer(file, delimiter=',')
-          g.writerow(datap)
-          g.writerow(datapi)
-          file.close()    
-  print("numD,numF:",numD,numF)
-  print("Number of Delta resonances created:",ND_total)
-  print("Number of all particles detected:", NP_total)
-  print()
-  return x_bw,y_bw,fwhm,mxi
+      pi_list.append(datapi)
+      p_list.append(datap)
+  return p_list, pi_list
 
+def IM_method(plist,pilist):
+  m_list=[]
+  mnt_list=[]
+  for i in range(0,len(pilist)):
+    for j in range(0,len(plist)):
+      #starting in lab frame
+      Ep=float(plist[j][0]) #total E of p
+      Epi=float(pilist[i][0]) #total E of pi
+      pp=[]
+      ppi=[]
+      for k in range(0,3):
+        pp.append(float(plist[j][k+1])) #3D momentum of p
+        ppi.append(float(pilist[i][k+1])) #3D momentum of pi
+      ptot=v_sum(pp,ppi) #total momentum of the two particles
+      pmag=dist_form(ptot) #magnitude of the total momentum
+      Etot=Ep+Epi #total energy of the two particles
+      p4p=[Ep]+pp #4 momentum of p 
+      p4pi=[Epi]+ppi #4 momentum of pi    
+      mdel_rec=inv_m(Etot,pmag)
+      gam=Etot/mdel_rec
+      if gam<1:
+        print("negative energy or mass detected")
+        quit()
+      v=np.sqrt(1-1/gam**2)
+
+      vx=ptot[0]/(gam*mdel_rec)
+      vy=ptot[1]/(gam*mdel_rec)
+      vz=ptot[2]/(gam*mdel_rec)
+      #move to the "delta" frame assuming the pair can create one
+      ptest=gam_mat(gam,v,vx,vy,vz,p4p) #4 momentum of p in delta frame
+      pitest=gam_mat(gam,v,vx,vy,vz,p4pi) #4 momentum of pi in delta frame
+      pt_tot=v_sum(ptest,pitest) #total 4 momentum of p and pi in delta frame
+      pt_mag=dist_form(pt_tot[1:]) #magnitude of the 3D momentum in delta frame
+      #momentum cut
+      if pt_mag < mc.p_cut:        
+        m_list.append(mdel_rec)
+        mnt_list.append(pmag)
+  return m_list, mnt_list
 
 #numbers of particles/pairs generated
 Delta_num=[1,2,3]
 Free_num=[0,1,2,3]
 
 #set constants/parameters
-dnorm_w=[5,10,20]
 delta_temp=300
-
 #fix A to 0.95 (leave A=None)
-a=np.arange(0.1,2,0.1)
-b=np.arange(0.1,2,0.1)
-print(a)
-print(b)
-quit()
-abs_path=os.path.dirname(__file__)
-output_folderA=os.path.join(abs_path,"bw_A")
-os.makedirs(output_folderA,exist_ok=True)
+a=np.random.uniform(0.1,2)
+b=np.random.uniform(0.1,2)
+
+plist1,pilist1=simp_gen(1,0,300,a=a,b=b)
+
+
+
+'''
+N_samples=10000
+a_list=[]
+b_list=[]
+m_val=[]
+for n in range(0,N_samples):
+  a=np.random.uniform(0.1,2)
+  b=np.random.uniform(0.1,2)
+  a_list.append(a)
+  b_list.append(b)
+  x_bw=np.linspace(mc.md_min,mc.md_max,100)
+  y_bw=[]
+  for i in range(0,len(x_bw)):
+    y_bw.append(bw_pdf(x_bw[i],mc.m_del0,mc.m_p,mc.m_pi,a=a,b=b))
+  norm_const=simpson(y=y_bw,x=x_bw)
+  y_norm=y_bw/norm_const
+  mdel=random.uniform(mc.md_min,mc.md_max)
+  ytest=random.uniform(0,max(y_norm))
+  while ytest > bw_pdf(mdel,mc.m_del0,mc.m_p,mc.m_pi,a=a,b=b)/norm_const:
+    mdel=random.uniform(mc.md_min,mc.md_max)
+    ytest=random.uniform(0,max(y_norm))
+  m_val.append(mdel)
+
+
+cor=np.corrcoef(a_list,b_list)[0,1]
+
+print("a,b correlation:",cor)
+
+plt.figure()
+plt.hist(m_val,bins=100)
+plt.show()
+plt.close()
+
+a_flat=np.repeat(a_list,len(b_list))
+b_flat=np.tile(b_list,len(a_list))
+
+plt.figure()
+plt.scatter(a_flat, b_flat, c=f_values)
+plt.colorbar(label='Mean f value')
+plt.xlabel('a')
+plt.ylabel('b')
+plt.title('Correlation Graph between a and b')
+plt.grid(True)
+plt.show()
+
+'''
