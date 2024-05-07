@@ -1,7 +1,25 @@
-a=[0.10519482074192821, 0.5200478441550253, 1.0183881205539225, 2.019177056827155]
-b=[0.6360705299932353, 0.6463601409805916, 0.6244958633601393, 0.6072466286013896]
 import numpy as np
+import matplotlib.pyplot as plt
 
-cor=np.corrcoef(a,b)
+# Define the function
+def my_function(x, y):
+    return np.sin(x) + np.cos(y)
 
-print(cor)
+# Generate data
+x = np.linspace(0, 2*np.pi, 100)
+y = np.linspace(0, 2*np.pi, 100)
+X, Y = np.meshgrid(x, y)
+Z = my_function(X, Y)
+
+# Create contour plot
+plt.figure(figsize=(8, 6))
+contour = plt.contourf(X, Y, Z, cmap='viridis')
+plt.colorbar(contour, label='Function Value')
+
+# Add labels and title
+plt.xlabel('X')
+plt.ylabel('Y')
+plt.title('Contour Plot of My Function')
+
+# Show plot
+plt.show()
