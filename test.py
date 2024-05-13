@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import ROOT
 
+'''
 # Define the function
 def my_function(x, y):
     return np.sin(x) + np.cos(y)
@@ -24,3 +25,17 @@ plt.title('Contour Plot of My Function')
 
 # Show plot
 plt.show()
+'''
+h = ROOT.TH1F("myHist", "myTitle", 64, -4, 4)
+h.FillRandom("gaus")
+
+
+
+f = ROOT.TF1("f1", "sin(x)/x", 0., 10.)
+f.Draw()
+
+print("press enter to continue")
+input()
+
+
+h.Draw()
