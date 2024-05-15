@@ -381,13 +381,13 @@ def reader(directory,file_pattern,output_folder):
       plt.show()
     plt.close()
 
-    contour=False
+    contour=True
     plt.figure()
     plt.title("Correlation Between 'a' and 'b' (Recreated Delta)")
     plt.xlabel('a')
     plt.ylabel('b')
-    aa=np.linspace(0,2,201)
-    bb=np.linspace(0,2,201)
+    aa=np.linspace(popt[1]-ea,popt[1]+ea,101)
+    bb=np.linspace(popt[2]-eb,popt[2]+eba,101)
     z=np.zeros((len(aa),len(bb)))
     for i in range (len(aa)):
       for j in range(len(bb)):
@@ -403,17 +403,18 @@ def reader(directory,file_pattern,output_folder):
     if contour is True:
       plt.show()
     plt.close()
+    
 
     plt.figure()
     plt.title("Correlation Between 'a' and 'b' (Actual Delta)")
     plt.xlabel('a')
     plt.ylabel('b')
-    aa=np.linspace(0,2,201)
-    bb=np.linspace(0,2,201)
+    aa=np.linspace(popt_act[1]-eaa,popt_act[1]+eaa,101)
+    bb=np.linspace(popt_act[2]-eba,popt_act[2]+eba,101)
     z=np.zeros((len(aa),len(bb)))
     for i in range (len(aa)):
       for j in range(len(bb)):
-        z[i,j]=chi2(bins_cntr_act,hist_act,act_err,popt[0],aa[i],bb[j],popt[3])-chi2(bins_cntr_act,hist_act,act_err,*popt_act)
+        z[j,i]=chi2(bins_cntr_act,hist_act,act_err,popt[0],aa[i],bb[j],popt[3])-chi2(bins_cntr_act,hist_act,act_err,*popt_act)
     aa,bb=np.meshgrid(aa,bb)
     cplot=plt.contour(aa,bb,z,levels=[1])
     plt.grid()
@@ -430,12 +431,12 @@ def reader(directory,file_pattern,output_folder):
     plt.title("Correlation Between 'a' and 'b' (Related Delta)")
     plt.xlabel('a')
     plt.ylabel('b')
-    aa=np.linspace(0,2,201)
-    bb=np.linspace(0,2,201)
+    aa=np.linspace(popt_cr[1]-eac,popt_cr[1]+eac,101)
+    bb=np.linspace(popt_cr[2]-ebc,popt_cr[2]+ebc,101)
     z=np.zeros((len(aa),len(bb)))
     for i in range (len(aa)):
       for j in range(len(bb)):
-        z[i,j]=chi2(bins_cntr_cr,hist_cr,cr_err,popt[0],aa[i],bb[j],popt[3])-chi2(bins_cntr_cr,hist_cr,cr_err,*popt_cr)
+        z[j,i]=chi2(bins_cntr_cr,hist_cr,cr_err,popt[0],aa[i],bb[j],popt[3])-chi2(bins_cntr_cr,hist_cr,cr_err,*popt_cr)
     aa,bb=np.meshgrid(aa,bb)
     cplot=plt.contour(aa,bb,z,levels=[1])
     plt.grid()
