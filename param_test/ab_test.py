@@ -113,7 +113,6 @@ def simp_gen(numD,numF,DT,A=None,a=None,b=None):
   norm_const=simpson(y=y_bw,x=x_bw)
   y_norm=y_bw/norm_const
 
-
   if numD==0 and numF==0:
     print("numD,numF:",0,0)
     print("No particles detected")
