@@ -295,8 +295,10 @@ def reader(directory,file_pattern,output_folder):
     yfit_par=bw_func(xfitbw,*param)
     print(*param)
     popt,pcov=curve_fit(bw_func,bins_cntr,hist,p0=[*param],sigma=hist_err,absolute_sigma=True)
-    print(popt)
-    eA=np.sqrt(pcov[0,0])
+    A_est=np.abs(popt[0]*sclr)
+    a_est=np.abs(popt[1])
+    b_est=np.abs(popt[2])
+    eA=np.sqrt(pcov[0,0])*sclr
     ea=np.sqrt(pcov[1,1])
     eb=np.sqrt(pcov[2,2])
     chi_sq=chi2(bins_cntr,hist,hist_err,*popt)
@@ -311,13 +313,13 @@ def reader(directory,file_pattern,output_folder):
     plt.xlabel("Mass (MeV/c^2)")
     plt.legend(loc='upper left')
     plt.ylim(0,max(hist)*1.1)
-    plt.figtext(0.75,0.75,"par=%s \n A=%s+/-%s\n a=%s+/-%s\n b=%s+/-%s \n chi_sq=%s"%(param,round(popt[0],3),round(eA,3),round(popt[1],3), round(ea,3),round(popt[2],3),round(eb,3),round(chi_sq,3)),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
+    plt.figtext(0.75,0.75,"par=%s \n A=%s+/-%s\n a=%s+/-%s\n b=%s+/-%s \n chi_sq=%s"%(param,round(A_est,3),round(eA,3),round(a_est,3), round(ea,3),round(b_est,3),round(eb,3),round(chi_sq,3)),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
     plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_IM_plot.png")
     plt.savefig(plot_file_path)
-    plt.show()
+    #plt.show()
     plt.close()
     print("total number of counted particles after momentum cut:", np.sum(hist))
-    quit()
+    
     #"actual" deltas
     actual=False
     plt.figure()
@@ -329,6 +331,9 @@ def reader(directory,file_pattern,output_folder):
     yfit_par_act=bw_func(xfitbw_act,*param)
     act_err=np.sqrt(hist_act)
     popt_act,pcov_act=curve_fit(bw_func,bins_cntr_act,hist_act,p0=[0.95,0.47,0.6],sigma=act_err,absolute_sigma=True)
+    Aa_est=np.abs(popt_act[0]*sclr_act)
+    aa_est=np.abs(popt_act[1])
+    ba_est=np.abs(popt_act[2])
     eAa=np.sqrt(pcov_act[0,0])
     eaa=np.sqrt(pcov_act[1,1])
     eba=np.sqrt(pcov_act[2,2])
@@ -339,7 +344,7 @@ def reader(directory,file_pattern,output_folder):
     plt.plot(xfitbw_act,yfit_par_act,'--',label='Fit w/ given param')
     plt.errorbar(bins_cntr_act,hist_act,xerr=binsize/2,yerr=act_err,fmt='.')
     plt.hlines(y=hlf_val,xmin=xfitbw_act[lft],xmax=xfitbw_act[rgt],label=f'fwhm={round(fwhm_act,3)}',colors='red')
-    plt.figtext(0.75,0.75,"par=%s \n A=%s+/-%s \n a=%s+/-%s \n b=%s+/-%s \n chi_sq=%s"%(param,round(popt_act[0],3),round(eAa,3),round(popt_act[1],3),round(eaa,3),round(popt_act[2],3),round(eba,3),round(act_chi_sq,5)),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
+    plt.figtext(0.75,0.75,"par=%s \n A=%s+/-%s \n a=%s+/-%s \n b=%s+/-%s \n chi_sq=%s"%(param,round(Aa_est,3),round(eAa,3),round(aa_est,3),round(eaa,3),round(ba_est,3),round(eba,3),round(act_chi_sq,5)),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
     plt.title("IM of Real Deltas")
     plt.xlabel("Mass (MeV/c^2)")
     plt.ylabel("Count")
@@ -362,6 +367,9 @@ def reader(directory,file_pattern,output_folder):
     yfit_par_cr=bw_func(xfitbw_act,*param)
     cr_err=np.sqrt(hist_cr)
     popt_cr,pcov_cr=curve_fit(bw_func,bins_cntr_cr,hist_cr,p0=[0.95,0.47,0.6],sigma=cr_err,absolute_sigma=True)
+    Ac_est=np.abs(popt_cr[0]*sclr_cr)
+    ac_est=np.abs(popt_cr[1])
+    bc_est=np.abs(popt_cr[2])    
     eAc=np.sqrt(pcov_cr[0,0])
     eac=np.sqrt(pcov_cr[1,1])
     ebc=np.sqrt(pcov_cr[2,2])    
@@ -372,7 +380,7 @@ def reader(directory,file_pattern,output_folder):
     plt.plot(xfitbw_cr,yfit_par_cr,'--',label='Fit w/ given param')    
     plt.errorbar(bins_cntr_cr,hist_cr,xerr=binsize_new/2,yerr=cr_err,fmt='.')
     plt.hlines(y=hlf_val,xmin=xfitbw_cr[lft],xmax=xfitbw_cr[rgt],label=f'fwhm={round(fwhm_cr,3)}',colors='red')
-    plt.figtext(0.75,0.75,"par=%s \n A=%s+/-%s \n a=%s+/-%s \n b=%s+/-%s \n chi_sq=%s"%(param,round(popt_cr[0],3),round(eAc,3),round(popt_cr[1],3),round(eac,3),round(popt_cr[2],3),round(ebc,3),round(cr_chi_sq,5)),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
+    plt.figtext(0.75,0.75,"par=%s \n A=%s+/-%s \n a=%s+/-%s \n b=%s+/-%s \n chi_sq=%s"%(param,round(Ac_est,3),round(eAc,3),round(ac_est,3),round(eac,3),round(bc_est,3),round(ebc,3),round(cr_chi_sq,5)),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
     plt.title("IM of Related Pairs")
     plt.xlabel("Mass (MeV/c^2)")
     plt.ylabel("Count")
@@ -383,7 +391,7 @@ def reader(directory,file_pattern,output_folder):
       plt.show()
     plt.close()
 
-    contour=True
+    contour=False
     plt.figure()
     plt.title("Correlation Between 'a' and 'b' (Recreated Delta)")
     plt.xlabel('a')
@@ -393,7 +401,7 @@ def reader(directory,file_pattern,output_folder):
     z=np.zeros((len(aa),len(bb)))
     for i in range (len(aa)):
       for j in range(len(bb)):
-        z[j,i]=chi2(bins_cntr,hist,hist_err,popt[0],aa[i],bb[j],popt[3])-chi2(bins_cntr,hist,hist_err,*popt)
+        z[j,i]=chi2(bins_cntr,hist,hist_err,popt[0],aa[i],bb[j])-chi2(bins_cntr,hist,hist_err,*popt)
     aa,bb=np.meshgrid(aa,bb)
     cplot=plt.contour(aa,bb,z,levels=[1])
     plt.grid()
@@ -416,7 +424,7 @@ def reader(directory,file_pattern,output_folder):
     z=np.zeros((len(aa),len(bb)))
     for i in range (len(aa)):
       for j in range(len(bb)):
-        z[j,i]=chi2(bins_cntr_act,hist_act,act_err,popt[0],aa[i],bb[j],popt[3])-chi2(bins_cntr_act,hist_act,act_err,*popt_act)
+        z[j,i]=chi2(bins_cntr_act,hist_act,act_err,popt[0],aa[i],bb[j])-chi2(bins_cntr_act,hist_act,act_err,*popt_act)
     aa,bb=np.meshgrid(aa,bb)
     cplot=plt.contour(aa,bb,z,levels=[1])
     plt.grid()
@@ -438,7 +446,7 @@ def reader(directory,file_pattern,output_folder):
     z=np.zeros((len(aa),len(bb)))
     for i in range (len(aa)):
       for j in range(len(bb)):
-        z[j,i]=chi2(bins_cntr_cr,hist_cr,cr_err,popt[0],aa[i],bb[j],popt[3])-chi2(bins_cntr_cr,hist_cr,cr_err,*popt_cr)
+        z[j,i]=chi2(bins_cntr_cr,hist_cr,cr_err,popt[0],aa[i],bb[j])-chi2(bins_cntr_cr,hist_cr,cr_err,*popt_cr)
     aa,bb=np.meshgrid(aa,bb)
     cplot=plt.contour(aa,bb,z,levels=[1])
     plt.grid()
