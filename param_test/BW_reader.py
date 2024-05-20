@@ -79,10 +79,10 @@ def poly_func(x,c0,c1,c2,c3,c4):
 def gaus_func(x,A,x0,sig):
   return A*np.exp(-((x-x0)**2)/(2*sig**2))/(np.sqrt(2*np.pi)*sig)
 
-def bw_func(x,A,a,b,scl):
+def bw_func(x,A,a,b):
   q=np.sqrt((x**2-mc.m_p**2-mc.m_pi**2)**2-4*(mc.m_p*mc.m_pi)**2)/(2*x)
   gam=(a*q**3)/(mc.m_pi**2+b*q**2)
-  return scl*(4*gam*mc.m_del0**2)/(A*((x**2-mc.m_del0**2)**2+(mc.m_del0*gam)**2))
+  return (4*gam*mc.m_del0**2)/(A*((x**2-mc.m_del0**2)**2+(mc.m_del0*gam)**2))
 
 def fwhm_calc(data,bins):
   max_value=np.max(data)
@@ -130,8 +130,8 @@ def r2_calc(f,x,y,p):
   sst=np.sum(ss_tot)
   return 1-(ssr/sst)
 
-def chi2(x,y,yerr,A,a,b,sclr):
-  return np.sum((y-bw_func(x,A,a,b,sclr))**2/yerr**2)
+def chi2(x,y,yerr,A,a,b):
+  return np.sum((y-bw_func(x,A,a,b))**2/yerr**2)
 
 fitting=False
 
@@ -290,16 +290,17 @@ def reader(directory,file_pattern,output_folder):
     hist_err=np.sqrt(hist)
     plt.errorbar(bins_cntr,hist,xerr=binsize/2,yerr=hist_err,fmt='.')
     xfitbw=np.arange(min(bins_cntr),max(bins_cntr),0.5)
-    ydef=bw_func(xfitbw,*param,scl=1)
+    ydef=bw_func(xfitbw,*param)
     sclr=max(hist)/max(ydef)
-    yfit_par=bw_func(xfitbw,*param,scl=sclr)
+    yfit_par=bw_func(xfitbw,*param)
     print(*param)
-    popt,pcov=curve_fit(bw_func,bins_cntr,hist,p0=[*param,sclr],sigma=hist_err,absolute_sigma=True)
+    popt,pcov=curve_fit(bw_func,bins_cntr,hist,p0=[*param],sigma=hist_err,absolute_sigma=True)
     eA=np.sqrt(pcov[0,0])
     ea=np.sqrt(pcov[1,1])
     eb=np.sqrt(pcov[2,2])
     chi_sq=chi2(bins_cntr,hist,hist_err,*popt)
     yfitbw=bw_func(xfitbw,*popt)
+    yfitbw=np.multiply(yfit_par,sclr)
     fwhm,hlf_val,lft,rgt,mxi=fwhm_calc(yfitbw,xfitbw)
     plt.plot(xfitbw,yfitbw,label='BW fit')
     plt.plot(xfitbw,yfit_par,'--',label='Fit w/ given param')
@@ -315,18 +316,18 @@ def reader(directory,file_pattern,output_folder):
     #plt.show()
     plt.close()
     print("total number of counted particles after momentum cut:", np.sum(hist))
-
+    quit()
     #"actual" deltas
     actual=False
     plt.figure()
     hist_act,bins_act,pack_act=plt.hist(act_IM,bins=bins,alpha=0)
     bins_cntr_act=0.5*(bins_act[:-1]+bins_act[1:])
     xfitbw_act=np.arange(min(bins_cntr_act),max(bins_cntr_act),0.5)
-    ydef_act=bw_func(xfitbw_act,*param,scl=1)
+    ydef_act=bw_func(xfitbw_act,*param)
     sclr_act=max(hist_act)/max(ydef_act)
-    yfit_par_act=bw_func(xfitbw_act,*param,scl=sclr_act)
+    yfit_par_act=bw_func(xfitbw_act,*param)
     act_err=np.sqrt(hist_act)
-    popt_act,pcov_act=curve_fit(bw_func,bins_cntr_act,hist_act,p0=[0.95,0.47,0.6,sclr_act],sigma=act_err,absolute_sigma=True)
+    popt_act,pcov_act=curve_fit(bw_func,bins_cntr_act,hist_act,p0=[0.95,0.47,0.6],sigma=act_err,absolute_sigma=True)
     eAa=np.sqrt(pcov_act[0,0])
     eaa=np.sqrt(pcov_act[1,1])
     eba=np.sqrt(pcov_act[2,2])
@@ -355,11 +356,11 @@ def reader(directory,file_pattern,output_folder):
     hist_cr,bins_cr,pack_cr=plt.hist(cr_IM,bins=np.arange(int(min(cr_IM)),int(max(cr_IM)),binsize_new),alpha=0)
     bins_cntr_cr=0.5*(bins_cr[:-1]+bins_cr[1:])
     xfitbw_cr=np.arange(min(bins_cntr_cr),max(bins_cntr_cr),0.5)    
-    ydef_cr=bw_func(xfitbw_cr,*param,scl=1)
+    ydef_cr=bw_func(xfitbw_cr,*param)
     sclr_cr=max(hist_cr)/max(ydef_cr)
-    yfit_par_cr=bw_func(xfitbw_act,*param,scl=sclr_cr)
+    yfit_par_cr=bw_func(xfitbw_act,*param)
     cr_err=np.sqrt(hist_cr)
-    popt_cr,pcov_cr=curve_fit(bw_func,bins_cntr_cr,hist_cr,p0=[0.95,0.47,0.6,sclr_cr],sigma=cr_err,absolute_sigma=True)
+    popt_cr,pcov_cr=curve_fit(bw_func,bins_cntr_cr,hist_cr,p0=[0.95,0.47,0.6],sigma=cr_err,absolute_sigma=True)
     eAc=np.sqrt(pcov_cr[0,0])
     eac=np.sqrt(pcov_cr[1,1])
     ebc=np.sqrt(pcov_cr[2,2])    
