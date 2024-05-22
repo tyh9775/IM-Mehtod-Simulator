@@ -586,7 +586,6 @@ for dn in range(0,len(mc.Dlist)):
     ptcl_dir='D_%d_F%d'%(mc.Dlist[dn],mc.Flist[fn])
     new_folder=os.path.join(abs_path,ptcl_dir)
     os.makedirs(new_folder,exist_ok=True)
-    quit()
     rel_pathA='bw_A_D%d_F%d'%(mc.Dlist[dn],mc.Flist[fn])
     directoryA=os.path.join(abs_path,rel_pathA)
     rel_patha='bw_qa_D%d_F%d'%(mc.Dlist[dn],mc.Flist[fn])
