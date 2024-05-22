@@ -148,6 +148,7 @@ def reader(directory,file_pattern,output_folder):
     new_file_path= os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_IM.csv")
     with open(new_file_path,"w",newline='') as new_file:
       new_file.close()
+
     IM_list=[] #the invariant mass of the recreated deltas from all events
     act_list=[] #momenta of "real" deltas
     act_IM=[] #inv mass of "real" deltas
@@ -175,7 +176,6 @@ def reader(directory,file_pattern,output_folder):
         eventNum=int(header[0])
         partNum=int(header[1])
         Ndelta=int(header[2])
-        Nfree=partNum-2*Ndelta
 
         plist={}
         pilist={}
@@ -293,9 +293,10 @@ def reader(directory,file_pattern,output_folder):
     ydef=bw_func(xfitbw,*param)
     sclr=max(hist)/max(ydef)
     yfit_par=bw_func(xfitbw,*param)
-    yfit_par=np.multiply(yfit_par,sclr)
     print(*param)
-    popt,pcov=curve_fit(bw_func,bins_cntr,hist,p0=[*param],sigma=hist_err,absolute_sigma=True)
+    lwrbnd=[0,0,0]
+    uprbnd=[np.inf,np.inf,np.inf]
+    popt,pcov=curve_fit(bw_func,bins_cntr,hist,p0=[*param],bounds=(lwrbnd,uprbnd ),sigma=hist_err,absolute_sigma=True)
     A_est=np.abs(popt[0]*sclr)
     a_est=np.abs(popt[1])
     b_est=np.abs(popt[2])
@@ -304,16 +305,17 @@ def reader(directory,file_pattern,output_folder):
     eb=np.sqrt(pcov[2,2])
     chi_sq=chi2(bins_cntr,hist,hist_err,*popt)
     yfitbw=bw_func(xfitbw,*popt)
+    yfit_par=np.multiply(yfit_par,sclr)
     fwhm,hlf_val,lft,rgt,mxi=fwhm_calc(yfitbw,xfitbw)
     plt.plot(xfitbw,yfitbw,label='BW fit')
-    plt.hlines(y=hlf_val,xmin=xfitbw[lft],xmax=xfitbw[rgt],label=f'fwhm={round(fwhm,3)}',colors='red')
-    plt.figtext(0.75,0.75,"par=%s \n A=%s+/-%s\n a=%s+/-%s\n b=%s+/-%s \n chi_sq=%s"%(param,round(A_est,3),round(eA,3),round(a_est,3), round(ea,3),round(b_est,3),round(eb,3),round(chi_sq,3)),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
     plt.plot(xfitbw,yfit_par,'--',label='Fit w/ given param')
+    plt.hlines(y=hlf_val,xmin=xfitbw[lft],xmax=xfitbw[rgt],label=f'fwhm={round(fwhm,3)}',colors='red')
     plt.title("Invariant Mass of Recreated Delta in Lab Frame")
     plt.ylabel("Count")
     plt.xlabel("Mass (MeV/c^2)")
     plt.legend(loc='upper left')
     plt.ylim(0,max(hist)*1.1)
+    plt.figtext(0.75,0.75,"par=%s \n A=%s+/-%s\n a=%s+/-%s\n b=%s+/-%s \n chi_sq=%s"%(param,round(A_est,3),round(eA,3),round(a_est,3), round(ea,3),round(b_est,3),round(eb,3),round(chi_sq,3)),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
     plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_IM_plot.png")
     plt.savefig(plot_file_path)
     #plt.show()
@@ -331,21 +333,21 @@ def reader(directory,file_pattern,output_folder):
     yfit_par_act=bw_func(xfitbw_act,*param)
     yfit_par_act=np.multiply(yfit_par_act,sclr_act)
     act_err=np.sqrt(hist_act)
-    plt.errorbar(bins_cntr_act,hist_act,xerr=binsize/2,yerr=act_err,fmt='.')    
-    popt_act,pcov_act=curve_fit(bw_func,bins_cntr_act,hist_act,p0=[0.95,0.47,0.6],sigma=act_err,absolute_sigma=True)
+    popt_act,pcov_act=curve_fit(bw_func,bins_cntr_act,hist_act,p0=[0.95,0.47,0.6],bounds=(lwrbnd,uprbnd ),sigma=act_err,absolute_sigma=True)
     Aa_est=np.abs(popt_act[0]*sclr_act)
     aa_est=np.abs(popt_act[1])
     ba_est=np.abs(popt_act[2])
-    eAa=np.sqrt(pcov_act[0,0])
+    eAa=np.sqrt(pcov_act[0,0])*sclr_act
     eaa=np.sqrt(pcov_act[1,1])
     eba=np.sqrt(pcov_act[2,2])
     act_chi_sq=chi2(bins_cntr_act,hist_act,act_err,*popt_act)
     yfitbw_act=bw_func(xfitbw_act,*popt_act)
     fwhm_act,hlf_val,lft,rgt,mxi=fwhm_calc(yfitbw_act,xfitbw_act)
     plt.plot(xfitbw_act,yfitbw_act,label='BW fit')
+    plt.plot(xfitbw_act,yfit_par_act,'--',label='Fit w/ given param')
+    plt.errorbar(bins_cntr_act,hist_act,xerr=binsize/2,yerr=act_err,fmt='.')
     plt.hlines(y=hlf_val,xmin=xfitbw_act[lft],xmax=xfitbw_act[rgt],label=f'fwhm={round(fwhm_act,3)}',colors='red')
     plt.figtext(0.75,0.75,"par=%s \n A=%s+/-%s \n a=%s+/-%s \n b=%s+/-%s \n chi_sq=%s"%(param,round(Aa_est,3),round(eAa,3),round(aa_est,3),round(eaa,3),round(ba_est,3),round(eba,3),round(act_chi_sq,5)),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
-    plt.plot(xfitbw_act,yfit_par_act,'--',label='Fit w/ given param')
     plt.title("IM of Real Deltas")
     plt.xlabel("Mass (MeV/c^2)")
     plt.ylabel("Count")
@@ -365,24 +367,24 @@ def reader(directory,file_pattern,output_folder):
     xfitbw_cr=np.arange(min(bins_cntr_cr),max(bins_cntr_cr),0.5)    
     ydef_cr=bw_func(xfitbw_cr,*param)
     sclr_cr=max(hist_cr)/max(ydef_cr)
-    yfit_par_cr=bw_func(xfitbw_cr,*param)
+    yfit_par_cr=bw_func(xfitbw_act,*param)
     yfit_par_cr=np.multiply(yfit_par_cr,sclr_cr)
     cr_err=np.sqrt(hist_cr)
-    plt.errorbar(bins_cntr_cr,hist_cr,xerr=binsize_new/2,yerr=cr_err,fmt='.')
-    popt_cr,pcov_cr=curve_fit(bw_func,bins_cntr_cr,hist_cr,p0=[0.95,0.47,0.6],sigma=cr_err,absolute_sigma=True)
+    popt_cr,pcov_cr=curve_fit(bw_func,bins_cntr_cr,hist_cr,p0=[0.95,0.47,0.6],bounds=(lwrbnd,uprbnd ),sigma=cr_err,absolute_sigma=True)
     Ac_est=np.abs(popt_cr[0]*sclr_cr)
     ac_est=np.abs(popt_cr[1])
     bc_est=np.abs(popt_cr[2])    
-    eAc=np.sqrt(pcov_cr[0,0])
+    eAc=np.sqrt(pcov_cr[0,0])*sclr_cr
     eac=np.sqrt(pcov_cr[1,1])
     ebc=np.sqrt(pcov_cr[2,2])    
     cr_chi_sq=chi2(bins_cntr_cr,hist_cr,cr_err,*popt)
     yfitbw_cr=bw_func(xfitbw_cr,*popt_cr)
     fwhm_cr,hlf_val,lft,rgt,mxi=fwhm_calc(yfitbw_cr,xfitbw_cr)
-    plt.plot(xfitbw_cr,yfitbw_cr,label='BW fit')  
+    plt.plot(xfitbw_cr,yfitbw_cr,label='BW fit')
+    plt.plot(xfitbw_cr,yfit_par_cr,'--',label='Fit w/ given param')    
+    plt.errorbar(bins_cntr_cr,hist_cr,xerr=binsize_new/2,yerr=cr_err,fmt='.')
     plt.hlines(y=hlf_val,xmin=xfitbw_cr[lft],xmax=xfitbw_cr[rgt],label=f'fwhm={round(fwhm_cr,3)}',colors='red')
     plt.figtext(0.75,0.75,"par=%s \n A=%s+/-%s \n a=%s+/-%s \n b=%s+/-%s \n chi_sq=%s"%(param,round(Ac_est,3),round(eAc,3),round(ac_est,3),round(eac,3),round(bc_est,3),round(ebc,3),round(cr_chi_sq,5)),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
-    plt.plot(xfitbw_cr,yfit_par_cr,'--',label='Fit w/ given param')  
     plt.title("IM of Related Pairs")
     plt.xlabel("Mass (MeV/c^2)")
     plt.ylabel("Count")
@@ -393,25 +395,24 @@ def reader(directory,file_pattern,output_folder):
       plt.show()
     plt.close()
 
-    #if Nfree==0:
     contour=False
     plt.figure()
     plt.title("Correlation Between 'a' and 'b' (Recreated Delta)")
     plt.xlabel('a')
     plt.ylabel('b')
-    aa=np.linspace(popt[1]-ea,popt[1]+ea,101)
-    bb=np.linspace(popt[2]-eb,popt[2]+eba,101)
+    aa=np.linspace(a_est-ea,a_est+ea,101)
+    bb=np.linspace(b_est-eb,b_est+eb,101)
     z=np.zeros((len(aa),len(bb)))
     for i in range (len(aa)):
       for j in range(len(bb)):
         z[j,i]=chi2(bins_cntr,hist,hist_err,popt[0],aa[i],bb[j])-chi2(bins_cntr,hist,hist_err,*popt)
     aa,bb=np.meshgrid(aa,bb)
-    cplot=plt.contour(aa,bb,z,levels=[1])
+    cplot=plt.contour(aa,bb,z,levels=[1,2])
     plt.grid()
-    plt.axhline(popt[2])
-    plt.axvline(popt[1])
+    plt.axhline(b_est)
+    plt.axvline(a_est)
     plt.clabel(cplot,inline=1,)
-    plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_cntr_plot.png")
+    plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_cntr_plot_ab.png")
     plt.savefig(plot_file_path)    
     if contour is True:
       plt.show()
@@ -422,19 +423,19 @@ def reader(directory,file_pattern,output_folder):
     plt.title("Correlation Between 'a' and 'b' (Actual Delta)")
     plt.xlabel('a')
     plt.ylabel('b')
-    aa=np.linspace(popt_act[1]-eaa,popt_act[1]+eaa,101)
-    bb=np.linspace(popt_act[2]-eba,popt_act[2]+eba,101)
+    aa=np.linspace(aa_est-eaa,aa_est+eaa,101)
+    bb=np.linspace(ba_est-eba,ba_est+eba,101)
     z=np.zeros((len(aa),len(bb)))
     for i in range (len(aa)):
       for j in range(len(bb)):
-        z[j,i]=chi2(bins_cntr_act,hist_act,act_err,popt[0],aa[i],bb[j])-chi2(bins_cntr_act,hist_act,act_err,*popt_act)
+        z[j,i]=chi2(bins_cntr_act,hist_act,act_err,popt_act[0],aa[i],bb[j])-chi2(bins_cntr_act,hist_act,act_err,*popt_act)
     aa,bb=np.meshgrid(aa,bb)
-    cplot=plt.contour(aa,bb,z,levels=[1])
+    cplot=plt.contour(aa,bb,z,levels=[1,2])
     plt.grid()
-    plt.axhline(popt[2])
-    plt.axvline(popt[1])
+    plt.axhline(ba_est)
+    plt.axvline(aa_est)
     plt.clabel(cplot,inline=1)
-    plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_act_cntr_plot.png")
+    plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_act_cntr_plot_ab.png")
     plt.savefig(plot_file_path)    
     if contour is True:
       plt.show()
@@ -444,24 +445,159 @@ def reader(directory,file_pattern,output_folder):
     plt.title("Correlation Between 'a' and 'b' (Related Delta)")
     plt.xlabel('a')
     plt.ylabel('b')
-    aa=np.linspace(popt_cr[1]-eac,popt_cr[1]+eac,101)
-    bb=np.linspace(popt_cr[2]-ebc,popt_cr[2]+ebc,101)
+    aa=np.linspace(ac_est-eac,ac_est+eac,101)
+    bb=np.linspace(bc_est-ebc,bc_est+ebc,101)
     z=np.zeros((len(aa),len(bb)))
     for i in range (len(aa)):
       for j in range(len(bb)):
-        z[j,i]=chi2(bins_cntr_cr,hist_cr,cr_err,popt[0],aa[i],bb[j])-chi2(bins_cntr_cr,hist_cr,cr_err,*popt_cr)
+        z[j,i]=chi2(bins_cntr_cr,hist_cr,cr_err,popt_cr[0],aa[i],bb[j])-chi2(bins_cntr_cr,hist_cr,cr_err,*popt_cr)
     aa,bb=np.meshgrid(aa,bb)
-    cplot=plt.contour(aa,bb,z,levels=[1])
+    cplot=plt.contour(aa,bb,z,levels=[1,2])
     plt.grid()
-    plt.axhline(popt[2])
-    plt.axvline(popt[1])
+    plt.axhline(bc_est)
+    plt.axvline(ac_est)
     plt.clabel(cplot,inline=1)
-    plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_cr_cntr_plot.png")
+    plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_cr_cntr_plot_ab.png")
     plt.savefig(plot_file_path)
     if contour is True:
       plt.show()
     plt.close()
 
+
+    plt.figure()
+    plt.title("Correlation Between 'A' and 'a' (Recreated Delta)")
+    plt.xlabel('A')
+    plt.ylabel('a')
+    AA=np.linspace(A_est-eA,A_est+eA,101)
+    aa=np.linspace(a_est-ea,a_est+ea,101)
+    z=np.zeros((len(AA),len(aa)))
+    for i in range (len(AA)):
+      for j in range(len(aa)):
+        z[j,i]=chi2(bins_cntr,hist,hist_err,AA[i]/sclr,aa[j],popt[2])-chi2(bins_cntr,hist,hist_err,*popt)
+    AA,aa=np.meshgrid(AA,aa)
+    cplot=plt.contour(AA,aa,z,levels=[1,2])
+    plt.grid()
+    plt.axhline(a_est)
+    plt.axvline(A_est)
+    plt.clabel(cplot,inline=1,)
+    plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_cntr_plot_Aa.png")
+    plt.savefig(plot_file_path)    
+    if contour is True:
+      plt.show()
+    plt.close()
+    
+
+    plt.figure()
+    plt.title("Correlation Between 'A' and 'a' (Actual Delta)")
+    plt.xlabel('A')
+    plt.ylabel('a')
+    AA=np.linspace(Aa_est-eAa,Aa_est+eAa,101)
+    aa=np.linspace(aa_est-eaa,aa_est+eaa,101)
+    z=np.zeros((len(aa),len(bb)))
+    for i in range (len(AA)):
+      for j in range(len(aa)):
+        z[j,i]=chi2(bins_cntr_act,hist_act,act_err,AA[i]/sclr_act,aa[j],popt_act[2])-chi2(bins_cntr_act,hist_act,act_err,*popt_act)
+    AA,aa=np.meshgrid(AA,aa)
+    cplot=plt.contour(AA,aa,z,levels=[1,2])
+    plt.grid()
+    plt.axhline(aa_est)
+    plt.axvline(Aa_est)
+    plt.clabel(cplot,inline=1)
+    plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_act_cntr_plot_Aa.png")
+    plt.savefig(plot_file_path)    
+    if contour is True:
+      plt.show()
+    plt.close()
+
+    plt.figure()
+    plt.title("Correlation Between 'A' and 'a' (Related Delta)")
+    plt.xlabel('A')
+    plt.ylabel('a')
+    AA=np.linspace(Ac_est-eAc,Ac_est+eAc,101)
+    aa=np.linspace(ac_est-eac,ac_est+eac,101)
+    z=np.zeros((len(AA),len(aa)))
+    for i in range (len(AA)):
+      for j in range(len(aa)):
+        z[j,i]=chi2(bins_cntr_cr,hist_cr,cr_err,AA[i]/sclr_cr,aa[j],popt_cr[2])-chi2(bins_cntr_cr,hist_cr,cr_err,*popt_cr)
+    AA,aa=np.meshgrid(AA,aa)
+    cplot=plt.contour(AA,aa,z,levels=[1,2])
+    plt.grid()
+    plt.axhline(ac_est)
+    plt.axvline(Ac_est)
+    plt.clabel(cplot,inline=1)
+    plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_cr_cntr_plot_Aa.png")
+    plt.savefig(plot_file_path)
+    if contour is True:
+      plt.show()
+    plt.close()
+
+
+    plt.figure()
+    plt.title("Correlation Between 'b' and 'A' (Recreated Delta)")
+    plt.xlabel('b')
+    plt.ylabel('A')
+    bb=np.linspace(b_est-eb,b_est+eb,101)
+    AA=np.linspace(A_est-eA,A_est+eA,101)
+    z=np.zeros((len(bb),len(AA)))
+    for i in range (len(bb)):
+      for j in range(len(AA)):
+        z[j,i]=chi2(bins_cntr,hist,hist_err,AA[j]/sclr,popt[1],bb[i])-chi2(bins_cntr,hist,hist_err,*popt)
+    bb,AA=np.meshgrid(bb,AA)
+    cplot=plt.contour(bb,AA,z,levels=[1,2])
+    plt.grid()
+    plt.axhline(A_est)
+    plt.axvline(b_est)
+    plt.clabel(cplot,inline=1,)
+    plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_cntr_plot_bA.png")
+    plt.savefig(plot_file_path)    
+    if contour is True:
+      plt.show()
+    plt.close()
+    
+
+    plt.figure()
+    plt.title("Correlation Between 'b' and 'A' (Actual Delta)")
+    plt.xlabel('b')
+    plt.ylabel('A')
+    bb=np.linspace(ba_est-eba,b_est+eba,101)
+    AA=np.linspace(Aa_est-eAa,A_est+eAa,101)
+    z=np.zeros((len(bb),len(AA)))
+    for i in range (len(bb)):
+      for j in range(len(AA)):
+        z[j,i]=chi2(bins_cntr_act,hist_act,act_err,AA[j]/sclr_act,popt_act[1],bb[i])-chi2(bins_cntr_act,hist_act,act_err,*popt_act)
+    bb,AA=np.meshgrid(bb,AA)
+    cplot=plt.contour(bb,AA,z,levels=[1,2])
+    plt.grid()
+    plt.axhline(Aa_est)
+    plt.axvline(ba_est)
+    plt.clabel(cplot,inline=1)
+    plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_act_cntr_plot_bA.png")
+    plt.savefig(plot_file_path)    
+    if contour is True:
+      plt.show()
+    plt.close()
+
+    plt.figure()
+    plt.title("Correlation Between 'b' and 'A' (Related Delta)")
+    plt.xlabel('b')
+    plt.ylabel('A')
+    bb=np.linspace(bc_est-ebc,bc_est+ebc,101)
+    AA=np.linspace(Ac_est-eAc,Ac_est+eAc,101)
+    z=np.zeros((len(bb),len(AA)))
+    for i in range (len(bb)):
+      for j in range(len(AA)):
+        z[j,i]=chi2(bins_cntr_cr,hist_cr,cr_err,AA[j]/sclr_cr,popt_cr[1],bb[i])-chi2(bins_cntr_cr,hist_cr,cr_err,*popt_cr)
+    bb,AA=np.meshgrid(bb,AA)
+    cplot=plt.contour(bb,AA,z,levels=[1,2])
+    plt.grid()
+    plt.axhline(Ac_est)
+    plt.axvline(bc_est)
+    plt.clabel(cplot,inline=1)
+    plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_cr_cntr_plot_bA.png")
+    plt.savefig(plot_file_path)
+    if contour is True:
+      plt.show()
+    plt.close()
 
     rmnt=False
     plt.figure()
@@ -569,7 +705,7 @@ def reader(directory,file_pattern,output_folder):
 abs_path=os.path.dirname(__file__)
 
 for dn in range(0,len(mc.Dlist)):
-  for fn in range(0,len(mc.Flist)):
+  for fn in range(1,len(mc.Flist)):
     print("Ndelta:",mc.Dlist[dn],",","Nfree:",mc.Flist[fn])
     ptcl_dir='D_%d_F_%d'%(mc.Dlist[dn],mc.Flist[fn])
     directoryA=os.path.join(abs_path,ptcl_dir,'bw_A')
