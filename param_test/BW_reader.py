@@ -294,7 +294,9 @@ def reader(directory,file_pattern,output_folder):
     sclr=max(hist)/max(ydef)
     yfit_par=bw_func(xfitbw,*param)
     print(*param)
-    popt,pcov=curve_fit(bw_func,bins_cntr,hist,p0=[*param],sigma=hist_err,absolute_sigma=True)
+    lwrbnd=[0,0,0]
+    uprbnd=[np.inf,np.inf,np.inf]
+    popt,pcov=curve_fit(bw_func,bins_cntr,hist,p0=[*param],bounds=(lwrbnd,uprbnd ),sigma=hist_err,absolute_sigma=True)
     A_est=np.abs(popt[0]*sclr)
     a_est=np.abs(popt[1])
     b_est=np.abs(popt[2])
@@ -330,7 +332,7 @@ def reader(directory,file_pattern,output_folder):
     sclr_act=max(hist_act)/max(ydef_act)
     yfit_par_act=bw_func(xfitbw_act,*param)
     act_err=np.sqrt(hist_act)
-    popt_act,pcov_act=curve_fit(bw_func,bins_cntr_act,hist_act,p0=[0.95,0.47,0.6],sigma=act_err,absolute_sigma=True)
+    popt_act,pcov_act=curve_fit(bw_func,bins_cntr_act,hist_act,p0=[0.95,0.47,0.6],bounds=(lwrbnd,uprbnd ),sigma=act_err,absolute_sigma=True)
     Aa_est=np.abs(popt_act[0]*sclr_act)
     aa_est=np.abs(popt_act[1])
     ba_est=np.abs(popt_act[2])
@@ -366,7 +368,7 @@ def reader(directory,file_pattern,output_folder):
     sclr_cr=max(hist_cr)/max(ydef_cr)
     yfit_par_cr=bw_func(xfitbw_act,*param)
     cr_err=np.sqrt(hist_cr)
-    popt_cr,pcov_cr=curve_fit(bw_func,bins_cntr_cr,hist_cr,p0=[0.95,0.47,0.6],sigma=cr_err,absolute_sigma=True)
+    popt_cr,pcov_cr=curve_fit(bw_func,bins_cntr_cr,hist_cr,p0=[0.95,0.47,0.6],bounds=(lwrbnd,uprbnd ),sigma=cr_err,absolute_sigma=True)
     Ac_est=np.abs(popt_cr[0]*sclr_cr)
     ac_est=np.abs(popt_cr[1])
     bc_est=np.abs(popt_cr[2])    
@@ -397,13 +399,13 @@ def reader(directory,file_pattern,output_folder):
     plt.xlabel('a')
     plt.ylabel('b')
     aa=np.linspace(popt[1]-ea,popt[1]+ea,101)
-    bb=np.linspace(popt[2]-eb,popt[2]+eba,101)
+    bb=np.linspace(popt[2]-eb,popt[2]+eb,101)
     z=np.zeros((len(aa),len(bb)))
     for i in range (len(aa)):
       for j in range(len(bb)):
         z[j,i]=chi2(bins_cntr,hist,hist_err,popt[0],aa[i],bb[j])-chi2(bins_cntr,hist,hist_err,*popt)
     aa,bb=np.meshgrid(aa,bb)
-    cplot=plt.contour(aa,bb,z,levels=[1])
+    cplot=plt.contour(aa,bb,z,levels=[1,2])
     plt.grid()
     plt.axhline(popt[2])
     plt.axvline(popt[1])
@@ -424,12 +426,12 @@ def reader(directory,file_pattern,output_folder):
     z=np.zeros((len(aa),len(bb)))
     for i in range (len(aa)):
       for j in range(len(bb)):
-        z[j,i]=chi2(bins_cntr_act,hist_act,act_err,popt[0],aa[i],bb[j])-chi2(bins_cntr_act,hist_act,act_err,*popt_act)
+        z[j,i]=chi2(bins_cntr_act,hist_act,act_err,popt_act[0],aa[i],bb[j])-chi2(bins_cntr_act,hist_act,act_err,*popt_act)
     aa,bb=np.meshgrid(aa,bb)
-    cplot=plt.contour(aa,bb,z,levels=[1])
+    cplot=plt.contour(aa,bb,z,levels=[1,2])
     plt.grid()
-    plt.axhline(popt[2])
-    plt.axvline(popt[1])
+    plt.axhline(popt_act[2])
+    plt.axvline(popt_act[1])
     plt.clabel(cplot,inline=1)
     plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_act_cntr_plot.png")
     plt.savefig(plot_file_path)    
@@ -446,12 +448,12 @@ def reader(directory,file_pattern,output_folder):
     z=np.zeros((len(aa),len(bb)))
     for i in range (len(aa)):
       for j in range(len(bb)):
-        z[j,i]=chi2(bins_cntr_cr,hist_cr,cr_err,popt[0],aa[i],bb[j])-chi2(bins_cntr_cr,hist_cr,cr_err,*popt_cr)
+        z[j,i]=chi2(bins_cntr_cr,hist_cr,cr_err,popt_cr[0],aa[i],bb[j])-chi2(bins_cntr_cr,hist_cr,cr_err,*popt_cr)
     aa,bb=np.meshgrid(aa,bb)
-    cplot=plt.contour(aa,bb,z,levels=[1])
+    cplot=plt.contour(aa,bb,z,levels=[1,2])
     plt.grid()
-    plt.axhline(popt[2])
-    plt.axvline(popt[1])
+    plt.axhline(popt_cr[2])
+    plt.axvline(popt_cr[1])
     plt.clabel(cplot,inline=1)
     plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_cr_cntr_plot.png")
     plt.savefig(plot_file_path)
@@ -459,6 +461,141 @@ def reader(directory,file_pattern,output_folder):
       plt.show()
     plt.close()
 
+
+    plt.figure()
+    plt.title("Correlation Between 'A' and 'a' (Recreated Delta)")
+    plt.xlabel('A')
+    plt.ylabel('a')
+    AA=np.linspace(popt[0]-eA,popt[0]+eA,101)
+    aa=np.linspace(popt[1]-ea,popt[1]+ea,101)
+    z=np.zeros((len(AA),len(aa)))
+    for i in range (len(AA)):
+      for j in range(len(aa)):
+        z[j,i]=chi2(bins_cntr,hist,hist_err,AA[i],aa[j],popt[2])-chi2(bins_cntr,hist,hist_err,*popt)
+    AA,aa=np.meshgrid(AA,aa)
+    cplot=plt.contour(AA,aa,z,levels=[1,2])
+    plt.grid()
+    plt.axhline(popt[1])
+    plt.axvline(popt[0])
+    plt.clabel(cplot,inline=1,)
+    plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_cntr_plot.png")
+    plt.savefig(plot_file_path)    
+    if contour is True:
+      plt.show()
+    plt.close()
+    
+
+    plt.figure()
+    plt.title("Correlation Between 'A' and 'a' (Actual Delta)")
+    plt.xlabel('A')
+    plt.ylabel('a')
+    AA=np.linspace(popt_act[0]-eAa,popt_act[0]+eAa,101)
+    aa=np.linspace(popt_act[1]-eaa,popt_act[1]+eaa,101)
+    z=np.zeros((len(aa),len(bb)))
+    for i in range (len(AA)):
+      for j in range(len(aa)):
+        z[j,i]=chi2(bins_cntr_act,hist_act,act_err,AA[i],aa[j],popt_act[2])-chi2(bins_cntr_act,hist_act,act_err,*popt_act)
+    AA,aa=np.meshgrid(AA,aa)
+    cplot=plt.contour(AA,aa,z,levels=[1,2])
+    plt.grid()
+    plt.axhline(popt_act[1])
+    plt.axvline(popt_act[0])
+    plt.clabel(cplot,inline=1)
+    plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_act_cntr_plot.png")
+    plt.savefig(plot_file_path)    
+    if contour is True:
+      plt.show()
+    plt.close()
+
+    plt.figure()
+    plt.title("Correlation Between 'A' and 'a' (Related Delta)")
+    plt.xlabel('A')
+    plt.ylabel('a')
+    AA=np.linspace(popt_cr[0]-eAc,popt_cr[0]+eAc,101)
+    aa=np.linspace(popt_cr[1]-eac,popt_cr[1]+eac,101)
+    z=np.zeros((len(AA),len(aa)))
+    for i in range (len(AA)):
+      for j in range(len(aa)):
+        z[j,i]=chi2(bins_cntr_cr,hist_cr,cr_err,AA[i],aa[j],popt_cr[2])-chi2(bins_cntr_cr,hist_cr,cr_err,*popt_cr)
+    AA,aa=np.meshgrid(AA,aa)
+    cplot=plt.contour(AA,aa,z,levels=[1,2])
+    plt.grid()
+    plt.axhline(popt_cr[1])
+    plt.axvline(popt_cr[0])
+    plt.clabel(cplot,inline=1)
+    plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_cr_cntr_plot.png")
+    plt.savefig(plot_file_path)
+    if contour is True:
+      plt.show()
+    plt.close()
+
+
+    plt.figure()
+    plt.title("Correlation Between 'b' and 'A' (Recreated Delta)")
+    plt.xlabel('b')
+    plt.ylabel('A')
+    bb=np.linspace(popt[2]-eb,popt[2]+eb,101)
+    AA=np.linspace(popt[0]-eA,popt[0]+eA,101)
+    z=np.zeros((len(bb),len(AA)))
+    for i in range (len(bb)):
+      for j in range(len(AA)):
+        z[j,i]=chi2(bins_cntr,hist,hist_err,AA[j],popt[1],bb[i])-chi2(bins_cntr,hist,hist_err,*popt)
+    bb,AA=np.meshgrid(bb,AA)
+    cplot=plt.contour(bb,AA,z,levels=[1,2])
+    plt.grid()
+    plt.axhline(popt[0])
+    plt.axvline(popt[2])
+    plt.clabel(cplot,inline=1,)
+    plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_cntr_plot.png")
+    plt.savefig(plot_file_path)    
+    if contour is True:
+      plt.show()
+    plt.close()
+    
+
+    plt.figure()
+    plt.title("Correlation Between 'b' and 'A' (Actual Delta)")
+    plt.xlabel('b')
+    plt.ylabel('A')
+    bb=np.linspace(popt_act[2]-eba,popt_act[2]+eba,101)
+    AA=np.linspace(popt_act[0]-eAa,popt_act[0]+eAa,101)
+    z=np.zeros((len(bb),len(AA)))
+    for i in range (len(bb)):
+      for j in range(len(AA)):
+        z[j,i]=chi2(bins_cntr_act,hist_act,act_err,AA[j],popt_act[1],bb[i])-chi2(bins_cntr_act,hist_act,act_err,*popt_act)
+    bb,AA=np.meshgrid(bb,AA)
+    cplot=plt.contour(bb,AA,z,levels=[1,2])
+    plt.grid()
+    plt.axhline(popt_act[0])
+    plt.axvline(popt_act[2])
+    plt.clabel(cplot,inline=1)
+    plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_act_cntr_plot.png")
+    plt.savefig(plot_file_path)    
+    if contour is True:
+      plt.show()
+    plt.close()
+
+    plt.figure()
+    plt.title("Correlation Between 'b' and 'A' (Related Delta)")
+    plt.xlabel('b')
+    plt.ylabel('A')
+    bb=np.linspace(popt_cr[2]-ebc,popt_cr[2]+ebc,101)
+    AA=np.linspace(popt_cr[0]-eAc,popt_cr[0]+eAc,101)
+    z=np.zeros((len(bb),len(AA)))
+    for i in range (len(bb)):
+      for j in range(len(AA)):
+        z[j,i]=chi2(bins_cntr_cr,hist_cr,cr_err,AA[j],popt_cr[1],bb[i])-chi2(bins_cntr_cr,hist_cr,cr_err,*popt_cr)
+    bb,AA=np.meshgrid(bb,AA)
+    cplot=plt.contour(bb,AA,z,levels=[1,2])
+    plt.grid()
+    plt.axhline(popt_cr[0])
+    plt.axvline(popt_cr[2])
+    plt.clabel(cplot,inline=1)
+    plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_cr_cntr_plot.png")
+    plt.savefig(plot_file_path)
+    if contour is True:
+      plt.show()
+    plt.close()
 
     rmnt=False
     plt.figure()

@@ -102,15 +102,15 @@ def param_reader(filename):
   b=re.findall(r'_b_', filename)
   numbers=[float(num) for num in numbers]
   if len(A) != 0:
-    A=numbers[0]
+    A=numbers[-1]
   else:
     A=0.95
   if len(a) != 0:
-    a=numbers[0]
+    a=numbers[-1]
   else:
     a=0.47
   if len(b) != 0:
-    b=numbers[0]
+    b=numbers[-1]
   else:
     b=0.6
   param=[A,a,b]
@@ -148,7 +148,6 @@ def reader(directory,file_pattern,output_folder):
     new_file_path= os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_IM.csv")
     with open(new_file_path,"w",newline='') as new_file:
       new_file.close()
-
     IM_list=[] #the invariant mass of the recreated deltas from all events
     act_list=[] #momenta of "real" deltas
     act_IM=[] #inv mass of "real" deltas
@@ -296,9 +295,6 @@ def reader(directory,file_pattern,output_folder):
     yfit_par=bw_func(xfitbw,*param)
     yfit_par=np.multiply(yfit_par,sclr)
     print(*param)
-    #only do the curve fit if there are no free particles
-    #otherwise, just plot the BW function over the data
-    #if Nfree==0:
     popt,pcov=curve_fit(bw_func,bins_cntr,hist,p0=[*param],sigma=hist_err,absolute_sigma=True)
     A_est=np.abs(popt[0]*sclr)
     a_est=np.abs(popt[1])
@@ -312,8 +308,6 @@ def reader(directory,file_pattern,output_folder):
     plt.plot(xfitbw,yfitbw,label='BW fit')
     plt.hlines(y=hlf_val,xmin=xfitbw[lft],xmax=xfitbw[rgt],label=f'fwhm={round(fwhm,3)}',colors='red')
     plt.figtext(0.75,0.75,"par=%s \n A=%s+/-%s\n a=%s+/-%s\n b=%s+/-%s \n chi_sq=%s"%(param,round(A_est,3),round(eA,3),round(a_est,3), round(ea,3),round(b_est,3),round(eb,3),round(chi_sq,3)),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
-    #else:
-    #plt.figtext(0.75,0.75,"par=%s"%(param),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
     plt.plot(xfitbw,yfit_par,'--',label='Fit w/ given param')
     plt.title("Invariant Mass of Recreated Delta in Lab Frame")
     plt.ylabel("Count")
@@ -338,7 +332,6 @@ def reader(directory,file_pattern,output_folder):
     yfit_par_act=np.multiply(yfit_par_act,sclr_act)
     act_err=np.sqrt(hist_act)
     plt.errorbar(bins_cntr_act,hist_act,xerr=binsize/2,yerr=act_err,fmt='.')    
-    #if Nfree==0:
     popt_act,pcov_act=curve_fit(bw_func,bins_cntr_act,hist_act,p0=[0.95,0.47,0.6],sigma=act_err,absolute_sigma=True)
     Aa_est=np.abs(popt_act[0]*sclr_act)
     aa_est=np.abs(popt_act[1])
@@ -352,8 +345,6 @@ def reader(directory,file_pattern,output_folder):
     plt.plot(xfitbw_act,yfitbw_act,label='BW fit')
     plt.hlines(y=hlf_val,xmin=xfitbw_act[lft],xmax=xfitbw_act[rgt],label=f'fwhm={round(fwhm_act,3)}',colors='red')
     plt.figtext(0.75,0.75,"par=%s \n A=%s+/-%s \n a=%s+/-%s \n b=%s+/-%s \n chi_sq=%s"%(param,round(Aa_est,3),round(eAa,3),round(aa_est,3),round(eaa,3),round(ba_est,3),round(eba,3),round(act_chi_sq,5)),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
-    #else:
-    #plt.figtext(0.75,0.75,"par=%s"%(param),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
     plt.plot(xfitbw_act,yfit_par_act,'--',label='Fit w/ given param')
     plt.title("IM of Real Deltas")
     plt.xlabel("Mass (MeV/c^2)")
@@ -378,7 +369,6 @@ def reader(directory,file_pattern,output_folder):
     yfit_par_cr=np.multiply(yfit_par_cr,sclr_cr)
     cr_err=np.sqrt(hist_cr)
     plt.errorbar(bins_cntr_cr,hist_cr,xerr=binsize_new/2,yerr=cr_err,fmt='.')
-    #if Nfree==0:
     popt_cr,pcov_cr=curve_fit(bw_func,bins_cntr_cr,hist_cr,p0=[0.95,0.47,0.6],sigma=cr_err,absolute_sigma=True)
     Ac_est=np.abs(popt_cr[0]*sclr_cr)
     ac_est=np.abs(popt_cr[1])
@@ -392,8 +382,6 @@ def reader(directory,file_pattern,output_folder):
     plt.plot(xfitbw_cr,yfitbw_cr,label='BW fit')  
     plt.hlines(y=hlf_val,xmin=xfitbw_cr[lft],xmax=xfitbw_cr[rgt],label=f'fwhm={round(fwhm_cr,3)}',colors='red')
     plt.figtext(0.75,0.75,"par=%s \n A=%s+/-%s \n a=%s+/-%s \n b=%s+/-%s \n chi_sq=%s"%(param,round(Ac_est,3),round(eAc,3),round(ac_est,3),round(eac,3),round(bc_est,3),round(ebc,3),round(cr_chi_sq,5)),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
-    #else:
-    #plt.figtext(0.75,0.75,"par=%s"%(param),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
     plt.plot(xfitbw_cr,yfit_par_cr,'--',label='Fit w/ given param')  
     plt.title("IM of Related Pairs")
     plt.xlabel("Mass (MeV/c^2)")
@@ -583,24 +571,18 @@ abs_path=os.path.dirname(__file__)
 for dn in range(0,len(mc.Dlist)):
   for fn in range(0,len(mc.Flist)):
     print("Ndelta:",mc.Dlist[dn],",","Nfree:",mc.Flist[fn])
-    ptcl_dir='D_%d_F%d'%(mc.Dlist[dn],mc.Flist[fn])
-    new_folder=os.path.join(abs_path,ptcl_dir)
-    rel_pathA=os.path.join(new_folder,'bw_A')
-    directoryA=os.path.join(abs_path,rel_pathA)
-    graph_folderA=os.path.join(directoryA,"results")
-    os.makedirs(graph_folderA,exist_ok=True)
-    
-    rel_patha='bw_qa_D%d_F%d'%(mc.Dlist[dn],mc.Flist[fn])
-    directorya=os.path.join(abs_path,rel_patha)
-    rel_pathb='bw_qb_D%d_F%d'%(mc.Dlist[dn],mc.Flist[fn])
-    directoryb=os.path.join(abs_path,rel_pathb)
+    ptcl_dir='D_%d_F_%d'%(mc.Dlist[dn],mc.Flist[fn])
+    directoryA=os.path.join(abs_path,ptcl_dir,'bw_A')
+    directorya=os.path.join(abs_path,ptcl_dir,'bw_qa')
+    directoryb=os.path.join(abs_path,ptcl_dir,'bw_qb')
     file_patternA="BW_A_*.csv"
     file_patterna="BW_a_*.csv"
     file_patternb="BW_b_*.csv"
-    
+    #output folders
+    graph_folderA=os.path.join(directoryA,"results")
     graph_foldera=os.path.join(directorya,"results")
     graph_folderb=os.path.join(directoryb,"results")
-    
+    os.makedirs(graph_folderA,exist_ok=True)
     os.makedirs(graph_foldera,exist_ok=True)
     os.makedirs(graph_folderb,exist_ok=True)
 

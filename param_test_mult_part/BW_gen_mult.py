@@ -294,6 +294,7 @@ def generator(numD,numF,filename,norm_w=None,DT=None,A=None,a=None,b=None,output
           g.writerow(datapi)
           file.close()    
   print("numD,numF:",numD,numF)
+  print("Parameters:",A,a,b)
   print("Number of Delta resonances created:",ND_total)
   print("Number of all particles detected:", NP_total)
   print()
@@ -314,7 +315,10 @@ abs_path=os.path.dirname(__file__)
 
 for dn in range(0,len(Delta_num)):
   for fn in range(0,len(Free_num)):
-    output_folderA=os.path.join(abs_path,"bw_A_D%d_F%d"%(Delta_num[dn],Free_num[fn]))
+    newfolder=os.path.join(abs_path,'D_%d_F_%d'%(Delta_num[dn],Free_num[fn]))
+    os.makedirs(newfolder,exist_ok=True)
+
+    output_folderA=os.path.join(newfolder,'bw_A')
     os.makedirs(output_folderA,exist_ok=True)
     xlistA=[]
     ylistA=[]
@@ -346,7 +350,7 @@ for dn in range(0,len(Delta_num)):
     fwhm_lista=[] 
     max_lista=[]
     ver_lista=[]
-    output_foldera=os.path.join(abs_path,"bw_qa_D%d_F%d"%(Delta_num[dn],Free_num[fn]))
+    output_foldera=os.path.join(newfolder,"bw_qa")
     os.makedirs(output_foldera,exist_ok=True)
     for ai in a:
       filename=f"BW_a_{ai}.csv"
@@ -372,7 +376,7 @@ for dn in range(0,len(Delta_num)):
     fwhm_listb=[]
     max_listb=[]
     ver_listb=[]
-    output_folderb=os.path.join(abs_path,"bw_qb_D%d_F%d"%(Delta_num[dn],Free_num[fn]))
+    output_folderb=os.path.join(newfolder,"bw_qb")
     os.makedirs(output_folderb,exist_ok=True)
     for bi in b:
       filename=f"BW_b_{bi}.csv"
@@ -392,6 +396,4 @@ for dn in range(0,len(Delta_num)):
     if show_all is True:
       plt.show()
     plt.close()
-
-
 
