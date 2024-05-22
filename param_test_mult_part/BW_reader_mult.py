@@ -585,9 +585,11 @@ for dn in range(0,len(mc.Dlist)):
     print("Ndelta:",mc.Dlist[dn],",","Nfree:",mc.Flist[fn])
     ptcl_dir='D_%d_F%d'%(mc.Dlist[dn],mc.Flist[fn])
     new_folder=os.path.join(abs_path,ptcl_dir)
-    os.makedirs(new_folder,exist_ok=True)
-    rel_pathA='bw_A_D%d_F%d'%(mc.Dlist[dn],mc.Flist[fn])
+    rel_pathA=os.path.join(new_folder,'bw_A')
     directoryA=os.path.join(abs_path,rel_pathA)
+    graph_folderA=os.path.join(directoryA,"results")
+    os.makedirs(graph_folderA,exist_ok=True)
+    
     rel_patha='bw_qa_D%d_F%d'%(mc.Dlist[dn],mc.Flist[fn])
     directorya=os.path.join(abs_path,rel_patha)
     rel_pathb='bw_qb_D%d_F%d'%(mc.Dlist[dn],mc.Flist[fn])
@@ -595,10 +597,10 @@ for dn in range(0,len(mc.Dlist)):
     file_patternA="BW_A_*.csv"
     file_patterna="BW_a_*.csv"
     file_patternb="BW_b_*.csv"
-    graph_folderA=os.path.join(directoryA,"results")
+    
     graph_foldera=os.path.join(directorya,"results")
     graph_folderb=os.path.join(directoryb,"results")
-    os.makedirs(graph_folderA,exist_ok=True)
+    
     os.makedirs(graph_foldera,exist_ok=True)
     os.makedirs(graph_folderb,exist_ok=True)
 
