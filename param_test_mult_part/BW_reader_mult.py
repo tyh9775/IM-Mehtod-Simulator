@@ -52,20 +52,39 @@ def IM_method(plist,pilist):
       p4p=[Ep]+pp #4 momentum of p 
       p4pi=[Epi]+ppi #4 momentum of pi    
       mdel_rec=inv_m(Etot,pmag)
+      print()
+      print(ptot)
+      print(pmag)
+      print(p4p)
+      print(p4pi)
+      print(mdel_rec)
       gam=Etot/mdel_rec
+      print(gam)
       if gam<1:
         print("negative energy or mass detected")
         quit()
       v=np.sqrt(1-1/gam**2)
+      print(v)
 
       vx=ptot[0]/(gam*mdel_rec)
       vy=ptot[1]/(gam*mdel_rec)
       vz=ptot[2]/(gam*mdel_rec)
       #move to the "delta" frame assuming the pair can create one
+      d4=[Etot]+ptot
+      dtest=gam_mat(gam,v,vx,vy,vz,d4)
+      print()
+      print(d4)
+      print(dtest)
+      print()
       ptest=gam_mat(gam,v,vx,vy,vz,p4p) #4 momentum of p in delta frame
       pitest=gam_mat(gam,v,vx,vy,vz,p4pi) #4 momentum of pi in delta frame
       pt_tot=v_sum(ptest,pitest) #total 4 momentum of p and pi in delta frame
       pt_mag=dist_form(pt_tot[1:]) #magnitude of the 3D momentum in delta frame
+      print(ptest)
+      print(pitest)
+      print(pt_tot)
+      print(pt_mag)
+      print()
       #momentum cut
       if pt_mag < mc.p_cut:        
         m_list.append(mdel_rec)
@@ -133,7 +152,7 @@ def r2_calc(f,x,y,p):
 def chi2(x,y,yerr,A,a,b):
   return np.sum((y-bw_func(x,A,a,b))**2/yerr**2)
 
-fitting=False
+
 
 def reader(directory,file_pattern,output_folder):
 #for comparing different widths
@@ -176,7 +195,6 @@ def reader(directory,file_pattern,output_folder):
         eventNum=int(header[0])
         partNum=int(header[1])
         Ndelta=int(header[2])
-
         plist={}
         pilist={}
 
@@ -214,7 +232,10 @@ def reader(directory,file_pattern,output_folder):
         #invariant mass of the p and pi in the event with momentum cut applied
         #random.shuffle(p_list)
         #random.shuffle(pi_list)
+        print(p_list)
+        print(pi_list)
         m_list,mnt_list=IM_method(p_list,pi_list)
+        quit()
 
         m_cr_list=[]
         mnt_cr_list=[]
@@ -251,42 +272,10 @@ def reader(directory,file_pattern,output_folder):
 
 
     #graphing and fitting
-    #mass cut done with the fitting
     binsize=5 #in MeV/c^2
     plt.figure()
     hist,bins,packages=plt.hist(IM_list,bins=np.arange(int(min(IM_list)),int(max(IM_list)),binsize),alpha=0)
     bins_cntr=0.5*(bins[:-1]+bins[1:])
-    
-    if fitting is True:
-      stp=int(mc.m_cut/binsize) #determines the width of the cut
-      x_omit=int(np.where(bins==mc.m_del0)[0][0]) #omit the inv mass of delta
-      #data to be consider for the fitting of the "noise"
-      x_start=np.where(hist>0.05*max(hist))[0][0]
-      x_end=np.where(hist[x_start:]<0.05*max(hist))[0][0]
-      x_new=bins[x_start:x_omit-stp].tolist()+bins[x_omit+stp+1:x_start+x_end].tolist()
-      y_new=hist[x_start:x_omit-stp].tolist()+hist[x_omit+stp+1:x_start+x_end].tolist()
-      #data to be considered for counting the number of deltas
-      x_skipped=bins[x_omit-stp:x_omit+stp]
-      y_skipped=hist[x_omit-stp:x_omit+stp]
-      print(x_skipped)
-      #fitting
-      xplt=np.arange(bins[x_start],bins[x_start+x_end],0.5)
-      ini_g=[0,0,0,0,0]
-      popt,pcov=curve_fit(poly_func, x_new,y_new,ini_g)
-      yplt=poly_func(xplt,*popt)
-      r2_poly=r2_calc(poly_func,x_new,y_new,popt)
-      r=str(round(r2_poly,5))
-      plt.plot(xplt,yplt,label='poly fit \n R^2=%s'%(r))
-      plt.plot(x_skipped,y_skipped,'.')
-      #plt.plot(x_skipped,poly_func(x_skipped,*popt),'.')
-      #guessing count
-      y_est=[]
-      for i in range(0,len(x_skipped)):
-        xi=np.where(xplt==x_skipped[i])[0][0]
-        y_est.append(y_skipped[i]-yplt[xi])
-
-      print("estimated number of deltas:",sum(y_est))
-    
     hist_err=np.sqrt(hist)
     plt.errorbar(bins_cntr,hist,xerr=binsize/2,yerr=hist_err,fmt='.')
     xfitbw=np.arange(min(bins_cntr),max(bins_cntr),0.5)
