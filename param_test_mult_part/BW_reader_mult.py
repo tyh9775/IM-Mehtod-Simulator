@@ -7,6 +7,8 @@ import os
 import glob
 import re
 
+
+eventcheck=False
 #distance formula: sqrt(x1^2+x2^2+...+xn^2)
 def dist_form(vec):
   vsum2=0
@@ -52,39 +54,37 @@ def IM_method(plist,pilist):
       p4p=[Ep]+pp #4 momentum of p 
       p4pi=[Epi]+ppi #4 momentum of pi    
       mdel_rec=inv_m(Etot,pmag)
-      print()
-      print(ptot)
-      print(pmag)
-      print(p4p)
-      print(p4pi)
-      print(mdel_rec)
       gam=Etot/mdel_rec
-      print(gam)
       if gam<1:
         print("negative energy or mass detected")
         quit()
       v=np.sqrt(1-1/gam**2)
-      print(v)
-
       vx=ptot[0]/(gam*mdel_rec)
       vy=ptot[1]/(gam*mdel_rec)
       vz=ptot[2]/(gam*mdel_rec)
       #move to the "delta" frame assuming the pair can create one
-      d4=[Etot]+ptot
-      dtest=gam_mat(gam,v,vx,vy,vz,d4)
-      print()
-      print(d4)
-      print(dtest)
-      print()
       ptest=gam_mat(gam,v,vx,vy,vz,p4p) #4 momentum of p in delta frame
       pitest=gam_mat(gam,v,vx,vy,vz,p4pi) #4 momentum of pi in delta frame
       pt_tot=v_sum(ptest,pitest) #total 4 momentum of p and pi in delta frame
       pt_mag=dist_form(pt_tot[1:]) #magnitude of the 3D momentum in delta frame
-      print(ptest)
-      print(pitest)
-      print(pt_tot)
-      print(pt_mag)
-      print()
+      if eventcheck is True:
+        print()
+        d4=[Etot]+ptot
+        dtest=gam_mat(gam,v,vx,vy,vz,d4)
+        print("proton 4-mnt:",p4p)
+        print("pion 4-mnt:",p4pi)
+        print("vector some of the mnt:",ptot)
+        print("mag of 3D mnt:",pmag)
+        print("calculated inv m:",mdel_rec)
+        print()
+        print("mnt of recreated delta:",d4)
+        print("mnt of delta in it's own rest frame:",dtest)
+        print()
+        print("mnt of proton after LT:",ptest)
+        print("mnt of pion after LT:",pitest)
+        print("total mnt after LT:",pt_tot)
+        print("mag of tot mnt after LT:",pt_mag)
+        print()
       #momentum cut
       if pt_mag < mc.p_cut:        
         m_list.append(mdel_rec)
@@ -232,10 +232,23 @@ def reader(directory,file_pattern,output_folder):
         #invariant mass of the p and pi in the event with momentum cut applied
         #random.shuffle(p_list)
         #random.shuffle(pi_list)
-        print(p_list)
-        print(pi_list)
+        
+        if eventcheck is True:
+          print("Event number:", eventNum)
         m_list,mnt_list=IM_method(p_list,pi_list)
-        quit()
+        while eventcheck is True:
+          user_input=input("Continue? (Y/N):").strip().lower()
+          if user_input =='no':
+            quit()
+          elif user_input =='n':
+            quit()
+          elif user_input=='yes':
+            print("continuing")
+          elif user_input=='y':
+            print("continuing")
+          else:
+            print("Invalid input")
+        
 
         m_cr_list=[]
         mnt_cr_list=[]
@@ -275,17 +288,19 @@ def reader(directory,file_pattern,output_folder):
     binsize=5 #in MeV/c^2
     plt.figure()
     hist,bins,packages=plt.hist(IM_list,bins=np.arange(int(min(IM_list)),int(max(IM_list)),binsize),alpha=0)
-    bins_cntr=0.5*(bins[:-1]+bins[1:])
+    bins_cntr=0.5*(bins[:-1]+bins[1:])    
     hist_err=np.sqrt(hist)
     plt.errorbar(bins_cntr,hist,xerr=binsize/2,yerr=hist_err,fmt='.')
-    xfitbw=np.arange(min(bins_cntr),max(bins_cntr),0.5)
+    #limit the range the fit is done to exclude bins with ~0 counts after the peak
+    peak_pt=np.where(hist==max(hist))[0][0]
+    endpoint=np.where(hist[peak_pt:]<=0.01*max(hist))[0][0]
+    xfitbw=np.arange(min(bins_cntr),bins_cntr[endpoint],0.5)
     ydef=bw_func(xfitbw,*param)
     sclr=max(hist)/max(ydef)
     yfit_par=bw_func(xfitbw,*param)
-    print(*param)
     lwrbnd=[0,0,0]
     uprbnd=[np.inf,np.inf,np.inf]
-    popt,pcov=curve_fit(bw_func,bins_cntr,hist,p0=[*param],bounds=(lwrbnd,uprbnd ),sigma=hist_err,absolute_sigma=True)
+    popt,pcov=curve_fit(bw_func,bins_cntr[:endpoint],hist[:endpoint],p0=[*param],bounds=(lwrbnd,uprbnd ),sigma=hist_err[:endpoint],absolute_sigma=True)
     A_est=np.abs(popt[0]*sclr)
     a_est=np.abs(popt[1])
     b_est=np.abs(popt[2])
@@ -303,16 +318,17 @@ def reader(directory,file_pattern,output_folder):
     plt.ylabel("Count")
     plt.xlabel("Mass (MeV/c^2)")
     plt.legend(loc='upper left')
+    plt.xlim(min(bins_cntr)*.9,bins_cntr[endpoint]*1.2)
     plt.ylim(0,max(hist)*1.1)
     plt.figtext(0.75,0.75,"par=%s \n A=%s+/-%s\n a=%s+/-%s\n b=%s+/-%s \n chi_sq=%s"%(param,round(A_est,3),round(eA,3),round(a_est,3), round(ea,3),round(b_est,3),round(eb,3),round(chi_sq,3)),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
     plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_IM_plot.png")
     plt.savefig(plot_file_path)
-    #plt.show()
+    plt.show()
     plt.close()
     print("total number of counted particles after momentum cut:", np.sum(hist))
     
     #"actual" deltas
-    actual=False
+    actual=True
     plt.figure()
     hist_act,bins_act,pack_act=plt.hist(act_IM,bins=bins,alpha=0)
     bins_cntr_act=0.5*(bins_act[:-1]+bins_act[1:])
