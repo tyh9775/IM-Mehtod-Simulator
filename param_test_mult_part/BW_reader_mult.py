@@ -85,10 +85,11 @@ def IM_method(plist,pilist):
         print("total mnt after LT:",pt_tot)
         print("mag of tot mnt after LT:",pt_mag)
         print()
-      #momentum cut
-      if pt_mag < mc.p_cut:        
+      #momentum cut and upper limit on the invariant mass
+      if pt_mag < mc.p_cut and mdel_rec < mc.md_max:        
         m_list.append(mdel_rec)
         mnt_list.append(pmag)
+      
   return m_list, mnt_list
 
 #for fitting
@@ -293,7 +294,11 @@ def reader(directory,file_pattern,output_folder):
     plt.errorbar(bins_cntr,hist,xerr=binsize/2,yerr=hist_err,fmt='.')
     #limit the range the fit is done to exclude bins with ~0 counts after the peak
     peak_pt=np.where(hist==max(hist))[0][0]
-    endpoint=np.where(hist[peak_pt:]<=0.01*max(hist))[0][0]
+    endpoints=np.where(hist[peak_pt:]<=0.01*max(hist))[0]
+    if len(endpoints)==0:
+      endpoint=len(bins_cntr)-1
+    else:
+      endpoint=endpoints[0]
     xfitbw=np.arange(min(bins_cntr),bins_cntr[endpoint],0.5)
     ydef=bw_func(xfitbw,*param)
     sclr=max(hist)/max(ydef)
