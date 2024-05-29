@@ -162,9 +162,9 @@ def reader(directory,file_pattern,output_folder):
   cr_all=[]
   mnt_all=[]
 
-
   for filename in glob.glob(os.path.join(directory,file_pattern)):
     param=param_reader(filename)
+    print(param)
     new_file_path= os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_IM.csv")
     with open(new_file_path,"w",newline='') as new_file:
       new_file.close()
@@ -305,7 +305,9 @@ def reader(directory,file_pattern,output_folder):
     yfit_par=bw_func(xfitbw,*param)
     lwrbnd=[0,0,0]
     uprbnd=[np.inf,np.inf,np.inf]
-    popt,pcov=curve_fit(bw_func,bins_cntr[:endpoint],hist[:endpoint],p0=[*param],bounds=(lwrbnd,uprbnd ),sigma=hist_err[:endpoint],absolute_sigma=True)
+    sigpts=hist_err[:endpoint]
+    sigpts=[1e-10 if sigs==0 else sigs for sigs in sigpts]
+    popt,pcov=curve_fit(bw_func,bins_cntr[:endpoint],hist[:endpoint],p0=[*param],bounds=(lwrbnd,uprbnd ),sigma=sigpts,absolute_sigma=True)
     A_est=np.abs(popt[0]*sclr)
     a_est=np.abs(popt[1])
     b_est=np.abs(popt[2])
@@ -328,12 +330,12 @@ def reader(directory,file_pattern,output_folder):
     plt.figtext(0.75,0.75,"par=%s \n A=%s+/-%s\n a=%s+/-%s\n b=%s+/-%s \n chi_sq=%s"%(param,round(A_est,3),round(eA,3),round(a_est,3), round(ea,3),round(b_est,3),round(eb,3),round(chi_sq,3)),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
     plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_IM_plot.png")
     plt.savefig(plot_file_path)
-    plt.show()
+    #plt.show()
     plt.close()
     print("total number of counted particles after momentum cut:", np.sum(hist))
     
     #"actual" deltas
-    actual=True
+    actual=False
     plt.figure()
     hist_act,bins_act,pack_act=plt.hist(act_IM,bins=bins,alpha=0)
     bins_cntr_act=0.5*(bins_act[:-1]+bins_act[1:])
@@ -343,7 +345,15 @@ def reader(directory,file_pattern,output_folder):
     yfit_par_act=bw_func(xfitbw_act,*param)
     yfit_par_act=np.multiply(yfit_par_act,sclr_act)
     act_err=np.sqrt(hist_act)
-    popt_act,pcov_act=curve_fit(bw_func,bins_cntr_act,hist_act,p0=[0.95,0.47,0.6],bounds=(lwrbnd,uprbnd ),sigma=act_err,absolute_sigma=True)
+    peak_act=np.where(hist_act==max(hist_act))[0][0]
+    endpoints=np.where(hist_act[peak_act:]<=0.01*max(hist_act))[0]
+    if len(endpoints)==0:
+      endpoint=len(bins_cntr_act)-1
+    else:
+      endpoint=endpoints[0]
+    sigpts_act=act_err[:endpoint]
+    sigpts_act=[1e-10 if sigs==0 else sigs for sigs in sigpts_act]
+    popt_act,pcov_act=curve_fit(bw_func,bins_cntr_act[:endpoint],hist_act[:endpoint],p0=[0.95,0.47,0.6],bounds=(lwrbnd,uprbnd ),sigma=sigpts_act,absolute_sigma=True)
     Aa_est=np.abs(popt_act[0]*sclr_act)
     aa_est=np.abs(popt_act[1])
     ba_est=np.abs(popt_act[2])
@@ -380,7 +390,15 @@ def reader(directory,file_pattern,output_folder):
     yfit_par_cr=bw_func(xfitbw_act,*param)
     yfit_par_cr=np.multiply(yfit_par_cr,sclr_cr)
     cr_err=np.sqrt(hist_cr)
-    popt_cr,pcov_cr=curve_fit(bw_func,bins_cntr_cr,hist_cr,p0=[0.95,0.47,0.6],bounds=(lwrbnd,uprbnd ),sigma=cr_err,absolute_sigma=True)
+    peak_cr=np.where(hist_cr==max(hist_cr))[0][0]
+    endpoints=np.where(hist_cr[peak_cr:]<=0.01*max(hist_cr))[0]
+    if len(endpoints)==0:
+      endpoint=len(bins_cntr_cr)-1
+    else:
+      endpoint=endpoints[0]
+    sigpts=cr_err[:endpoint]
+    sigpts=[1e-10 if sigs==0 else sigs for sigs in sigpts]
+    popt_cr,pcov_cr=curve_fit(bw_func,bins_cntr_cr[:endpoint],hist_cr[:endpoint],p0=[0.95,0.47,0.6],bounds=(lwrbnd,uprbnd ),sigma=sigpts,absolute_sigma=True)
     Ac_est=np.abs(popt_cr[0]*sclr_cr)
     ac_est=np.abs(popt_cr[1])
     bc_est=np.abs(popt_cr[2])    
@@ -715,7 +733,7 @@ def reader(directory,file_pattern,output_folder):
 abs_path=os.path.dirname(__file__)
 
 for dn in range(0,len(mc.Dlist)):
-  for fn in range(1,len(mc.Flist)):
+  for fn in range(0,len(mc.Flist)):
     print("Ndelta:",mc.Dlist[dn],",","Nfree:",mc.Flist[fn])
     ptcl_dir='D_%d_F_%d'%(mc.Dlist[dn],mc.Flist[fn])
     directoryA=os.path.join(abs_path,ptcl_dir,'bw_A')
@@ -733,5 +751,7 @@ for dn in range(0,len(mc.Dlist)):
     os.makedirs(graph_folderb,exist_ok=True)
 
     reader(directoryA,file_patternA,graph_folderA)
+    print()
     reader(directorya,file_patterna,graph_foldera)
+    print()
     reader(directoryb,file_patternb,graph_folderb)

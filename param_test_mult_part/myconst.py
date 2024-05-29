@@ -20,7 +20,7 @@ pd_max=(((rt_s**2+md_min**2-m_p**2)/(2*rt_s))**2-md_min**2)**0.5
 nevts=10000
 
 #numbers of particles/pairs generated
-Dlist=[1]
+Dlist=[1,2]
 Flist=[0,1]
 
 p_cut=1 #momentum restriction on the particles in delta frame
