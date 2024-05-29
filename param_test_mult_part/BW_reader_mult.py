@@ -9,6 +9,7 @@ import re
 
 
 eventcheck=False
+masslim=True
 #distance formula: sqrt(x1^2+x2^2+...+xn^2)
 def dist_form(vec):
   vsum2=0
@@ -86,10 +87,14 @@ def IM_method(plist,pilist):
         print("mag of tot mnt after LT:",pt_mag)
         print()
       #momentum cut and upper limit on the invariant mass
-      if pt_mag < mc.p_cut and mdel_rec < mc.md_max:        
-        m_list.append(mdel_rec)
-        mnt_list.append(pmag)
-      
+      if pt_mag < mc.p_cut:
+        if masslim is True:
+          if mdel_rec<mc.md_max:
+            m_list.append(mdel_rec)
+            mnt_list.append(pmag)
+        else:
+          m_list.append(mdel_rec)
+          mnt_list.append(pmag)
   return m_list, mnt_list
 
 #for fitting
@@ -151,7 +156,12 @@ def r2_calc(f,x,y,p):
   return 1-(ssr/sst)
 
 def chi2(x,y,yerr,A,a,b):
-  return np.sum((y-bw_func(x,A,a,b))**2/yerr**2)
+  sum=0
+  for ind in range(0,len(x)):
+    if yerr[ind]==0:
+      yerr[ind]=1e-10
+    sum+=(y[ind]-bw_func(x[ind],A,a,b))**2/yerr[ind]**2
+  return sum
 
 
 
@@ -314,7 +324,7 @@ def reader(directory,file_pattern,output_folder):
     eA=np.sqrt(pcov[0,0])*sclr
     ea=np.sqrt(pcov[1,1])
     eb=np.sqrt(pcov[2,2])
-    chi_sq=chi2(bins_cntr,hist,hist_err,*popt)
+    chi_sq=chi2(bins_cntr[:endpoint],hist[:endpoint],sigpts,*popt)
     yfitbw=bw_func(xfitbw,*popt)
     yfit_par=np.multiply(yfit_par,sclr)
     fwhm,hlf_val,lft,rgt,mxi=fwhm_calc(yfitbw,xfitbw)
@@ -325,7 +335,6 @@ def reader(directory,file_pattern,output_folder):
     plt.ylabel("Count")
     plt.xlabel("Mass (MeV/c^2)")
     plt.legend(loc='upper left')
-    plt.xlim(min(bins_cntr)*.9,bins_cntr[endpoint]*1.2)
     plt.ylim(0,max(hist)*1.1)
     plt.figtext(0.75,0.75,"par=%s \n A=%s+/-%s\n a=%s+/-%s\n b=%s+/-%s \n chi_sq=%s"%(param,round(A_est,3),round(eA,3),round(a_est,3), round(ea,3),round(b_est,3),round(eb,3),round(chi_sq,3)),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
     plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_IM_plot.png")
@@ -360,12 +369,12 @@ def reader(directory,file_pattern,output_folder):
     eAa=np.sqrt(pcov_act[0,0])*sclr_act
     eaa=np.sqrt(pcov_act[1,1])
     eba=np.sqrt(pcov_act[2,2])
-    act_chi_sq=chi2(bins_cntr_act,hist_act,act_err,*popt_act)
+    act_chi_sq=chi2(bins_cntr_act[:endpoint],hist_act[:endpoint],sigpts_act,*popt_act)
     yfitbw_act=bw_func(xfitbw_act,*popt_act)
     fwhm_act,hlf_val,lft,rgt,mxi=fwhm_calc(yfitbw_act,xfitbw_act)
     plt.plot(xfitbw_act,yfitbw_act,label='BW fit')
     plt.plot(xfitbw_act,yfit_par_act,'--',label='Fit w/ given param')
-    plt.errorbar(bins_cntr_act,hist_act,xerr=binsize/2,yerr=act_err,fmt='.')
+    plt.errorbar(bins_cntr_act[:endpoint],hist_act[:endpoint],xerr=binsize/2,yerr=sigpts_act,fmt='.')
     plt.hlines(y=hlf_val,xmin=xfitbw_act[lft],xmax=xfitbw_act[rgt],label=f'fwhm={round(fwhm_act,3)}',colors='red')
     plt.figtext(0.75,0.75,"par=%s \n A=%s+/-%s \n a=%s+/-%s \n b=%s+/-%s \n chi_sq=%s"%(param,round(Aa_est,3),round(eAa,3),round(aa_est,3),round(eaa,3),round(ba_est,3),round(eba,3),round(act_chi_sq,5)),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
     plt.title("IM of Real Deltas")
@@ -377,6 +386,7 @@ def reader(directory,file_pattern,output_folder):
     if actual is True:
       plt.show()
     plt.close()
+
 
     rlt=False
     #related pairs
@@ -396,16 +406,16 @@ def reader(directory,file_pattern,output_folder):
       endpoint=len(bins_cntr_cr)-1
     else:
       endpoint=endpoints[0]
-    sigpts=cr_err[:endpoint]
-    sigpts=[1e-10 if sigs==0 else sigs for sigs in sigpts]
-    popt_cr,pcov_cr=curve_fit(bw_func,bins_cntr_cr[:endpoint],hist_cr[:endpoint],p0=[0.95,0.47,0.6],bounds=(lwrbnd,uprbnd ),sigma=sigpts,absolute_sigma=True)
+    sigpts_cr=cr_err[:endpoint]
+    sigpts_cr=[1e-10 if sigs==0 else sigs for sigs in sigpts]
+    popt_cr,pcov_cr=curve_fit(bw_func,bins_cntr_cr[:endpoint],hist_cr[:endpoint],p0=[0.95,0.47,0.6],bounds=(lwrbnd,uprbnd ),sigma=sigpts_cr,absolute_sigma=True)
     Ac_est=np.abs(popt_cr[0]*sclr_cr)
     ac_est=np.abs(popt_cr[1])
     bc_est=np.abs(popt_cr[2])    
     eAc=np.sqrt(pcov_cr[0,0])*sclr_cr
     eac=np.sqrt(pcov_cr[1,1])
     ebc=np.sqrt(pcov_cr[2,2])    
-    cr_chi_sq=chi2(bins_cntr_cr,hist_cr,cr_err,*popt)
+    cr_chi_sq=chi2(bins_cntr_cr[:endpoint],hist_cr[:endpoint],sigpts_cr,*popt_cr)
     yfitbw_cr=bw_func(xfitbw_cr,*popt_cr)
     fwhm_cr,hlf_val,lft,rgt,mxi=fwhm_calc(yfitbw_cr,xfitbw_cr)
     plt.plot(xfitbw_cr,yfitbw_cr,label='BW fit')
