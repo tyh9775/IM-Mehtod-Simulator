@@ -317,7 +317,7 @@ def reader(directory,file_pattern,output_folder):
     uprbnd=[np.inf,np.inf,np.inf]
     sigpts=hist_err[:endpoint]
     sigpts=[1e-10 if sigs==0 else sigs for sigs in sigpts]
-    popt,pcov=curve_fit(bw_func,bins_cntr[:endpoint],hist[:endpoint],p0=[*param],bounds=(lwrbnd,uprbnd ),sigma=sigpts,absolute_sigma=True)
+    popt,pcov=curve_fit(bw_func,bins_cntr[:endpoint],hist[:endpoint],p0=[*param],bounds=(lwrbnd,uprbnd),sigma=sigpts,absolute_sigma=True)
     A_est=np.abs(popt[0]*sclr)
     a_est=np.abs(popt[1])
     b_est=np.abs(popt[2])
