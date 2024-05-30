@@ -736,7 +736,7 @@ def reader(directory,file_pattern,output_folder):
         rec_err=np.sqrt(hist_rec[i]*(1-hist_rec[i]/len(hist_rec)))
         act_err=np.sqrt(hist_act[i]*(1-hist_act[i]/len(hist_act)))
         eff_err.append((hist_act[i]/hist_rec[i])*np.sqrt((act_err/hist_act[i])**2+(rec_err/hist_rec[i])**2))
-
+  print()
   return IM_all,act_all,cr_all,mnt_all
 
 #read files
