@@ -316,7 +316,7 @@ def reader(directory,file_pattern,output_folder):
     lwrbnd=[0,0,0]
     uprbnd=[np.inf,np.inf,np.inf]
     sigpts=hist_err[:endpoint]
-    sigpts=[1e-10 if sigs==0 else sigs for sigs in sigpts]
+    sigpts=[1 if sigs==0 else sigs for sigs in sigpts]
     popt,pcov=curve_fit(bw_func,bins_cntr[:endpoint],hist[:endpoint],p0=[*param],bounds=(lwrbnd,uprbnd),sigma=sigpts,absolute_sigma=True)
     A_est=np.abs(popt[0]*sclr)
     a_est=np.abs(popt[1])
@@ -329,7 +329,7 @@ def reader(directory,file_pattern,output_folder):
     yfit_par=np.multiply(yfit_par,sclr)
     fwhm,hlf_val,lft,rgt,mxi=fwhm_calc(yfitbw,xfitbw)
     plt.plot(xfitbw,yfitbw,label='BW fit')
-    plt.plot(xfitbw,yfit_par,'--',label='Fit w/ given param')
+    plt.plot(xfitbw,yfit_par,'--',label='Function w/ given param')
     plt.hlines(y=hlf_val,xmin=xfitbw[lft],xmax=xfitbw[rgt],label=f'fwhm={round(fwhm,3)}',colors='red')
     plt.title("Invariant Mass of Recreated Delta in Lab Frame")
     plt.ylabel("Count")
@@ -344,11 +344,8 @@ def reader(directory,file_pattern,output_folder):
     print("total number of counted particles after momentum cut:", np.sum(hist))
     
     #"actual" deltas
-    actual=False
     plt.figure()
     hist_act,bins_act,pack_act=plt.hist(act_IM,bins=bins,alpha=0)
-    print(hist_act)
-    quit()
     bins_cntr_act=0.5*(bins_act[:-1]+bins_act[1:])
     xfitbw_act=np.arange(min(bins_cntr_act),max(bins_cntr_act),0.5)
     ydef_act=bw_func(xfitbw_act,*param)
@@ -363,7 +360,7 @@ def reader(directory,file_pattern,output_folder):
     else:
       endpoint=endpoints[0]
     sigpts_act=act_err[:endpoint]
-    sigpts_act=[1e-10 if sigs==0 else sigs for sigs in sigpts_act]
+    sigpts_act=[1 if sigs==0 else sigs for sigs in sigpts_act]
     popt_act,pcov_act=curve_fit(bw_func,bins_cntr_act[:endpoint],hist_act[:endpoint],p0=[0.95,0.47,0.6],bounds=(lwrbnd,uprbnd ),sigma=sigpts_act,absolute_sigma=True)
     Aa_est=np.abs(popt_act[0]*sclr_act)
     aa_est=np.abs(popt_act[1])
@@ -375,7 +372,7 @@ def reader(directory,file_pattern,output_folder):
     yfitbw_act=bw_func(xfitbw_act,*popt_act)
     fwhm_act,hlf_val,lft,rgt,mxi=fwhm_calc(yfitbw_act,xfitbw_act)
     plt.plot(xfitbw_act,yfitbw_act,label='BW fit')
-    plt.plot(xfitbw_act,yfit_par_act,'--',label='Fit w/ given param')
+    plt.plot(xfitbw_act,yfit_par_act,'--',label='Function w/ given param')
     plt.errorbar(bins_cntr_act[:endpoint],hist_act[:endpoint],xerr=binsize/2,yerr=sigpts_act,fmt='.')
     plt.hlines(y=hlf_val,xmin=xfitbw_act[lft],xmax=xfitbw_act[rgt],label=f'fwhm={round(fwhm_act,3)}',colors='red')
     plt.figtext(0.75,0.75,"par=%s \n A=%s+/-%s \n a=%s+/-%s \n b=%s+/-%s \n chi_sq=%s"%(param,round(Aa_est,3),round(eAa,3),round(aa_est,3),round(eaa,3),round(ba_est,3),round(eba,3),round(act_chi_sq,5)),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
@@ -385,12 +382,10 @@ def reader(directory,file_pattern,output_folder):
     plt.legend(loc='upper left')
     plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_act_IM_plot.png")
     plt.savefig(plot_file_path)
-    if actual is True:
-      plt.show()
+    #plt.show()
     plt.close()
 
 
-    rlt=False
     #related pairs
     binsize_new=5
     plt.figure()
@@ -399,7 +394,7 @@ def reader(directory,file_pattern,output_folder):
     xfitbw_cr=np.arange(min(bins_cntr_cr),max(bins_cntr_cr),0.5)    
     ydef_cr=bw_func(xfitbw_cr,*param)
     sclr_cr=max(hist_cr)/max(ydef_cr)
-    yfit_par_cr=bw_func(xfitbw_act,*param)
+    yfit_par_cr=bw_func(xfitbw_cr,*param)
     yfit_par_cr=np.multiply(yfit_par_cr,sclr_cr)
     cr_err=np.sqrt(hist_cr)
     peak_cr=np.where(hist_cr==max(hist_cr))[0][0]
@@ -409,8 +404,8 @@ def reader(directory,file_pattern,output_folder):
     else:
       endpoint=endpoints[0]
     sigpts_cr=cr_err[:endpoint]
-    sigpts_cr=[1e-10 if sigs==0 else sigs for sigs in sigpts]
-    popt_cr,pcov_cr=curve_fit(bw_func,bins_cntr_cr[:endpoint],hist_cr[:endpoint],p0=[0.95,0.47,0.6],bounds=(lwrbnd,uprbnd ),sigma=sigpts_cr,absolute_sigma=True)
+    sigpts_cr=[1 if sigs==0 else sigs for sigs in sigpts_cr]
+    popt_cr,pcov_cr=curve_fit(bw_func,bins_cntr_cr[:endpoint],hist_cr[:endpoint],p0=[0.95,0.47,0.6],bounds=(lwrbnd,uprbnd),sigma=sigpts_cr,absolute_sigma=True)
     Ac_est=np.abs(popt_cr[0]*sclr_cr)
     ac_est=np.abs(popt_cr[1])
     bc_est=np.abs(popt_cr[2])    
@@ -421,7 +416,7 @@ def reader(directory,file_pattern,output_folder):
     yfitbw_cr=bw_func(xfitbw_cr,*popt_cr)
     fwhm_cr,hlf_val,lft,rgt,mxi=fwhm_calc(yfitbw_cr,xfitbw_cr)
     plt.plot(xfitbw_cr,yfitbw_cr,label='BW fit')
-    plt.plot(xfitbw_cr,yfit_par_cr,'--',label='Fit w/ given param')    
+    plt.plot(xfitbw_cr,yfit_par_cr,'--',label='Function w/ given param')    
     plt.errorbar(bins_cntr_cr,hist_cr,xerr=binsize_new/2,yerr=cr_err,fmt='.')
     plt.hlines(y=hlf_val,xmin=xfitbw_cr[lft],xmax=xfitbw_cr[rgt],label=f'fwhm={round(fwhm_cr,3)}',colors='red')
     plt.figtext(0.75,0.75,"par=%s \n A=%s+/-%s \n a=%s+/-%s \n b=%s+/-%s \n chi_sq=%s"%(param,round(Ac_est,3),round(eAc,3),round(ac_est,3),round(eac,3),round(bc_est,3),round(ebc,3),round(cr_chi_sq,5)),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
@@ -431,8 +426,7 @@ def reader(directory,file_pattern,output_folder):
     plt.legend(loc='upper left')
     plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_cr_IM_plot.png")
     plt.savefig(plot_file_path)
-    if rlt is True:
-      plt.show()
+    #plt.show()
     plt.close()
 
     contour=False
@@ -745,7 +739,7 @@ def reader(directory,file_pattern,output_folder):
 abs_path=os.path.dirname(__file__)
 
 for dn in range(0,len(mc.Dlist)):
-  for fn in range(1,len(mc.Flist)):
+  for fn in range(0,len(mc.Flist)):
     print("Ndelta:",mc.Dlist[dn],",","Nfree:",mc.Flist[fn])
     ptcl_dir='D_%d_F_%d'%(mc.Dlist[dn],mc.Flist[fn])
     directoryA=os.path.join(abs_path,ptcl_dir,'bw_A')
