@@ -74,7 +74,7 @@ def vec_calc(r,theta,phi):
   return x,y,z
 
 #given a->b+c decay, solves for p of b and c
-def dec_mom_sol(m0,m1,m2):
+def dec_mnt_sol(m0,m1,m2):
   return np.sqrt(m0**4-2*(m0*m1)**2-2*(m0*m2)**2+m1**4-2*(m1*m2)**2+m2**4)/(2*m0)
 
 #LT in 3D space in matrix form
@@ -200,7 +200,7 @@ def generator(numD,numF,filename,norm_w=None,DT=None,A=None,a=None,b=None,output
       ############################################
 
       #momentum of the particles in CoM frame (decay equation solved with algebraic solver)
-      pcm=dec_mom_sol(mdel,mc.m_p,mc.m_pi)
+      pcm=dec_mnt_sol(mdel,mc.m_p,mc.m_pi)
 
       #momentum of the pion in the delta frame according to bw_dist
       #pcm=q_solv(mdel,mc.m_p,mc.m_pi)

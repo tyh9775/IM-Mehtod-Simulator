@@ -8,7 +8,7 @@ import glob
 import re
 
 
-eventcheck=False
+eventcheck=True
 masslim=True
 #distance formula: sqrt(x1^2+x2^2+...+xn^2)
 def dist_form(vec):
@@ -23,6 +23,10 @@ def v_sum(v1,v2):
   for i in range (0,len(v1)):
     vtot.append(v1[i]+v2[i]) 
   return vtot
+
+#given a->b+c decay, solves for p of b and c
+def dec_mnt_sol(m0,m1,m2):
+  return np.sqrt(m0**4-2*(m0*m1)**2-2*(m0*m2)**2+m1**4-2*(m1*m2)**2+m2**4)/(2*m0)
 
 #LT in 3D space in matrix form
 def gam_mat(gam,v,vx,vy,vz,p4):
@@ -68,6 +72,10 @@ def IM_method(plist,pilist):
       pitest=gam_mat(gam,v,vx,vy,vz,p4pi) #4 momentum of pi in delta frame
       pt_tot=v_sum(ptest,pitest) #total 4 momentum of p and pi in delta frame
       pt_mag=dist_form(pt_tot[1:]) #magnitude of the 3D momentum in delta frame
+      dec_mnt=dec_mnt_sol(mdel_rec,mc.m_p,mc.m_pi) #theoretical mag of the mnt of p or pi in delta frame
+      ptest_mag=dist_form(ptest[1:]) #mag of the mnt of p in delta frame
+      pitest_mag=dist_form(pitest[1:]) #mag of the mnt of pi in delta frame
+      
       if eventcheck is True:
         print()
         d4=[Etot]+ptot
@@ -85,7 +93,10 @@ def IM_method(plist,pilist):
         print("mnt of pion after LT:",pitest)
         print("total mnt after LT:",pt_tot)
         print("mag of tot mnt after LT:",pt_mag)
+        print("theoretical mag of mnt of p or pi:",dec_mnt)
+        print("mag of mnt of p after LT:",ptest_mag)
         print()
+      
       #momentum cut and upper limit on the invariant mass
       if pt_mag < mc.p_cut:
         if masslim is True:
@@ -95,6 +106,8 @@ def IM_method(plist,pilist):
         else:
           m_list.append(mdel_rec)
           mnt_list.append(pmag)
+  if eventcheck is True:
+    quit()
   return m_list, mnt_list
 
 #for fitting
@@ -244,21 +257,8 @@ def reader(directory,file_pattern,output_folder):
         #random.shuffle(p_list)
         #random.shuffle(pi_list)
         
-        if eventcheck is True:
-          print("Event number:", eventNum)
         m_list,mnt_list=IM_method(p_list,pi_list)
-        while eventcheck is True:
-          user_input=input("Continue? (Y/N):").strip().lower()
-          if user_input =='no':
-            quit()
-          elif user_input =='n':
-            quit()
-          elif user_input=='yes':
-            print("continuing")
-          elif user_input=='y':
-            print("continuing")
-          else:
-            print("Invalid input")
+
         
 
         m_cr_list=[]
@@ -738,8 +738,8 @@ def reader(directory,file_pattern,output_folder):
 #read files
 abs_path=os.path.dirname(__file__)
 
-for dn in range(0,len(mc.Dlist)):
-  for fn in range(0,len(mc.Flist)):
+for dn in range(1,len(mc.Dlist)):
+  for fn in range(1,len(mc.Flist)):
     print("Ndelta:",mc.Dlist[dn],",","Nfree:",mc.Flist[fn])
     ptcl_dir='D_%d_F_%d'%(mc.Dlist[dn],mc.Flist[fn])
     directoryA=os.path.join(abs_path,ptcl_dir,'bw_A')
