@@ -347,6 +347,8 @@ def reader(directory,file_pattern,output_folder):
     actual=False
     plt.figure()
     hist_act,bins_act,pack_act=plt.hist(act_IM,bins=bins,alpha=0)
+    print(hist_act)
+    quit()
     bins_cntr_act=0.5*(bins_act[:-1]+bins_act[1:])
     xfitbw_act=np.arange(min(bins_cntr_act),max(bins_cntr_act),0.5)
     ydef_act=bw_func(xfitbw_act,*param)
@@ -743,7 +745,7 @@ def reader(directory,file_pattern,output_folder):
 abs_path=os.path.dirname(__file__)
 
 for dn in range(0,len(mc.Dlist)):
-  for fn in range(0,len(mc.Flist)):
+  for fn in range(1,len(mc.Flist)):
     print("Ndelta:",mc.Dlist[dn],",","Nfree:",mc.Flist[fn])
     ptcl_dir='D_%d_F_%d'%(mc.Dlist[dn],mc.Flist[fn])
     directoryA=os.path.join(abs_path,ptcl_dir,'bw_A')
