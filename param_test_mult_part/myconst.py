@@ -28,3 +28,9 @@ m_cut=2 #mass error bar for delta
 
 #width of the mass generated via BW dist (gamma)
 bw_mw=50
+
+
+#particle temp
+Tpfree=150
+Tpifree=200
+TDel=300

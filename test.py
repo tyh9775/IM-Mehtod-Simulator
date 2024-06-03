@@ -1,65 +1,32 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
-import myconst as mc
 
-def bw_func(x,A,a,b):
-  q=np.sqrt((x**2-mc.m_p**2-mc.m_pi**2)**2-4*(mc.m_p*mc.m_pi)**2)/(2*x)
-  gam=(a*q**3)/(mc.m_pi**2+b*q**2)
-  return (4*gam*mc.m_del0**2)/(A*((x**2-mc.m_del0**2)**2+(mc.m_del0*gam)**2))
+# Sample data (replace with your actual data)
+x_data = np.array([1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900])
+y_data = np.array([960.1, 480.7, 241.1, 120.3, 60.5, 31.2, 16.3, 8.5, 4.1, 2.3])
 
+# Define the exponential decay function
+def exponential_decay_model(x, a, b, c):
+    return a * np.exp(-b * x) + c
 
+# Initial guess for the parameters
+initial_guess = [1, 0.001, 1]
 
-x1=[1079.5,1084.5,1089.5,1094.5,1099.5,1104.5,1109.5,1114.5,1119.5,1124.5
-,1129.5,1134.5,1139.5,1144.5,1149.5,1154.5,1159.5,1164.5,1169.5,1174.5
-,1179.5,1184.5,1189.5,1194.5,1199.5,1204.5,1209.5,1214.5,1219.5,1224.5
-,1229.5,1234.5,1239.5,1244.5,1249.5,1254.5,1259.5,1264.5,1269.5,1274.5
-,1279.5,1284.5,1289.5,1294.5,1299.5,1304.5,1309.5,1314.5,1319.5,1324.5
-,1329.5,1334.5]
-y1=[191.,356.,406.,450.,506.,567.,523.,613.,560.,596.,592.,582.,584.,584.
-,613.,650.,674.,708.,681.,656.,723.,777.,778.,798.,844.,861.,903.,885.
-,843.,867.,881.,844.,790.,807.,722.,675.,641.,634.,680.,582.,544.,551.
-,495.,494.,481.,425.,410.,444.,397.,382.,365.,368.]
+# Perform the curve fit
+params, covariance = curve_fit(exponential_decay_model, x_data, y_data, p0=initial_guess)
 
-yerr=np.sqrt(y1)
-yerr=[1 if i==0 else i for i in yerr]
+# Get the fitted curve
+fitted_y_data = exponential_decay_model(x_data, *params)
 
-x=[1079.5,1084.5,1089.5,1094.5,1099.5,1104.5,1109.5,1114.5,1119.5,1124.5
-,1129.5,1134.5,1139.5,1144.5,1149.5,1154.5,1159.5,1164.5,1169.5,1174.5
-,1179.5,1184.5,1189.5,1194.5,1199.5,1204.5,1209.5,1214.5,1219.5,1224.5
-,1229.5,1234.5,1239.5,1244.5,1249.5,1254.5,1259.5,1264.5,1269.5,1274.5
-,1279.5,1284.5,1289.5,1294.5,1299.5,1304.5,1309.5,1314.5,1319.5,1324.5
-,1329.5,1334.5]
+# Print the parameters
+print(f"Fitted parameters: a = {params[0]}, b = {params[1]}, c = {params[2]}")
 
-y=[ 0.,1.,4.,2.,2.,12.,15.,15.,20.,30.,33.,39.,53.,57.
-,84.,84.,115.,138.,137.,162.,212.,239.,291.,309.,341.,399.,429.,435.
-,413.,427.,461.,434.,367.,403.,346.,329.,286.,269.,301.,251.,215.,228.
-,184.,182.,170.,140.,146.,136.,141.,116.,108.,110.]
-
-yer=np.sqrt(y)
-yer=[1 if i==0 else i for i in yer]
-
-popt1,pcov1=curve_fit(bw_func,x,y,p0=[0.95,0.47,0.6],bounds=([0,0,0],[np.inf,np.inf,np.inf]),sigma=yer,absolute_sigma=True)
-popt,pcov=curve_fit(bw_func,x,y,p0=[0.95,0.47,0.6],bounds=([0,0,0],[np.inf,np.inf,np.inf]))
-
-popt1,pcov1=curve_fit(bw_func,x1,y1,p0=[0.95,0.47,0.6],bounds=([0,0,0],[np.inf,np.inf,np.inf]),sigma=yerr,absolute_sigma=True)
-popt,pcov=curve_fit(bw_func,x1,y1,p0=[0.95,0.47,0.6],bounds=([0,0,0],[np.inf,np.inf,np.inf]))
-
-
-x2=[1085.5,1090.5,1095.5,1100.5,1105.5,1110.5,1115.5,1120.5,1125.5,1130.5
-,1135.5,1140.5,1145.5,1150.5,1155.5,1160.5,1165.5,1170.5,1175.5,1180.5
-,1185.5,1190.5,1195.5,1200.5,1205.5,1210.5,1215.5,1220.5,1225.5,1230.5
-,1235.5,1240.5,1245.5,1250.5,1255.5,1260.5,1265.5,1270.5,1275.5,1280.5
-,1285.5,1290.5,1295.5,1300.5,1305.5,1310.5,1315.5,1320.5,1325.5,1330.5
-,1335.5]
-y2=[2.,4.,2.,4.,10.,16.,15.,21.,36.,30.,41.,60.,52.,89.
-,91.,123.,137.,137.,175.,211.,258.,282.,318.,350.,428.,408.,437.,422.
-,424.,462.,431.,374.,379.,342.,336.,274.,276.,277.,256.,215.,222.,175.
-,186.,157.,152.,137.,143.,135.,110.,108.,104.]
-
-yerr=np.sqrt(y2)
-
-popt2,pcov2=curve_fit(bw_func,x2,y2,p0=[0.95,0.47,0.6],bounds=([0,0,0],[np.inf,np.inf,np.inf]),sigma=yerr,absolute_sigma=True)
-
-print(popt2)
-print(pcov2)
+# Plot the original data and the fitted curve
+plt.scatter(x_data, y_data, label='Data')
+plt.plot(x_data, fitted_y_data, label='Fitted curve', color='red')
+plt.legend()
+plt.xlabel('x')
+plt.ylabel('y')
+plt.title('Exponential Decay Fit')
+plt.show()

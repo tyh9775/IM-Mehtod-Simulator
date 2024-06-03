@@ -255,8 +255,8 @@ def generator(numD,numF,filename,norm_w=None,DT=None,A=None,a=None,b=None,output
     #In lab frame
 
     #generate the momenta of the particles in lab frame according to exp dist
-    ke_N=exp_dist(150,N_free)
-    ke_Pi=exp_dist(200,N_free)  
+    ke_N=exp_dist(mc.Tpfree,N_free)
+    ke_Pi=exp_dist(mc.Tpifree,N_free)  
 
     pN=[]
     pPi=[]
@@ -315,6 +315,8 @@ abs_path=os.path.dirname(__file__)
 
 for dn in range(0,len(Delta_num)):
   for fn in range(0,len(Free_num)):
+    if dn==0 and fn==0:
+      continue
     newfolder=os.path.join(abs_path,'D_%d_F_%d'%(Delta_num[dn],Free_num[fn]))
     os.makedirs(newfolder,exist_ok=True)
 
