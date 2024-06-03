@@ -82,7 +82,7 @@ def IM_method(plist,pilist):
         dtest=gam_mat(gam,v,vx,vy,vz,d4)
         print("proton 4-mnt:",p4p)
         print("pion 4-mnt:",p4pi)
-        print("vector some of the mnt:",ptot)
+        print("vector sum of the mnt:",ptot)
         print("mag of 3D mnt:",pmag)
         print("calculated inv m:",mdel_rec)
         print()
@@ -100,7 +100,7 @@ def IM_method(plist,pilist):
       #momentum cut and upper limit on the invariant mass
       if pt_mag < mc.p_cut:
         if masslim is True:
-          if mdel_rec<mc.md_max:
+          if mdel_rec<mc.m_max:
             m_list.append(mdel_rec)
             mnt_list.append(pmag)
         else:
@@ -465,11 +465,11 @@ def reader(directory,file_pattern,output_folder):
       xfit_f=np.arange(min(bins_cntr_f),max(bins_cntr_f),0.5)    
       f_err=np.sqrt(hist_f)
       sigpts_f=[1 if sigs==0 else sigs for sigs in f_err]
-      #popt_f_e,pcov_f_e=curve_fit(exp_func,bins_cntr_f,hist_f,p0=[1,1/mc.TDel,1],bounds=([0,0,0],[np.inf,1,np.inf]))
+      popt_f_e,pcov_f_e=curve_fit(exp_func,bins_cntr_f,hist_f,p0=[1,1/mc.TDel,1],bounds=([0,0,0],[np.inf,1,np.inf]))
       #print(popt_f_e)
-      #f_e_chi_sq=chi2gen(exp_func,bins_cntr_f,hist_f,sigpts_f,popt_f_e)
-      #yfit_f_e=exp_func(xfit_f,*popt_f_e)
-      #plt.plot(xfit_f,yfit_f_e,label='exp fit, chi2=%s'%round(f_e_chi_sq,3))
+      f_e_chi_sq=chi2gen(exp_func,bins_cntr_f,hist_f,sigpts_f,popt_f_e)
+      yfit_f_e=exp_func(xfit_f,*popt_f_e)
+      plt.plot(xfit_f,yfit_f_e,label='exp fit, chi2=%s'%round(f_e_chi_sq,3))
       popt_f_p,pcov_f_p=curve_fit(poly_func,bins_cntr_f,hist_f,p0=[0,0,0,0,0],sigma=sigpts_f,absolute_sigma=True)
       f_p_chi_sq=chi2gen(poly_func,bins_cntr_f,hist_f,sigpts_f,popt_f_p)
       yfit_f_p=poly_func(xfit_f,*popt_f_p)
@@ -484,7 +484,17 @@ def reader(directory,file_pattern,output_folder):
       #plt.show()
       plt.close()
 
-
+    #adding free and actual
+    if len(free_IM)!=0 and len(act_IM)!=0:
+      plt.figure()
+      plt.title("Real + Free")
+      plt.close()
+      
+    #subtracting free from recreated
+    if len(IM_list)!=0 and len(free_IM)!=0:
+      plt.figure()
+      plt.title("Recreated - Free")
+      plt.close()
 
     contour=False
     if len(IM_list)!=0:
