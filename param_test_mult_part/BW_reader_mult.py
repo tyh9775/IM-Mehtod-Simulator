@@ -117,6 +117,9 @@ def poly_func(x,c0,c1,c2,c3,c4):
 def gaus_func(x,A,x0,sig):
   return A*np.exp(-((x-x0)**2)/(2*sig**2))/(np.sqrt(2*np.pi)*sig)
 
+def exp_func(x,a,b,c,d):
+  return a*np.exp(-b*x+c)+d
+
 def bw_func(x,A,a,b):
   q=np.sqrt((x**2-mc.m_p**2-mc.m_pi**2)**2-4*(mc.m_p*mc.m_pi)**2)/(2*x)
   gam=(a*q**3)/(mc.m_pi**2+b*q**2)
@@ -195,6 +198,8 @@ def reader(directory,file_pattern,output_folder):
     IM_list=[] #the invariant mass of the recreated deltas from all events
     act_list=[] #momenta of "real" deltas
     act_IM=[] #inv mass of "real" deltas
+    free_mnt=[] #mnt of "fake" deltas
+    free_IM=[] #inv mass of "fake" deltas
     momentum_list=[] #the momenta of recreated deltas
     p_mnt=[] #momenta of detected protons
     pi_mnt=[] #momenta of detected pions
@@ -211,6 +216,10 @@ def reader(directory,file_pattern,output_folder):
         #4 momenta of protons and pions
         p_list=[]
         pi_list=[]
+
+        #free particles
+        pflist=[]
+        piflist=[]
 
         del_list=[] #4 mnt of 'real' delta
         
@@ -242,7 +251,7 @@ def reader(directory,file_pattern,output_folder):
             p_en.append(float(rowdata[1]))
             p_mnt.append(dist_form(rowdata[2:4]))
             if Par_ID==0:
-              continue
+              pflist.append(rowdata[1:5])
             else:
               plist[f'p{Par_ID}_list'].append(rowdata[1:5])
           elif PID==211: #pion+
@@ -250,16 +259,23 @@ def reader(directory,file_pattern,output_folder):
             pi_en.append(float(rowdata[1]))
             pi_mnt.append(dist_form(rowdata[2:4]))
             if Par_ID==0:
-              continue
+              piflist.append(rowdata[1:5])
             else:
               pilist[f'pi{Par_ID}_list'].append(rowdata[1:5])       
         #invariant mass of the p and pi in the event with momentum cut applied
         #random.shuffle(p_list)
         #random.shuffle(pi_list)
         
+        #inv mass of all pairs
         m_list,mnt_list=IM_method(p_list,pi_list)
 
-        
+        #inv mass of free particle pairs
+        mf_list,mntf_list=IM_method(pflist,pilist)
+
+        for ff in range(0,len(mf_list)):
+          free_IM.append(mf_list[ff])
+        for ff in range(0,len(mntf_list)):
+          free_mnt.append(mf_list[ff])
 
         m_cr_list=[]
         mnt_cr_list=[]
@@ -428,6 +444,33 @@ def reader(directory,file_pattern,output_folder):
     plt.savefig(plot_file_path)
     #plt.show()
     plt.close()
+
+    #free pairs ("fake" delta)
+    binsize_new=5
+    plt.figure()
+    hist_f,bins_f,pack_f=plt.hist(free_IM,bins=np.arange(int(min(free_IM)),int(max(free_IM)),binsize_new),alpha=0)
+    bins_cntr_f=0.5*(bins_f[:-1]+bins_f[1:])
+    xfit_f=np.arange(min(bins_cntr_f),max(bins_cntr_f),0.5)    
+    f_err=np.sqrt(hist_f)
+    #try fit with both exp and poly functions
+    sigpts_f=[1 if sigs==0 else sigs for sigs in f_err]
+    popt_f_e,pcov_f_e=curve_fit(exp_func,bins_cntr_f,hist_f,p0=[max(hist_f),0.01,mc.md_min,0],sigma=sigpts_f,absolute_sigma=True)
+    f_e_chi_sq=chi2(bins_cntr_f,hist_f,sigpts_f,*popt_f_e)
+    yfit_f_e=exp_func(xfit_f,*popt_f_e)
+    plt.plot(xfitbw_cr,yfitbw_cr,label='BW fit')
+    plt.plot(xfitbw_cr,yfit_par_cr,'--',label='Function w/ given param')    
+    plt.errorbar(bins_cntr_cr,hist_cr,xerr=binsize_new/2,yerr=cr_err,fmt='.')
+    plt.hlines(y=hlf_val,xmin=xfitbw_cr[lft],xmax=xfitbw_cr[rgt],label=f'fwhm={round(fwhm_cr,3)}',colors='red')
+    plt.figtext(0.75,0.75,"par=%s \n A=%s+/-%s \n a=%s+/-%s \n b=%s+/-%s \n chi_sq=%s"%(param,round(Ac_est,3),round(eAc,3),round(ac_est,3),round(eac,3),round(bc_est,3),round(ebc,3),round(cr_chi_sq,5)),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
+    plt.title("IM of Related Pairs")
+    plt.xlabel("Mass (MeV/c^2)")
+    plt.ylabel("Count")
+    plt.legend(loc='upper left')
+    plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_cr_IM_plot.png")
+    plt.savefig(plot_file_path)
+    #plt.show()
+    plt.close()
+
 
     contour=False
     plt.figure()
