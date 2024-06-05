@@ -487,6 +487,7 @@ def reader(directory,file_pattern,output_folder):
     #adding free and actual
     if len(free_IM)!=0 and len(act_IM)!=0:
       plt.figure()
+      plt.errorbar(bins_cntr,hist,xerr=binsize/2,yerr=hist_err,fmt='.',label='Recreated Deltas')
       plt.errorbar(bins_cntr_f,hist_f,xerr=binsize_new/2,yerr=f_err,fmt='.',label='Free Particles')
       plt.errorbar(bins_cntr_act,hist_act,xerr=binsize/2,yerr=act_err,fmt='.',label='Real Deltas')
       if min(bins_cntr_act)<min(bins_cntr_f):
@@ -499,7 +500,6 @@ def reader(directory,file_pattern,output_folder):
         cmb_max=max(bins_cntr_f)
       cmb_hist,cmb_bins=np.histogram(np.concatenate([free_IM,act_IM]),bins=np.arange(cmb_min,cmb_max,binsize_new))
       binsize_cmb=(cmb_bins[1]-cmb_bins[0])
-      print(binsize_cmb)
       cmb_err=np.sqrt(cmb_hist)
       plt.errorbar(cmb_bins[:-1],cmb_hist,xerr=binsize_cmb/2,yerr=cmb_err,fmt='.',label="Combined")
       plt.title("Real + Free")
@@ -508,16 +508,35 @@ def reader(directory,file_pattern,output_folder):
       plt.legend(loc='upper right')
       plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_add_IM_plot.png")
       plt.savefig(plot_file_path)
-      #plt.show()      
+      plt.show()      
       plt.close()
 
     #subtracting free from recreated
     if len(IM_list)!=0 and len(free_IM)!=0:
       plt.figure()
+      plt.errorbar(bins_cntr,hist,xerr=binsize/2,yerr=hist_err,fmt='.',label='Recreated Deltas')
+      plt.errorbar(bins_cntr_f,hist_f,xerr=binsize_new/2,yerr=f_err,fmt='.',label='Free Particles')
+      plt.errorbar(bins_cntr_act,hist_act,xerr=binsize/2,yerr=act_err,fmt='.',label='Real Deltas')
+      if min(bins_cntr)<min(bins_cntr_f):
+        sub_min=min(bins_cntr)
+      else:
+        sub_min=min(bins_cntr_f)
+      if max(bins_cntr)>max(bins_cntr_f):
+        sub_max=max(bins_cntr)
+      else:
+        sub_max=max(bins_cntr_f)
+      cmn_hist1,sub_bins=np.histogram(IM_list,bins=np.arange(sub_min,sub_max,binsize_cmb))
+      cmn_hist2,sub_bins=np.histogram(free_IM,bins=sub_bins)
+      sub_hist=[a-b for a,b in zip(cmn_hist1,cmn_hist2)]
+      sub_err=np.sqrt(sub_hist)
+      plt.errorbar(sub_bins[:-1],sub_hist,xerr=binsize_cmb/2,yerr=sub_err,fmt='.',label='Difference')
       plt.title("Recreated - Free")
       plt.xlabel("Mass (MeV/c^2)")
       plt.ylabel("Count")
       plt.legend(loc='upper right')
+      plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_sub_IM_plot.png")
+      plt.savefig(plot_file_path)
+      plt.show()
       plt.close()
 
     contour=False
