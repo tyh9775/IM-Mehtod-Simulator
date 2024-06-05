@@ -487,13 +487,25 @@ def reader(directory,file_pattern,output_folder):
     #adding free and actual
     if len(free_IM)!=0 and len(act_IM)!=0:
       plt.figure()
+      plt.errorbar(bins_cntr_f,hist_f,xerr=binsize_new/2,yerr=f_err,fmt='.',label='Free Particles')
+      plt.errorbar(bins_cntr_act,hist_act,xerr=binsize/2,yerr=act_err,fmt='.',label='Real Deltas')
+      cmb_hist,cmb_bins=np.histogram(np.concatenate([free_IM,act_IM]),bins='auto')
+      print(cmb_bins)
+      print(cmb_hist)
       plt.title("Real + Free")
+      plt.xlabel("Mass (MeV/c^2)")
+      plt.ylabel("Count")
+      plt.legend(loc='upper right')
+      plt.show()      
       plt.close()
-      
+      quit()
     #subtracting free from recreated
     if len(IM_list)!=0 and len(free_IM)!=0:
       plt.figure()
       plt.title("Recreated - Free")
+      plt.xlabel("Mass (MeV/c^2)")
+      plt.ylabel("Count")
+      plt.legend(loc='upper right')
       plt.close()
 
     contour=False
@@ -813,8 +825,8 @@ def reader(directory,file_pattern,output_folder):
 #read files
 abs_path=os.path.dirname(__file__)
 
-for dn in range(0,len(mc.Dlist)):
-  for fn in range(0,len(mc.Flist)):
+for dn in range(1,len(mc.Dlist)):
+  for fn in range(1,len(mc.Flist)):
     if dn==0 and fn==0:
       continue
     print("Ndelta:",mc.Dlist[dn],",","Nfree:",mc.Flist[fn])

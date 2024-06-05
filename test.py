@@ -1,32 +1,30 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.optimize import curve_fit
 
-# Sample data (replace with your actual data)
-x_data = np.array([1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900])
-y_data = np.array([960.1, 480.7, 241.1, 120.3, 60.5, 31.2, 16.3, 8.5, 4.1, 2.3])
+# Example histograms data
+data1 = np.random.normal(0, 1, 1000)
+data2 = np.random.normal(1, 2, 1500)
 
-# Define the exponential decay function
-def exponential_decay_model(x, a, b, c):
-    return a * np.exp(-b * x) + c
+# Identify the larger dataset
+if len(data1) > len(data2):
+    larger_data = data1
+    smaller_data = data2
+else:
+    larger_data = data2
+    smaller_data = data1
 
-# Initial guess for the parameters
-initial_guess = [1, 0.001, 1]
+# Compute histogram for the larger dataset
+larger_hist, larger_bin_edges = np.histogram(larger_data, bins='auto')
 
-# Perform the curve fit
-params, covariance = curve_fit(exponential_decay_model, x_data, y_data, p0=initial_guess)
+# Rebin the smaller dataset using the bin edges from the larger dataset
+smaller_hist, _ = np.histogram(smaller_data, bins=larger_bin_edges)
 
-# Get the fitted curve
-fitted_y_data = exponential_decay_model(x_data, *params)
+# Add the histograms
+combined_hist = larger_hist + smaller_hist
 
-# Print the parameters
-print(f"Fitted parameters: a = {params[0]}, b = {params[1]}, c = {params[2]}")
-
-# Plot the original data and the fitted curve
-plt.scatter(x_data, y_data, label='Data')
-plt.plot(x_data, fitted_y_data, label='Fitted curve', color='red')
+# Plot the histograms
+plt.hist(larger_data, bins=larger_bin_edges, alpha=0.5, label='Larger Data', color='blue')
+plt.hist(smaller_data, bins=larger_bin_edges, alpha=0.5, label='Smaller Data', color='red')
+plt.hist(np.concatenate([data1, data2]), bins=larger_bin_edges, alpha=0.5, label='Combined', color='green')
 plt.legend()
-plt.xlabel('x')
-plt.ylabel('y')
-plt.title('Exponential Decay Fit')
 plt.show()
