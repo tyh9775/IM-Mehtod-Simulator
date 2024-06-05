@@ -489,16 +489,28 @@ def reader(directory,file_pattern,output_folder):
       plt.figure()
       plt.errorbar(bins_cntr_f,hist_f,xerr=binsize_new/2,yerr=f_err,fmt='.',label='Free Particles')
       plt.errorbar(bins_cntr_act,hist_act,xerr=binsize/2,yerr=act_err,fmt='.',label='Real Deltas')
-      cmb_hist,cmb_bins=np.histogram(np.concatenate([free_IM,act_IM]),bins='auto')
-      print(cmb_bins)
-      print(cmb_hist)
+      if min(bins_cntr_act)<min(bins_cntr_f):
+        cmb_min=min(bins_cntr_act)
+      else:
+        cmb_min=min(bins_cntr_f)
+      if max(bins_cntr_act)>max(bins_cntr_f):
+        cmb_max=max(bins_cntr_act)
+      else:
+        cmb_max=max(bins_cntr_f)
+      cmb_hist,cmb_bins=np.histogram(np.concatenate([free_IM,act_IM]),bins=np.arange(cmb_min,cmb_max,binsize_new))
+      binsize_cmb=(cmb_bins[1]-cmb_bins[0])
+      print(binsize_cmb)
+      cmb_err=np.sqrt(cmb_hist)
+      plt.errorbar(cmb_bins[:-1],cmb_hist,xerr=binsize_cmb/2,yerr=cmb_err,fmt='.',label="Combined")
       plt.title("Real + Free")
       plt.xlabel("Mass (MeV/c^2)")
       plt.ylabel("Count")
       plt.legend(loc='upper right')
-      plt.show()      
+      plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_add_IM_plot.png")
+      plt.savefig(plot_file_path)
+      #plt.show()      
       plt.close()
-      quit()
+
     #subtracting free from recreated
     if len(IM_list)!=0 and len(free_IM)!=0:
       plt.figure()
