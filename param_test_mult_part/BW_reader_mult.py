@@ -125,6 +125,9 @@ def bw_func(x,A,a,b):
   gam=(a*q**3)/(mc.m_pi**2+b*q**2)
   return (4*gam*mc.m_del0**2)/(A*((x**2-mc.m_del0**2)**2+(mc.m_del0*gam)**2))
 
+def cmb_func_p(x,A,a,b,c0,c1,c2,c3,c4,scl1,scl2):
+  return scl1*bw_func(x,A,a,b)+scl2*poly_func(x,c0,c1,c2,c3,c4)
+
 def fwhm_calc(data,bins):
   max_value=np.max(data)
   max_ind=np.argmax(data)
@@ -332,7 +335,7 @@ def reader(directory,file_pattern,output_folder):
       if len(endpoints)==0:
         endpoint=len(bins_cntr)-1
       else:
-        endpoint=endpoints[0]
+        endpoint=peak_pt+endpoints[0]
       xfitbw=np.arange(min(bins_cntr),bins_cntr[endpoint],0.5)
       ydef=bw_func(xfitbw,*param)
       sclr=max(hist)/max(ydef)
@@ -370,7 +373,7 @@ def reader(directory,file_pattern,output_folder):
     #"actual" deltas
     if len(act_IM)!=0:
       plt.figure()
-      hist_act,bins_act,pack_act=plt.hist(act_IM,bins=bins,alpha=0)
+      hist_act,bins_act,pack_act=plt.hist(act_IM,bins=np.arange(min(act_IM),max(act_IM),binsize),alpha=0)
       bins_cntr_act=0.5*(bins_act[:-1]+bins_act[1:])
       xfitbw_act=np.arange(min(bins_cntr_act),max(bins_cntr_act),0.5)
       ydef_act=bw_func(xfitbw_act,*param)
@@ -383,7 +386,7 @@ def reader(directory,file_pattern,output_folder):
       if len(endpoints)==0:
         endpoint=len(bins_cntr_act)-1
       else:
-        endpoint=endpoints[0]
+        endpoint=peak_act+endpoints[0]
       sigpts_act=act_err[:endpoint]
       sigpts_act=[1 if sigs==0 else sigs for sigs in sigpts_act]
       popt_act,pcov_act=curve_fit(bw_func,bins_cntr_act[:endpoint],hist_act[:endpoint],p0=[0.95,0.47,0.6],bounds=(lwrbnd,uprbnd ),sigma=sigpts_act,absolute_sigma=True)
@@ -413,9 +416,9 @@ def reader(directory,file_pattern,output_folder):
 
     #related pairs
     if len(cr_IM)!=0:
-      binsize_new=5
+      
       plt.figure()
-      hist_cr,bins_cr,pack_cr=plt.hist(cr_IM,bins=np.arange(int(min(cr_IM)),int(max(cr_IM)),binsize_new),alpha=0)
+      hist_cr,bins_cr,pack_cr=plt.hist(cr_IM,bins=np.arange(int(min(cr_IM)),int(max(cr_IM)),binsize),alpha=0)
       bins_cntr_cr=0.5*(bins_cr[:-1]+bins_cr[1:])
       xfitbw_cr=np.arange(min(bins_cntr_cr),max(bins_cntr_cr),0.5)    
       ydef_cr=bw_func(xfitbw_cr,*param)
@@ -428,7 +431,7 @@ def reader(directory,file_pattern,output_folder):
       if len(endpoints)==0:
         endpoint=len(bins_cntr_cr)-1
       else:
-        endpoint=endpoints[0]
+        endpoint=peak_cr+endpoints[0]
       sigpts_cr=cr_err[:endpoint]
       sigpts_cr=[1 if sigs==0 else sigs for sigs in sigpts_cr]
       popt_cr,pcov_cr=curve_fit(bw_func,bins_cntr_cr[:endpoint],hist_cr[:endpoint],p0=[0.95,0.47,0.6],bounds=(lwrbnd,uprbnd),sigma=sigpts_cr,absolute_sigma=True)
@@ -443,7 +446,7 @@ def reader(directory,file_pattern,output_folder):
       fwhm_cr,hlf_val,lft,rgt,mxi=fwhm_calc(yfitbw_cr,xfitbw_cr)
       plt.plot(xfitbw_cr,yfitbw_cr,label='BW fit')
       plt.plot(xfitbw_cr,yfit_par_cr,'--',label='Function w/ given param')    
-      plt.errorbar(bins_cntr_cr,hist_cr,xerr=binsize_new/2,yerr=cr_err,fmt='.')
+      plt.errorbar(bins_cntr_cr,hist_cr,xerr=binsize/2,yerr=cr_err,fmt='.')
       plt.hlines(y=hlf_val,xmin=xfitbw_cr[lft],xmax=xfitbw_cr[rgt],label=f'fwhm={round(fwhm_cr,3)}',colors='red')
       plt.figtext(0.75,0.75,"par=%s \n A=%s+/-%s \n a=%s+/-%s \n b=%s+/-%s \n chi_sq=%s"%(param,round(Ac_est,3),round(eAc,3),round(ac_est,3),round(eac,3),round(bc_est,3),round(ebc,3),round(cr_chi_sq,5)),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
       plt.title("IM of Related Pairs")
@@ -456,11 +459,10 @@ def reader(directory,file_pattern,output_folder):
       plt.close()
 
     #free pairs ("fake" delta)
-    binsize_new=5
     
     if len(free_IM)!=0:
       plt.figure()
-      hist_f,bins_f,pack_f=plt.hist(free_IM,bins=np.arange(int(min(free_IM)),int(max(free_IM)),binsize_new),alpha=0)
+      hist_f,bins_f,pack_f=plt.hist(free_IM,bins=np.arange(int(min(free_IM)),int(max(free_IM)),binsize),alpha=0)
       bins_cntr_f=0.5*(bins_f[:-1]+bins_f[1:])
       xfit_f=np.arange(min(bins_cntr_f),max(bins_cntr_f),0.5)    
       f_err=np.sqrt(hist_f)
@@ -473,37 +475,58 @@ def reader(directory,file_pattern,output_folder):
       popt_f_p,pcov_f_p=curve_fit(poly_func,bins_cntr_f,hist_f,p0=[0,0,0,0,0],sigma=sigpts_f,absolute_sigma=True)
       f_p_chi_sq=chi2gen(poly_func,bins_cntr_f,hist_f,sigpts_f,popt_f_p)
       yfit_f_p=poly_func(xfit_f,*popt_f_p)
+      print(popt_f_p)
       plt.plot(xfit_f,yfit_f_p,label='poly fit, chi2=%s'%round(f_p_chi_sq,3))
-      plt.errorbar(bins_cntr_f,hist_f,xerr=binsize_new/2,yerr=sigpts_f,fmt='.')
+      plt.errorbar(bins_cntr_f,hist_f,xerr=binsize/2,yerr=sigpts_f,fmt='.')
       plt.title("IM of Free Pairs")
       plt.xlabel("Mass (MeV/c^2)")
       plt.ylabel("Count")
       plt.legend(loc='upper right')
       plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_free_IM_plot.png")
       plt.savefig(plot_file_path)
-      #plt.show()
+      plt.show()
       plt.close()
 
     #adding free and actual
     if len(free_IM)!=0 and len(act_IM)!=0:
+      
       plt.figure(1)
       plt.errorbar(bins_cntr,hist,xerr=binsize/2,yerr=hist_err,fmt='.',label='Recreated Deltas')
-      plt.errorbar(bins_cntr_f,hist_f,xerr=binsize_new/2,yerr=f_err,fmt='.',label='Free Particles')
+      plt.errorbar(bins_cntr_f,hist_f,xerr=binsize/2,yerr=f_err,fmt='.',label='Free Particles')
       plt.errorbar(bins_cntr_act,hist_act,xerr=binsize/2,yerr=act_err,fmt='.',label='Real Deltas')
       cmb_min=min(min(bins_cntr_f),min(bins_cntr_act))
       cmb_max=max(max(bins_cntr_f),max(bins_cntr_act))     
-      cmn_hista,cmb_bins=np.histogram(free_IM,bins=np.arange(cmb_min,cmb_max,binsize_new))
+      cmn_hista,cmb_bins=np.histogram(free_IM,bins=np.arange(cmb_min,cmb_max,binsize))
       cmn_histb,cmb_bins=np.histogram(act_IM,bins=cmb_bins)
       cmb_hist=[a+b for a,b in zip(cmn_hista,cmn_histb)]            
       binsize_cmb=(cmb_bins[1]-cmb_bins[0])
       cmb_err=np.sqrt(cmb_hist)
       cmn_x=np.arange(cmb_min,cmb_max,0.5)
-      yfit_f_new=exp_func(cmn_x,*popt_f_e)
-      yfitbw_new=bw_func(cmn_x,*popt_act)
-      cmb_y=[a+b for a,b in zip(yfit_f_new,yfitbw_new)]
-      plt.plot(cmn_x,yfitbw_new,label='BW Fit (Real)')
-      plt.plot(cmn_x,yfit_f_new,label='poly fit (Free)')
+      cmb_y=[]
+      cmb_y1=[]
+      scld_y=[]
+      fit_sclr_list=[]
+      for i in range(len(bins_cntr_act),len(bins_cntr_f)):
+        if hist_f[i]>0:
+          fit_sclr_list.append(hist[i]/hist_f[i])
+      fit_sclr1=np.average(fit_sclr_list)
+      print(fit_sclr1)
+      fit_sclr2=max(hist)/max(hist_act)
+      print(fit_sclr2)
+      for i in range(0,len(xfitbw_act)):
+        cmb_y.append(yfitbw_act[i]+yfit_f_p[i])
+        cmb_y1.append(yfitbw_act[i]+fit_sclr1*yfit_f_p[i])
+        scld_y.append(fit_sclr1*yfit_f_p[i])
+      for i in range(len(xfitbw_act),len(xfit_f)):
+        cmb_y.append(yfit_f_p[i])
+        cmb_y1.append(yfit_f_p[i]*fit_sclr1)
+        scld_y.append(fit_sclr1*yfit_f_p[i])
+      plt.plot(xfitbw_act,yfitbw_act,label='BW Fit (Real)')
+      plt.plot(xfit_f,yfit_f_p,label='poly fit (Free)')
       plt.plot(cmn_x,cmb_y,label='combined fit')
+      plt.plot(cmn_x,cmb_y1,label='combined w/ F scl')
+      plt.plot(cmn_x,scld_y,label='scld free')
+      plt.hlines(0,min(cmn_x),max(cmn_x))
       plt.errorbar(cmb_bins[:-1],cmb_hist,xerr=binsize_cmb/2,yerr=cmb_err,fmt='.',label="Combined")
       plt.title("Real + Free")
       plt.xlabel("Mass (MeV/c^2)")
@@ -511,14 +534,15 @@ def reader(directory,file_pattern,output_folder):
       plt.legend(loc='upper right')
       plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_add_IM_plot.png")
       plt.savefig(plot_file_path)
-      #plt.show()
-      #plt.close()
+      plt.show()
+      plt.close()
+      quit()
 
       #subtracting free from recreated
       if len(IM_list)!=0 and len(free_IM)!=0:
         plt.figure(2)
         plt.errorbar(bins_cntr,hist,xerr=binsize/2,yerr=hist_err,fmt='.',label='Recreated Deltas')
-        plt.errorbar(bins_cntr_f,hist_f,xerr=binsize_new/2,yerr=f_err,fmt='.',label='Free Particles')
+        plt.errorbar(bins_cntr_f,hist_f,xerr=binsize/2,yerr=f_err,fmt='.',label='Free Particles')
         plt.errorbar(bins_cntr_act,hist_act,xerr=binsize/2,yerr=act_err,fmt='.',label='Real Deltas')
         sub_min=min(min(bins_cntr_f),min(bins_cntr))
         sub_max=max(max(bins_cntr_f),max(bins_cntr))
@@ -743,7 +767,7 @@ def reader(directory,file_pattern,output_folder):
     rmnt=False
     if len(cr_mnt)!=0:
       plt.figure()
-      hist_cr_mnt,bins_cr_mnt,pack_cr_mnt=plt.hist(cr_mnt,bins=np.arange(0,int(max(cr_mnt))+1,binsize_new))
+      hist_cr_mnt,bins_cr_mnt,pack_cr_mnt=plt.hist(cr_mnt,bins=np.arange(0,int(max(cr_mnt))+1,binsize))
       plt.title("Momenta of Related Pairs")
       plt.xlabel("Momentum (MeV/c)")
       plt.ylabel("Count")

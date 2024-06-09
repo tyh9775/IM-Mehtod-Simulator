@@ -14,7 +14,7 @@ md_min=m_p+m_pi
 md_max=rt_s-m_p
 
 #bounds for the reader
-m_max=2000
+m_max=1800
 
 #maximum momentum from the maximum mass
 pd_max=(((rt_s**2+md_min**2-m_p**2)/(2*rt_s))**2-md_min**2)**0.5
