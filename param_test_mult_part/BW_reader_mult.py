@@ -490,8 +490,6 @@ def reader(directory,file_pattern,output_folder):
       plt.errorbar(bins_cntr,hist,xerr=binsize/2,yerr=hist_err,fmt='.',label='Recreated Deltas')
       plt.errorbar(bins_cntr_f,hist_f,xerr=binsize_new/2,yerr=f_err,fmt='.',label='Free Particles')
       plt.errorbar(bins_cntr_act,hist_act,xerr=binsize/2,yerr=act_err,fmt='.',label='Real Deltas')
-      #plt.plot(xfitbw_act,yfitbw_act,label='BW Fit (Real)')
-      #plt.plot(xfit_f,yfit_f_p,label='poly fit (Free)')
       cmb_min=min(min(bins_cntr_f),min(bins_cntr_act))
       cmb_max=max(max(bins_cntr_f),max(bins_cntr_act))     
       cmn_hista,cmb_bins=np.histogram(free_IM,bins=np.arange(cmb_min,cmb_max,binsize_new))
@@ -499,6 +497,13 @@ def reader(directory,file_pattern,output_folder):
       cmb_hist=[a+b for a,b in zip(cmn_hista,cmn_histb)]            
       binsize_cmb=(cmb_bins[1]-cmb_bins[0])
       cmb_err=np.sqrt(cmb_hist)
+      cmn_x=np.arange(cmb_min,cmb_max,0.5)
+      yfit_f_new=exp_func(cmn_x,*popt_f_e)
+      yfitbw_new=bw_func(cmn_x,*popt_act)
+      cmb_y=[a+b for a,b in zip(yfit_f_new,yfitbw_new)]
+      plt.plot(cmn_x,yfitbw_new,label='BW Fit (Real)')
+      plt.plot(cmn_x,yfit_f_new,label='poly fit (Free)')
+      plt.plot(cmn_x,cmb_y,label='combined fit')
       plt.errorbar(cmb_bins[:-1],cmb_hist,xerr=binsize_cmb/2,yerr=cmb_err,fmt='.',label="Combined")
       plt.title("Real + Free")
       plt.xlabel("Mass (MeV/c^2)")
