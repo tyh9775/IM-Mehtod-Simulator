@@ -111,8 +111,8 @@ def IM_method(plist,pilist):
   return m_list, mnt_list
 
 #for fitting
-def poly_func(x,c0,c1,c2,c3,c4):
-  return c0+c1*x+c2*x**2+c3*x**3+c4*x**4
+def poly_func(x,c0,c1,c2,c3):
+  return c0+c1*x+c2*x**2+c3*x**3
 
 def gaus_func(x,A,x0,sig):
   return A*np.exp(-((x-x0)**2)/(2*sig**2))/(np.sqrt(2*np.pi)*sig)
@@ -125,8 +125,8 @@ def bw_func(x,A,a,b):
   gam=(a*q**3)/(mc.m_pi**2+b*q**2)
   return (4*gam*mc.m_del0**2)/(A*((x**2-mc.m_del0**2)**2+(mc.m_del0*gam)**2))
 
-def cmb_func_p(x,A,a,b,c0,c1,c2,c3,c4,scl1,scl2):
-  return scl1*bw_func(x,A,a,b)+scl2*poly_func(x,c0,c1,c2,c3,c4)
+def cmb_func_p(x,A,a,b,c0,c1,c2,c3,scl1,scl2):
+  return scl1*bw_func(x,A,a,b)+scl2*poly_func(x,c0,c1,c2,c3)
 
 def fwhm_calc(data,bins):
   max_value=np.max(data)
@@ -472,10 +472,15 @@ def reader(directory,file_pattern,output_folder):
       f_e_chi_sq=chi2gen(exp_func,bins_cntr_f,hist_f,sigpts_f,popt_f_e)
       yfit_f_e=exp_func(xfit_f,*popt_f_e)
       plt.plot(xfit_f,yfit_f_e,label='exp fit, chi2=%s'%round(f_e_chi_sq,3))
-      popt_f_p,pcov_f_p=curve_fit(poly_func,bins_cntr_f,hist_f,p0=[0,0,0,0,0],sigma=sigpts_f,absolute_sigma=True)
+      popt_f_p,pcov_f_p=curve_fit(poly_func,bins_cntr_f,hist_f,p0=[0,0,0,0],sigma=sigpts_f,absolute_sigma=True)
       f_p_chi_sq=chi2gen(poly_func,bins_cntr_f,hist_f,sigpts_f,popt_f_p)
       yfit_f_p=poly_func(xfit_f,*popt_f_p)
       print(popt_f_p)
+      '''bins_f_rscl=[i-min(bins_cntr_f) for i in bins_cntr_f]
+      popt_f_p_rscl,pcov_f_p_rscl=curve_fit(poly_func,bins_f_rscl,hist_f,p0=[0,0,0,0],sigma=sigpts_f,absolute_sigma=True)
+      print(popt_f_p_rscl)
+      yfit_f_p_rscl=poly_func(np.arange(min(bins_f_rscl),max(bins_f_rscl),0.5),*popt_f_p_rscl)
+      plt.plot(xfit_f-1,yfit_f_p_rscl,label='poly fit, rscl')'''
       plt.plot(xfit_f,yfit_f_p,label='poly fit, chi2=%s'%round(f_p_chi_sq,3))
       plt.errorbar(bins_cntr_f,hist_f,xerr=binsize/2,yerr=sigpts_f,fmt='.')
       plt.title("IM of Free Pairs")
