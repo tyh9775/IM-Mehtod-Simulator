@@ -1,38 +1,58 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from numpy.polynomial.polynomial import Polynomial
+from scipy.optimize import fsolve
 
-# Generate synthetic data
-np.random.seed(0)
-x_data = np.linspace(0, 10, 100)
-y_data = 3 * x_data**2 + 2 * x_data + 1 + 10 * np.random.normal(size=len(x_data))
+# Define the functions
+def f(x):
+    return x**2 + 2*x + 1
 
-# Perform a polynomial fit (degree 2 in this case)
-degree = 2
-coeffs = np.polyfit(x_data, y_data, degree)
+def g(x):
+    return 2*x + 3
 
-# Create a Polynomial object for easy manipulation
-poly = Polynomial(coeffs[::-1])  # np.polyfit returns coefficients in reverse order
+# Define the function to find roots for (f(x) - g(x) = 0)
+def h(x):
+    return f(x) - g(x)
 
-# Define the shift
-x_shift = 2.0
+# Use fsolve to find the roots of h(x) = 0 within a specific range
+# We need to iterate over a range to ensure we capture all intersection points
+x_values = np.linspace(-10, 10, 400)
+initial_guesses = []
 
-# Shift the polynomial
-def shifted_polynomial(x, poly, shift):
-    return poly(x - shift)
+# Adding initial guesses based on a grid search
+for x in x_values:
+    initial_guesses.append(x)
 
-# Plot the original data and the polynomial fit
-x_fit = np.linspace(0, 10, 200)
-y_fit = poly(x_fit)
-y_fit_shifted = shifted_polynomial(x_fit, poly, x_shift)
+# Finding unique roots
+roots = []
+for guess in initial_guesses:
+    root = fsolve(h, guess)[0]
+    # Checking if the root is a duplicate or not by comparing with existing roots
+    if np.isclose(root, roots, atol=1e-5).any():
+        continue
+    else:
+        roots.append(root)
 
-plt.scatter(x_data, y_data, label='Data')
-plt.plot(x_fit, y_fit, label='Polynomial Fit', color='orange')
-plt.plot(x_fit, y_fit_shifted, label=f'Shifted Polynomial (x - {x_shift})', color='green')
-plt.legend()
+# Plot the functions and their intersection points
+x = np.linspace(-10, 10, 400)
+y_f = f(x)
+y_g = g(x)
+
+plt.plot(x, y_f, label='$f(x) = x^2 + 2x + 1$')
+plt.plot(x, y_g, label='$g(x) = 2x + 3$')
+
+# Plot intersection points
+for root in roots:
+    plt.plot(root, f(root), 'ro')  # Intersection points
+    plt.annotate(f'({root:.2f}, {f(root):.2f})', (root, f(root)), textcoords="offset points", xytext=(0,10), ha='center')
+
 plt.xlabel('x')
 plt.ylabel('y')
-plt.title('Polynomial Fit and Shifted Polynomial')
+plt.legend()
+plt.grid(True)
+plt.title('Intersection of two graphs')
 plt.show()
 
-print("Original polynomial coefficients:", coeffs)
+# Print the intersection points
+print("Intersection points:")
+for root in roots:
+    print(f"x = {root:.2f}, y = {f(root):.2f}")

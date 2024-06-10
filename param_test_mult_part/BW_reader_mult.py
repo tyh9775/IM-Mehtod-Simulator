@@ -7,9 +7,8 @@ import os
 import glob
 import re
 
-
+mass_method=True
 eventcheck=False
-masslim=True
 #distance formula: sqrt(x1^2+x2^2+...+xn^2)
 def dist_form(vec):
   vsum2=0
@@ -96,23 +95,22 @@ def IM_method(plist,pilist):
         print("theoretical mag of mnt of p or pi:",dec_mnt)
         print("mag of mnt of p after LT:",ptest_mag)
         print()
-      
+
       #momentum cut and upper limit on the invariant mass
-      if pt_mag < mc.p_cut:
-        if masslim is True:
-          if mdel_rec<mc.m_max:
-            m_list.append(mdel_rec)
-            mnt_list.append(pmag)
-        else:
+      if mass_method is True:
+        if pt_mag < mc.p_cut:
           m_list.append(mdel_rec)
           mnt_list.append(pmag)
+      else:
+        m_list.append(mdel_rec)
+        mnt_list.append(pmag)        
   if eventcheck is True:
     quit()
   return m_list, mnt_list
 
 #for fitting
-def poly_func(x,c0,c1,c2,c3):
-  return c0+c1*x+c2*x**2+c3*x**3
+def poly_func(x,c0,c1,c2,c3,c4):
+  return c0+c1*x+c2*x**2+c3*x**3+c4*x**4
 
 def gaus_func(x,A,x0,sig):
   return A*np.exp(-((x-x0)**2)/(2*sig**2))/(np.sqrt(2*np.pi)*sig)
@@ -125,8 +123,8 @@ def bw_func(x,A,a,b):
   gam=(a*q**3)/(mc.m_pi**2+b*q**2)
   return (4*gam*mc.m_del0**2)/(A*((x**2-mc.m_del0**2)**2+(mc.m_del0*gam)**2))
 
-def cmb_func_p(x,A,a,b,c0,c1,c2,c3,scl1,scl2):
-  return scl1*bw_func(x,A,a,b)+scl2*poly_func(x,c0,c1,c2,c3)
+def cmb_func_p(x,A,a,b,c0,c1,c2,c3,c4,scl1,scl2):
+  return scl1*bw_func(x,A,a,b)+scl2*poly_func(x,c0,c1,c2,c3,c4)
 
 def fwhm_calc(data,bins):
   max_value=np.max(data)
@@ -363,6 +361,7 @@ def reader(directory,file_pattern,output_folder):
       plt.xlabel("Mass (MeV/c^2)")
       plt.legend(loc='upper left')
       plt.ylim(0,max(hist)*1.1)
+      plt.xlim(min(bins_cntr)-2*binsize,mc.m_max)
       plt.figtext(0.75,0.75,"par=%s \n A=%s+/-%s\n a=%s+/-%s\n b=%s+/-%s \n chi_sq=%s"%(param,round(A_est,3),round(eA,3),round(a_est,3), round(ea,3),round(b_est,3),round(eb,3),round(chi_sq,3)),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
       plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_IM_plot.png")
       plt.savefig(plot_file_path)
@@ -408,6 +407,7 @@ def reader(directory,file_pattern,output_folder):
       plt.xlabel("Mass (MeV/c^2)")
       plt.ylabel("Count")
       plt.legend(loc='upper left')
+      #plt.xlim(min(bins_cntr_act)-2*binsize,mc.m_max)
       plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_act_IM_plot.png")
       plt.savefig(plot_file_path)
       #plt.show()
@@ -453,6 +453,7 @@ def reader(directory,file_pattern,output_folder):
       plt.xlabel("Mass (MeV/c^2)")
       plt.ylabel("Count")
       plt.legend(loc='upper left')
+      #plt.xlim(min(bins_cntr_cr)-2*binsize,mc.m_max)
       plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_cr_IM_plot.png")
       plt.savefig(plot_file_path)
       #plt.show()
@@ -462,22 +463,23 @@ def reader(directory,file_pattern,output_folder):
     
     if len(free_IM)!=0:
       plt.figure()
-      hist_f,bins_f,pack_f=plt.hist(free_IM,bins=np.arange(int(min(free_IM)),int(max(free_IM)),binsize),alpha=0)
+      hist_f,bins_f,pack_f=plt.hist(free_IM,bins=np.arange(int(min(free_IM)),int(max(free_IM)),binsize),alpha=1)
+      #plt.show()
       bins_cntr_f=0.5*(bins_f[:-1]+bins_f[1:])
       xfit_f=np.arange(min(bins_cntr_f),max(bins_cntr_f),0.5)    
       f_err=np.sqrt(hist_f)
       sigpts_f=[1 if sigs==0 else sigs for sigs in f_err]
-      popt_f_e,pcov_f_e=curve_fit(exp_func,bins_cntr_f,hist_f,p0=[1,1/mc.TDel,1],bounds=([0,0,0],[np.inf,1,np.inf]))
+      popt_f_e,pcov_f_e=curve_fit(exp_func,bins_cntr_f,hist_f,p0=[max(hist_f),1/mc.TDel,1],bounds=([0,0,0],[np.inf,1,np.inf]))
       #print(popt_f_e)
       f_e_chi_sq=chi2gen(exp_func,bins_cntr_f,hist_f,sigpts_f,popt_f_e)
       yfit_f_e=exp_func(xfit_f,*popt_f_e)
       plt.plot(xfit_f,yfit_f_e,label='exp fit, chi2=%s'%round(f_e_chi_sq,3))
-      popt_f_p,pcov_f_p=curve_fit(poly_func,bins_cntr_f,hist_f,p0=[0,0,0,0],sigma=sigpts_f,absolute_sigma=True)
+      popt_f_p,pcov_f_p=curve_fit(poly_func,bins_cntr_f,hist_f,p0=[max(hist_f),0,0,0,0],sigma=sigpts_f,absolute_sigma=True)
       f_p_chi_sq=chi2gen(poly_func,bins_cntr_f,hist_f,sigpts_f,popt_f_p)
       yfit_f_p=poly_func(xfit_f,*popt_f_p)
-      print(popt_f_p)
+      #print(popt_f_p)
       '''bins_f_rscl=[i-min(bins_cntr_f) for i in bins_cntr_f]
-      popt_f_p_rscl,pcov_f_p_rscl=curve_fit(poly_func,bins_f_rscl,hist_f,p0=[0,0,0,0],sigma=sigpts_f,absolute_sigma=True)
+      popt_f_p_rscl,pcov_f_p_rscl=curve_fit(poly_func,bins_f_rscl,hist_f,p0=[max(hist_f),0,0,0,0],sigma=sigpts_f,absolute_sigma=True)
       print(popt_f_p_rscl)
       yfit_f_p_rscl=poly_func(np.arange(min(bins_f_rscl),max(bins_f_rscl),0.5),*popt_f_p_rscl)
       plt.plot(xfit_f-1,yfit_f_p_rscl,label='poly fit, rscl')'''
@@ -487,14 +489,14 @@ def reader(directory,file_pattern,output_folder):
       plt.xlabel("Mass (MeV/c^2)")
       plt.ylabel("Count")
       plt.legend(loc='upper right')
+      #plt.xlim(min(bins_cntr_f)-2*binsize,mc.m_max)
       plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_free_IM_plot.png")
       plt.savefig(plot_file_path)
-      plt.show()
+      #plt.show()
       plt.close()
 
     #adding free and actual
-    if len(free_IM)!=0 and len(act_IM)!=0:
-      
+    if len(free_IM)!=0 and len(act_IM)!=0:      
       plt.figure(1)
       plt.errorbar(bins_cntr,hist,xerr=binsize/2,yerr=hist_err,fmt='.',label='Recreated Deltas')
       plt.errorbar(bins_cntr_f,hist_f,xerr=binsize/2,yerr=f_err,fmt='.',label='Free Particles')
@@ -509,41 +511,50 @@ def reader(directory,file_pattern,output_folder):
       cmn_x=np.arange(cmb_min,cmb_max,0.5)
       cmb_y=[]
       cmb_y1=[]
-      scld_y=[]
+      #scld_y=[]
+      #scld_y2=[]
+      #cmb_y2=[]
       fit_sclr_list=[]
       for i in range(len(bins_cntr_act),len(bins_cntr_f)):
         if hist_f[i]>0:
           fit_sclr_list.append(hist[i]/hist_f[i])
       fit_sclr1=np.average(fit_sclr_list)
-      print(fit_sclr1)
-      fit_sclr2=max(hist)/max(hist_act)
-      print(fit_sclr2)
+      #print(fit_sclr1)
+      #fit_sclr2=max(hist)/max(hist_act)
+      mxpt=np.where(yfitbw_act==max(yfitbw_act))[0]
+      fval_at_max=poly_func(cmn_x[mxpt],*popt_f_p)[0]
+      fit_sclr3=1+(fval_at_max/max(hist))
       for i in range(0,len(xfitbw_act)):
         cmb_y.append(yfitbw_act[i]+yfit_f_p[i])
-        cmb_y1.append(yfitbw_act[i]+fit_sclr1*yfit_f_p[i])
-        scld_y.append(fit_sclr1*yfit_f_p[i])
+        cmb_y1.append(fit_sclr3*yfitbw_act[i]+fit_sclr1*yfit_f_p[i])
+        #cmb_y2.append(fit_sclr3*yfitbw_act[i]+fit_sclr1*yfit_f_e[i])
+        #scld_y.append(fit_sclr1*yfit_f_p[i])
+        #scld_y2.append(fit_sclr1*yfit_f_e[i])
       for i in range(len(xfitbw_act),len(xfit_f)):
         cmb_y.append(yfit_f_p[i])
         cmb_y1.append(yfit_f_p[i]*fit_sclr1)
-        scld_y.append(fit_sclr1*yfit_f_p[i])
+        #cmb_y2.append(yfit_f_e[i]*fit_sclr1)
+        #scld_y.append(fit_sclr1*yfit_f_p[i])
+        #scld_y2.append(fit_sclr1*yfit_f_e[i])
+      xfit_diff=min(xfitbw_act)-min(xfit_f)
+      cmn_x=[i+xfit_diff for i in cmn_x]
       plt.plot(xfitbw_act,yfitbw_act,label='BW Fit (Real)')
       plt.plot(xfit_f,yfit_f_p,label='poly fit (Free)')
       plt.plot(cmn_x,cmb_y,label='combined fit')
-      plt.plot(cmn_x,cmb_y1,label='combined w/ F scl')
-      plt.plot(cmn_x,scld_y,label='scld free')
-      plt.hlines(0,min(cmn_x),max(cmn_x))
+      plt.plot(cmn_x,cmb_y1,label='combined fit w/ scaling')
       plt.errorbar(cmb_bins[:-1],cmb_hist,xerr=binsize_cmb/2,yerr=cmb_err,fmt='.',label="Combined")
       plt.title("Real + Free")
       plt.xlabel("Mass (MeV/c^2)")
       plt.ylabel("Count")
       plt.legend(loc='upper right')
+      plt.xlim(min(bins_cntr)-2*binsize,mc.m_max)
+      plt.grid
       plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_add_IM_plot.png")
       plt.savefig(plot_file_path)
-      plt.show()
+      #plt.show()
       plt.close()
-      quit()
 
-      #subtracting free from recreated
+      '''#subtracting free from recreated
       if len(IM_list)!=0 and len(free_IM)!=0:
         plt.figure(2)
         plt.errorbar(bins_cntr,hist,xerr=binsize/2,yerr=hist_err,fmt='.',label='Recreated Deltas')
@@ -563,7 +574,7 @@ def reader(directory,file_pattern,output_folder):
         plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_sub_IM_plot.png")
         plt.savefig(plot_file_path)
         plt.show()
-        plt.close()
+        plt.close()'''
 
     contour=False
     if len(IM_list)!=0:
@@ -882,8 +893,8 @@ def reader(directory,file_pattern,output_folder):
 #read files
 abs_path=os.path.dirname(__file__)
 
-for dn in range(1,len(mc.Dlist)):
-  for fn in range(1,len(mc.Flist)):
+for dn in range(0,len(mc.Dlist)):
+  for fn in range(2,len(mc.Flist)):
     if dn==0 and fn==0:
       continue
     print("Ndelta:",mc.Dlist[dn],",","Nfree:",mc.Flist[fn])
