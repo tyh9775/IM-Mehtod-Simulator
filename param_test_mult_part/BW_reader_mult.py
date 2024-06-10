@@ -513,35 +513,41 @@ def reader(directory,file_pattern,output_folder):
       cmb_y1=[]
       #scld_y=[]
       #scld_y2=[]
-      #cmb_y2=[]
+      cmb_y2=[]
+      cmb_ye=[]
       fit_sclr_list=[]
       for i in range(len(bins_cntr_act),len(bins_cntr_f)):
         if hist_f[i]>0:
           fit_sclr_list.append(hist[i]/hist_f[i])
       fit_sclr1=np.average(fit_sclr_list)
-      #print(fit_sclr1)
-      #fit_sclr2=max(hist)/max(hist_act)
       mxpt=np.where(yfitbw_act==max(yfitbw_act))[0]
-      fval_at_max=poly_func(cmn_x[mxpt],*popt_f_p)[0]
-      fit_sclr3=1+(fval_at_max/max(hist))
+      fpval_at_max=poly_func(cmn_x[mxpt],*popt_f_p)[0]
+      feval_at_max=exp_func(cmn_x[mxpt],*popt_f_e)[0]
+      fit_sclr2=1+Ndelta*(fpval_at_max/max(hist))
+      fit_sclr3=1+Ndelta*(feval_at_max/max(hist))
       for i in range(0,len(xfitbw_act)):
         cmb_y.append(yfitbw_act[i]+yfit_f_p[i])
-        cmb_y1.append(fit_sclr3*yfitbw_act[i]+fit_sclr1*yfit_f_p[i])
-        #cmb_y2.append(fit_sclr3*yfitbw_act[i]+fit_sclr1*yfit_f_e[i])
+        cmb_ye.append(yfitbw_act[i]+yfit_f_e[i])
+        cmb_y1.append(fit_sclr2*yfitbw_act[i]+fit_sclr1*yfit_f_p[i])
+        cmb_y2.append(fit_sclr3*yfitbw_act[i]+fit_sclr1*yfit_f_e[i])
         #scld_y.append(fit_sclr1*yfit_f_p[i])
         #scld_y2.append(fit_sclr1*yfit_f_e[i])
       for i in range(len(xfitbw_act),len(xfit_f)):
         cmb_y.append(yfit_f_p[i])
+        cmb_ye.append(yfit_f_e[i])
         cmb_y1.append(yfit_f_p[i]*fit_sclr1)
-        #cmb_y2.append(yfit_f_e[i]*fit_sclr1)
+        cmb_y2.append(yfit_f_e[i]*fit_sclr1)
         #scld_y.append(fit_sclr1*yfit_f_p[i])
         #scld_y2.append(fit_sclr1*yfit_f_e[i])
       xfit_diff=min(xfitbw_act)-min(xfit_f)
       cmn_x=[i+xfit_diff for i in cmn_x]
       plt.plot(xfitbw_act,yfitbw_act,label='BW Fit (Real)')
       plt.plot(xfit_f,yfit_f_p,label='poly fit (Free)')
-      plt.plot(cmn_x,cmb_y,label='combined fit')
-      plt.plot(cmn_x,cmb_y1,label='combined fit w/ scaling')
+      plt.plot(xfit_f,yfit_f_e,label='exp fit (Free)')
+      plt.plot(cmn_x,cmb_y,label='combined fit (poly)')
+      plt.plot(cmn_x,cmb_ye,label='combined fit (exp)')
+      plt.plot(cmn_x,cmb_y1,label='combined fit w/ scaling (poly)')
+      plt.plot(cmn_x,cmb_y2,label='combined fit w/ scaling (exp)')      
       plt.errorbar(cmb_bins[:-1],cmb_hist,xerr=binsize_cmb/2,yerr=cmb_err,fmt='.',label="Combined")
       plt.title("Real + Free")
       plt.xlabel("Mass (MeV/c^2)")
@@ -893,8 +899,8 @@ def reader(directory,file_pattern,output_folder):
 #read files
 abs_path=os.path.dirname(__file__)
 
-for dn in range(0,len(mc.Dlist)):
-  for fn in range(2,len(mc.Flist)):
+for dn in range(1,len(mc.Dlist)):
+  for fn in range(1,len(mc.Flist)):
     if dn==0 and fn==0:
       continue
     print("Ndelta:",mc.Dlist[dn],",","Nfree:",mc.Flist[fn])
@@ -915,6 +921,7 @@ for dn in range(0,len(mc.Dlist)):
 
     reader(directoryA,file_patternA,graph_folderA)
     print()
-    reader(directorya,file_patterna,graph_foldera)
+    #reader(directorya,file_patterna,graph_foldera)
     print()
-    reader(directoryb,file_patternb,graph_folderb)
+    #reader(directoryb,file_patternb,graph_folderb)
+  
