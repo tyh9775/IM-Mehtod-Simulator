@@ -460,7 +460,6 @@ def reader(directory,file_pattern,output_folder):
       plt.close()
 
     #free pairs ("fake" delta)
-    
     if len(free_IM)!=0:
       plt.figure()
       hist_f,bins_f,pack_f=plt.hist(free_IM,bins=np.arange(int(min(free_IM)),int(max(free_IM)),binsize),alpha=1)
@@ -497,7 +496,7 @@ def reader(directory,file_pattern,output_folder):
 
     #adding free and actual
     if len(free_IM)!=0 and len(act_IM)!=0:      
-      plt.figure(1)
+      plt.figure()
       plt.errorbar(bins_cntr,hist,xerr=binsize/2,yerr=hist_err,fmt='.',label='Recreated Deltas')
       plt.errorbar(bins_cntr_f,hist_f,xerr=binsize/2,yerr=f_err,fmt='.',label='Free Particles')
       plt.errorbar(bins_cntr_act,hist_act,xerr=binsize/2,yerr=act_err,fmt='.',label='Real Deltas')
@@ -559,28 +558,33 @@ def reader(directory,file_pattern,output_folder):
       plt.savefig(plot_file_path)
       #plt.show()
       plt.close()
+      
+      plt.figure()
+      popt_guess,pcov_guess=curve_fit(cmb_func_p,bins_cntr,hist,p0=[*param,*popt_f_p,fit_sclr2,fit_sclr1])
+      
+      plt.close()
 
-      '''#subtracting free from recreated
-      if len(IM_list)!=0 and len(free_IM)!=0:
-        plt.figure(2)
-        plt.errorbar(bins_cntr,hist,xerr=binsize/2,yerr=hist_err,fmt='.',label='Recreated Deltas')
-        plt.errorbar(bins_cntr_f,hist_f,xerr=binsize/2,yerr=f_err,fmt='.',label='Free Particles')
-        plt.errorbar(bins_cntr_act,hist_act,xerr=binsize/2,yerr=act_err,fmt='.',label='Real Deltas')
-        sub_min=min(min(bins_cntr_f),min(bins_cntr))
-        sub_max=max(max(bins_cntr_f),max(bins_cntr))
-        cmn_hist1,sub_bins=np.histogram(IM_list,bins=np.arange(sub_min,sub_max,binsize_cmb))
-        cmn_hist2,sub_bins=np.histogram(free_IM,bins=sub_bins)
-        sub_hist=[a-b for a,b in zip(cmn_hist1,cmn_hist2)]
-        sub_err=np.sqrt(sub_hist)
-        plt.errorbar(sub_bins[:-1],sub_hist,xerr=binsize_cmb/2,yerr=sub_err,fmt='.',label='Difference')
-        plt.title("Recreated - Free")
-        plt.xlabel("Mass (MeV/c^2)")
-        plt.ylabel("Count")
-        plt.legend(loc='upper right')
-        plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_sub_IM_plot.png")
-        plt.savefig(plot_file_path)
-        plt.show()
-        plt.close()'''
+    '''#subtracting free from recreated
+    if len(IM_list)!=0 and len(free_IM)!=0:
+      plt.figure(2)
+      plt.errorbar(bins_cntr,hist,xerr=binsize/2,yerr=hist_err,fmt='.',label='Recreated Deltas')
+      plt.errorbar(bins_cntr_f,hist_f,xerr=binsize/2,yerr=f_err,fmt='.',label='Free Particles')
+      plt.errorbar(bins_cntr_act,hist_act,xerr=binsize/2,yerr=act_err,fmt='.',label='Real Deltas')
+      sub_min=min(min(bins_cntr_f),min(bins_cntr))
+      sub_max=max(max(bins_cntr_f),max(bins_cntr))
+      cmn_hist1,sub_bins=np.histogram(IM_list,bins=np.arange(sub_min,sub_max,binsize_cmb))
+      cmn_hist2,sub_bins=np.histogram(free_IM,bins=sub_bins)
+      sub_hist=[a-b for a,b in zip(cmn_hist1,cmn_hist2)]
+      sub_err=np.sqrt(sub_hist)
+      plt.errorbar(sub_bins[:-1],sub_hist,xerr=binsize_cmb/2,yerr=sub_err,fmt='.',label='Difference')
+      plt.title("Recreated - Free")
+      plt.xlabel("Mass (MeV/c^2)")
+      plt.ylabel("Count")
+      plt.legend(loc='upper right')
+      plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_sub_IM_plot.png")
+      plt.savefig(plot_file_path)
+      plt.show()
+      plt.close()'''
 
     contour=False
     if len(IM_list)!=0:
