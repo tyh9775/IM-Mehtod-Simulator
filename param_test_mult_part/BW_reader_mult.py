@@ -123,8 +123,16 @@ def bw_func(x,A,a,b):
   gam=(a*q**3)/(mc.m_pi**2+b*q**2)
   return (4*gam*mc.m_del0**2)/(A*((x**2-mc.m_del0**2)**2+(mc.m_del0*gam)**2))
 
+def bw_func_alt(x,A,a,b,scl):
+  q=np.sqrt((x**2-mc.m_p**2-mc.m_pi**2)**2-4*(mc.m_p*mc.m_pi)**2)/(2*x)
+  gam=(a*q**3)/(mc.m_pi**2+b*q**2)
+  return scl*(4*gam*mc.m_del0**2)/(A*((x**2-mc.m_del0**2)**2+(mc.m_del0*gam)**2))
+
 def cmb_func_p(x,A,a,b,c0,c1,c2,c3,c4,scl1,scl2):
   return scl1*bw_func(x,A,a,b)+scl2*poly_func(x,c0,c1,c2,c3,c4)
+
+def cmb_func_e(x,A,a,b,a1,b1,c1,scl1,scl2):
+  return scl1*bw_func(x,A,a,b)+scl2*exp_func(x,a1,b1,c1)
 
 def fwhm_calc(data,bins):
   max_value=np.max(data)
@@ -365,7 +373,7 @@ def reader(directory,file_pattern,output_folder):
       plt.figtext(0.75,0.75,"par=%s \n A=%s+/-%s\n a=%s+/-%s\n b=%s+/-%s \n chi_sq=%s"%(param,round(A_est,3),round(eA,3),round(a_est,3), round(ea,3),round(b_est,3),round(eb,3),round(chi_sq,3)),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
       plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_IM_plot.png")
       plt.savefig(plot_file_path)
-      #plt.show()
+      plt.show()
       plt.close()
       print("total number of counted particles after momentum cut:", np.sum(hist))
     
@@ -559,10 +567,29 @@ def reader(directory,file_pattern,output_folder):
       #plt.show()
       plt.close()
       
+      #fitting with combined function using the existing histograms and parameters
       plt.figure()
-      popt_guess,pcov_guess=curve_fit(cmb_func_p,bins_cntr,hist,p0=[*param,*popt_f_p,fit_sclr2,fit_sclr1])
-      
+      lwrbnd_cmb=[0,0,0,-np.inf,-np.inf,-np.inf,-np.inf,-np.inf,fit_sclr2-2,fit_sclr1-2]
+      uprbnd_cmb=[5,5,5,np.inf,np.inf,np.inf,np.inf,np.inf,fit_sclr2+2,fit_sclr1+2]
+      lwrbnd_cmb1=[0,0,0,0,0,-np.inf,fit_sclr2-2,fit_sclr1-2]
+      uprbnd_cmb1=[5,5,5,np.inf,np.inf,np.inf,fit_sclr2+2,fit_sclr1+2]
+      popt_guess,pcov_guess1=curve_fit(cmb_func_p,bins_cntr,hist,p0=[*param,*popt_f_p,fit_sclr2,fit_sclr1])
+      popt_guess1,pcov_guess1=curve_fit(cmb_func_e,bins_cntr,hist,p0=[A_est,*param[1:],*popt_f_e,fit_sclr2,fit_sclr1],bounds=[lwrbnd_cmb1,uprbnd_cmb1])
+      xfit_cmb=np.arange(min(bins_cntr),max(bins_cntr),0.5)
+      yfit_cmb=cmb_func_p(xfit_cmb,*popt_guess)
+      yfit_cmb2=cmb_func_e(xfit_cmb,*popt_guess1)
+      print(popt_guess)
+      print(popt_guess1)
+      plt.plot(xfit_cmb,yfit_cmb,label='cmb fit w/ p')
+      plt.plot(xfit_cmb,yfit_cmb2,label='cmb fit w/ e')
+      plt.errorbar(bins_cntr,hist,xerr=binsize/2,yerr=hist_err,fmt='.')
+      plt.xlim(min(bins_cntr)-2*binsize,mc.m_max)
+      plt.legend(loc='upper right')
+      plt.show()
       plt.close()
+
+
+    #
 
     '''#subtracting free from recreated
     if len(IM_list)!=0 and len(free_IM)!=0:
