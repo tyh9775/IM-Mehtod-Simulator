@@ -1,58 +1,30 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.optimize import fsolve
 
-# Define the functions
-def f(x):
-    return x**2 + 2*x + 1
 
-def g(x):
-    return 2*x + 3
+# Generate a synthetic histogram data
+np.random.seed(42)
+hist_data = np.random.randn(1000)
 
-# Define the function to find roots for (f(x) - g(x) = 0)
-def h(x):
-    return f(x) - g(x)
+# Compute histogram
+hist, bin_edges = np.histogram(hist_data, bins=100)
 
-# Use fsolve to find the roots of h(x) = 0 within a specific range
-# We need to iterate over a range to ensure we capture all intersection points
-x_values = np.linspace(-10, 10, 400)
-initial_guesses = []
+# Calculate differences in histogram counts
+hist_diffs = np.diff(hist)
 
-# Adding initial guesses based on a grid search
-for x in x_values:
-    initial_guesses.append(x)
+# Define a threshold for significant changes in the histogram
+hist_threshold = 3 * np.std(hist_diffs)
 
-# Finding unique roots
-roots = []
-for guess in initial_guesses:
-    root = fsolve(h, guess)[0]
-    # Checking if the root is a duplicate or not by comparing with existing roots
-    if np.isclose(root, roots, atol=1e-5).any():
-        continue
-    else:
-        roots.append(root)
+# Identify bin indices where the difference exceeds the threshold
+hist_kinks_jumps_indices = np.where(np.abs(hist_diffs) > hist_threshold)[0]
 
-# Plot the functions and their intersection points
-x = np.linspace(-10, 10, 400)
-y_f = f(x)
-y_g = g(x)
-
-plt.plot(x, y_f, label='$f(x) = x^2 + 2x + 1$')
-plt.plot(x, y_g, label='$g(x) = 2x + 3$')
-
-# Plot intersection points
-for root in roots:
-    plt.plot(root, f(root), 'ro')  # Intersection points
-    plt.annotate(f'({root:.2f}, {f(root):.2f})', (root, f(root)), textcoords="offset points", xytext=(0,10), ha='center')
-
-plt.xlabel('x')
-plt.ylabel('y')
-plt.legend()
-plt.grid(True)
-plt.title('Intersection of two graphs')
+# Plot the histogram and highlight kinks and jumps
+plt.figure(figsize=(14, 7))
+plt.bar(bin_edges[:-1], hist, width=np.diff(bin_edges), edgecolor="black", align="edge", alpha=0.7)
+for idx in hist_kinks_jumps_indices:
+    plt.bar(bin_edges[idx:idx+2], hist[idx:idx+2], width=np.diff(bin_edges[idx:idx+2]), color='red', align='edge')
+plt.title('Histogram with Identified Kinks and Jumps')
+plt.xlabel('Value')
+plt.ylabel('Frequency')
 plt.show()
 
-# Print the intersection points
-print("Intersection points:")
-for root in roots:
-    print(f"x = {root:.2f}, y = {f(root):.2f}")

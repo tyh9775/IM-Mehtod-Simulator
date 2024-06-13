@@ -134,6 +134,9 @@ def cmb_func_p(x,A,a,b,c0,c1,c2,c3,c4,scl1,scl2):
 def cmb_func_e(x,A,a,b,a1,b1,c1,scl1,scl2):
   return scl1*bw_func(x,A,a,b)+scl2*exp_func(x,a1,b1,c1)
 
+def cmp_func(x,A,b,c):
+  return A*(x**2)*np.exp(-b*x)+c
+
 def fwhm_calc(data,bins):
   max_value=np.max(data)
   max_ind=np.argmax(data)
@@ -373,7 +376,7 @@ def reader(directory,file_pattern,output_folder):
       plt.figtext(0.75,0.75,"par=%s \n A=%s+/-%s\n a=%s+/-%s\n b=%s+/-%s \n chi_sq=%s"%(param,round(A_est,3),round(eA,3),round(a_est,3), round(ea,3),round(b_est,3),round(eb,3),round(chi_sq,3)),horizontalalignment='center',verticalalignment='center',bbox=dict(facecolor='none',edgecolor='black'))
       plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_IM_plot.png")
       plt.savefig(plot_file_path)
-      plt.show()
+      #plt.show()
       plt.close()
       print("total number of counted particles after momentum cut:", np.sum(hist))
     
@@ -470,8 +473,7 @@ def reader(directory,file_pattern,output_folder):
     #free pairs ("fake" delta)
     if len(free_IM)!=0:
       plt.figure()
-      hist_f,bins_f,pack_f=plt.hist(free_IM,bins=np.arange(int(min(free_IM)),int(max(free_IM)),binsize),alpha=1)
-      #plt.show()
+      hist_f,bins_f,pack_f=plt.hist(free_IM,bins=np.arange(int(min(free_IM)),int(max(free_IM)),binsize),alpha=0)
       bins_cntr_f=0.5*(bins_f[:-1]+bins_f[1:])
       xfit_f=np.arange(min(bins_cntr_f),max(bins_cntr_f),0.5)    
       f_err=np.sqrt(hist_f)
@@ -485,12 +487,20 @@ def reader(directory,file_pattern,output_folder):
       f_p_chi_sq=chi2gen(poly_func,bins_cntr_f,hist_f,sigpts_f,popt_f_p)
       yfit_f_p=poly_func(xfit_f,*popt_f_p)
       #print(popt_f_p)
+      plt.plot(xfit_f,yfit_f_p,label='poly fit, chi2=%s'%round(f_p_chi_sq,3))
+      
       '''bins_f_rscl=[i-min(bins_cntr_f) for i in bins_cntr_f]
+      xfit_f_rscl=np.arange(min(bins_f_rscl),max(bins_f_rscl),0.5)
       popt_f_p_rscl,pcov_f_p_rscl=curve_fit(poly_func,bins_f_rscl,hist_f,p0=[max(hist_f),0,0,0,0],sigma=sigpts_f,absolute_sigma=True)
       print(popt_f_p_rscl)
       yfit_f_p_rscl=poly_func(np.arange(min(bins_f_rscl),max(bins_f_rscl),0.5),*popt_f_p_rscl)
       plt.plot(xfit_f-1,yfit_f_p_rscl,label='poly fit, rscl')'''
-      plt.plot(xfit_f,yfit_f_p,label='poly fit, chi2=%s'%round(f_p_chi_sq,3))
+
+      popt_f_cmp,pcov_f_cmp=curve_fit(cmp_func,bins_cntr_f,hist_f,p0=[1/mc.TDel,1/mc.TDel,1],sigma=sigpts_f,absolute_sigma=True)
+      f_cmp_chi_sq=chi2gen(cmp_func,bins_cntr_f,hist_f,sigpts_f,popt_f_cmp)
+      yfit_f_cmp=cmp_func(xfit_f,*popt_f_cmp)
+      plt.plot(xfit_f,yfit_f_cmp,label='cmp fit, chi2=%s'%round(f_cmp_chi_sq,3))
+      
       plt.errorbar(bins_cntr_f,hist_f,xerr=binsize/2,yerr=sigpts_f,fmt='.')
       plt.title("IM of Free Pairs")
       plt.xlabel("Mass (MeV/c^2)")
@@ -501,7 +511,11 @@ def reader(directory,file_pattern,output_folder):
       plt.savefig(plot_file_path)
       #plt.show()
       plt.close()
+      
 
+    #################
+    #addition method#
+    #################
     #adding free and actual
     if len(free_IM)!=0 and len(act_IM)!=0:      
       plt.figure()
@@ -522,6 +536,7 @@ def reader(directory,file_pattern,output_folder):
       #scld_y2=[]
       cmb_y2=[]
       cmb_ye=[]
+      #cmb_y3=[]
       fit_sclr_list=[]
       for i in range(len(bins_cntr_act),len(bins_cntr_f)):
         if hist_f[i]>0:
@@ -530,13 +545,16 @@ def reader(directory,file_pattern,output_folder):
       mxpt=np.where(yfitbw_act==max(yfitbw_act))[0]
       fpval_at_max=poly_func(cmn_x[mxpt],*popt_f_p)[0]
       feval_at_max=exp_func(cmn_x[mxpt],*popt_f_e)[0]
+      fcmpval_at_max=exp_func(cmn_x[mxpt],*popt_f_cmp)[0]
       fit_sclr2=1+Ndelta*(fpval_at_max/max(hist))
       fit_sclr3=1+Ndelta*(feval_at_max/max(hist))
+      #fit_sclr4=1+Ndelta*(fcmpval_at_max/max(hist))
       for i in range(0,len(xfitbw_act)):
         cmb_y.append(yfitbw_act[i]+yfit_f_p[i])
         cmb_ye.append(yfitbw_act[i]+yfit_f_e[i])
         cmb_y1.append(fit_sclr2*yfitbw_act[i]+fit_sclr1*yfit_f_p[i])
         cmb_y2.append(fit_sclr3*yfitbw_act[i]+fit_sclr1*yfit_f_e[i])
+        #cmb_y3.append(fit_sclr4*yfitbw_act[i]+fit_sclr1*yfit_f_cmp[i])
         #scld_y.append(fit_sclr1*yfit_f_p[i])
         #scld_y2.append(fit_sclr1*yfit_f_e[i])
       for i in range(len(xfitbw_act),len(xfit_f)):
@@ -544,6 +562,7 @@ def reader(directory,file_pattern,output_folder):
         cmb_ye.append(yfit_f_e[i])
         cmb_y1.append(yfit_f_p[i]*fit_sclr1)
         cmb_y2.append(yfit_f_e[i]*fit_sclr1)
+        #cmb_y3.append(yfit_f_cmp[i]*fit_sclr1)
         #scld_y.append(fit_sclr1*yfit_f_p[i])
         #scld_y2.append(fit_sclr1*yfit_f_e[i])
       xfit_diff=min(xfitbw_act)-min(xfit_f)
@@ -554,7 +573,8 @@ def reader(directory,file_pattern,output_folder):
       plt.plot(cmn_x,cmb_y,label='combined fit (poly)')
       plt.plot(cmn_x,cmb_ye,label='combined fit (exp)')
       plt.plot(cmn_x,cmb_y1,label='combined fit w/ scaling (poly)')
-      plt.plot(cmn_x,cmb_y2,label='combined fit w/ scaling (exp)')      
+      plt.plot(cmn_x,cmb_y2,label='combined fit w/ scaling (exp)') 
+      #plt.plot(cmn_x,cmb_y3,label='combined fit w/ scaling (cmp)')      
       plt.errorbar(cmb_bins[:-1],cmb_hist,xerr=binsize_cmb/2,yerr=cmb_err,fmt='.',label="Combined")
       plt.title("Real + Free")
       plt.xlabel("Mass (MeV/c^2)")
@@ -578,18 +598,69 @@ def reader(directory,file_pattern,output_folder):
       xfit_cmb=np.arange(min(bins_cntr),max(bins_cntr),0.5)
       yfit_cmb=cmb_func_p(xfit_cmb,*popt_guess)
       yfit_cmb2=cmb_func_e(xfit_cmb,*popt_guess1)
-      print(popt_guess)
-      print(popt_guess1)
+      #print(popt_guess)
+      #print(popt_guess1)
       plt.plot(xfit_cmb,yfit_cmb,label='cmb fit w/ p')
       plt.plot(xfit_cmb,yfit_cmb2,label='cmb fit w/ e')
       plt.errorbar(bins_cntr,hist,xerr=binsize/2,yerr=hist_err,fmt='.')
       plt.xlim(min(bins_cntr)-2*binsize,mc.m_max)
       plt.legend(loc='upper right')
+      #plt.show()
+      plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_cmb_IM_plot.png")
+      plt.close()
+      
+
+    #####################
+    #subtraction methods#
+    #####################
+    
+    #goal: "take out" the affect of the background in the IM histogram
+    #step 1: find, if any, the distinguishing point(s) btwn bg and real
+    #step 2: curve_fit on section with just the bg
+    #step 3: extrapolate to the rest of the histogram
+    #step 4: subtract fit values from the histogram
+
+    if len(IM_list)!=0 and len(free_IM)!=0:
+      plt.figure()
+      plt.errorbar(bins_cntr,hist,xerr=binsize/2,yerr=hist_err,fmt='.',label='Recreated Deltas')
+      #identify any jumps or kinks
+      startpt=np.where(hist==max(hist))[0][0]
+      hist_diff=np.diff(hist)
+      limiter=6
+      hist_lim=limiter*np.std(hist_diff)
+      ind_jump=np.where(np.abs(hist_diff[startpt:])>hist_lim)[0]
+      while len(ind_jump)==0:
+        if limiter==0:
+          continue
+        else:
+          limiter=limiter-1
+          hist_lim=limiter*np.std(hist_diff)
+          ind_jump=np.where(np.abs(hist_diff[startpt:])>hist_lim)[0]
+      bg_start=startpt+ind_jump[-1]+1
+      bg_bins=bins_cntr[bg_start:]
+      #bg_bins_rscl=[ii-mc.md_min for ii in bg_bins]
+      bg_hist=hist[bg_start:]
+      bg_err=hist_err[bg_start:]
+      bg_err=[1 if i==0 else i for i in bg_err]
+      popt_bg_p,pcov_bg_p=curve_fit(poly_func,bg_bins,bg_hist,p0=[bg_hist[0],0,0,0,0],sigma=bg_err,absolute_sigma=True)
+      popt_bg_e,pcov_bg_e=curve_fit(exp_func,bg_bins,bg_hist,p0=[max(hist),2/(mc.Tpfree+mc.Tpifree),0],sigma=bg_err,absolute_sigma=True)
+      popt_bg_cmp,pcov_bg_cmp=curve_fit(cmp_func,bg_bins,bg_hist,p0=[max(hist),1/mc.TDel,0],sigma=bg_err,absolute_sigma=True)
+      #popt_bg_cmp_r,pcov_bg_cmp_r=curve_fit(cmp_func,bg_bins_rscl,bg_hist,p0=[max(hist),1/mc.TDel,0],sigma=bg_err,absolute_sigma=True)
+      bg_x=np.arange(min(bins_cntr),max(bins_cntr),0.5)
+      #bg_x_r=bg_x-mc.md_min
+      bg_y_p=poly_func(bg_x,*popt_bg_p)
+      bg_y_e=exp_func(bg_x,*popt_bg_e)
+      bg_y_cmp=cmp_func(bg_x,*popt_bg_cmp)
+      #bg_y_cmp_r=cmp_func(bg_x_r,*popt_bg_cmp_r)
+      plt.plot(bg_x,bg_y_e,label='bg w/ exp fit')
+      plt.plot(bg_x,bg_y_p,label='bg w/ poly fit')
+      plt.plot(bg_x,bg_y_cmp,label='bg w/ cmp fit')
+      #plt.plot(bg_x,bg_y_cmp_r,label='bg w/ cmp fit (rscl)')
+      plt.scatter(bins_cntr[startpt+ind_jump],hist[startpt+ind_jump],label='jumps')
+      plt.legend(loc='upper right')
       plt.show()
       plt.close()
-
-
-    #
+      quit()
 
     '''#subtracting free from recreated
     if len(IM_list)!=0 and len(free_IM)!=0:
