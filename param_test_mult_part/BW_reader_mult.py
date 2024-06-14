@@ -137,6 +137,20 @@ def cmb_func_e(x,A,a,b,a1,b1,c1,scl1,scl2):
 def cmp_func(x,A,b,c):
   return A*(x**2)*np.exp(-b*x)+c
 
+def poly_fit_optimize(x,y,max_deg):
+  errors=[]
+  models=[]
+  for i in range(0,max_deg):
+    coef=np.polyfit(x,y,deg=i)
+    models.append(coef)
+    p=np.poly1d(coef)
+    y_pred=p(x)
+    mse = np.mean((y-y_pred)**2)
+    errors.append(mse)
+  best_deg=np.argmin(errors)+1
+  best_coef=models[best_deg-1]
+  return best_coef, best_deg
+
 def fwhm_calc(data,bins):
   max_value=np.max(data)
   max_ind=np.argmax(data)
@@ -625,6 +639,7 @@ def reader(directory,file_pattern,output_folder):
       plt.errorbar(bins_cntr,hist,xerr=binsize/2,yerr=hist_err,fmt='.',label='Recreated Deltas')
       #identify any jumps or kinks
       startpt=np.where(hist==max(hist))[0][0]
+      #endpt=np.where(np.abs(bins_cntr-mc.m_max+200)<=1)[0][0]
       hist_diff=np.diff(hist)
       limiter=6
       hist_lim=limiter*np.std(hist_diff)
@@ -638,26 +653,41 @@ def reader(directory,file_pattern,output_folder):
           ind_jump=np.where(np.abs(hist_diff[startpt:])>hist_lim)[0]
       bg_start=startpt+ind_jump[-1]+1
       bg_bins=bins_cntr[bg_start:]
+      bg_bins_alt=bins_cntr[:5].tolist()+bg_bins.tolist()
       #bg_bins_rscl=[ii-mc.md_min for ii in bg_bins]
+      #bg_bins_alt=[ii-mc.md_min for ii in bg_bins_alt]
       bg_hist=hist[bg_start:]
+      bg_hist_alt=hist[:5].tolist()+bg_hist.tolist()
       bg_err=hist_err[bg_start:]
       bg_err=[1 if i==0 else i for i in bg_err]
+      bg_err_alt=np.sqrt(bg_hist_alt)
+      bg_err_alt=[1 if i==0 else i for i in bg_err_alt]
       popt_bg_p,pcov_bg_p=curve_fit(poly_func,bg_bins,bg_hist,p0=[bg_hist[0],0,0,0,0],sigma=bg_err,absolute_sigma=True)
       popt_bg_e,pcov_bg_e=curve_fit(exp_func,bg_bins,bg_hist,p0=[max(hist),2/(mc.Tpfree+mc.Tpifree),0],sigma=bg_err,absolute_sigma=True)
       popt_bg_cmp,pcov_bg_cmp=curve_fit(cmp_func,bg_bins,bg_hist,p0=[max(hist),1/mc.TDel,0],sigma=bg_err,absolute_sigma=True)
       #popt_bg_cmp_r,pcov_bg_cmp_r=curve_fit(cmp_func,bg_bins_rscl,bg_hist,p0=[max(hist),1/mc.TDel,0],sigma=bg_err,absolute_sigma=True)
+      #print(popt_bg_p)
+      popt_bg_p2,pcov_bg_p2=curve_fit(poly_func,bg_bins_alt,bg_hist_alt,p0=[bg_hist[0],0,0,0,0],sigma=bg_err_alt,absolute_sigma=True)
+      opt_coef,opt_deg=poly_fit_optimize(bg_bins_alt,bg_hist_alt,10)
+      opt_p=np.poly1d(opt_coef)
       bg_x=np.arange(min(bins_cntr),max(bins_cntr),0.5)
       #bg_x_r=bg_x-mc.md_min
       bg_y_p=poly_func(bg_x,*popt_bg_p)
       bg_y_e=exp_func(bg_x,*popt_bg_e)
       bg_y_cmp=cmp_func(bg_x,*popt_bg_cmp)
       #bg_y_cmp_r=cmp_func(bg_x_r,*popt_bg_cmp_r)
+      bg_y_p2=poly_func(bg_x,*popt_bg_p2)
+      bg_y_opt=opt_p(bg_x)
+      bg_endpt=np.where(np.abs(bg_x-mc.m_max)<=1)[0][0]
       plt.plot(bg_x,bg_y_e,label='bg w/ exp fit')
       plt.plot(bg_x,bg_y_p,label='bg w/ poly fit')
       plt.plot(bg_x,bg_y_cmp,label='bg w/ cmp fit')
+      plt.plot(bg_x[:bg_endpt],bg_y_p2[:bg_endpt],label='bg w/ p2 fit')
+      plt.plot(bg_x,bg_y_opt,label='bg w/ opt fit deg:%d'%opt_deg)
       #plt.plot(bg_x,bg_y_cmp_r,label='bg w/ cmp fit (rscl)')
-      plt.scatter(bins_cntr[startpt+ind_jump],hist[startpt+ind_jump],label='jumps')
+      plt.scatter(bins_cntr[startpt+ind_jump],hist[startpt+ind_jump],color='r',label='jumps')
       plt.legend(loc='upper right')
+      plt.xlim(min(bins_cntr)-2*binsize,mc.m_max)
       plt.show()
       plt.close()
       quit()
