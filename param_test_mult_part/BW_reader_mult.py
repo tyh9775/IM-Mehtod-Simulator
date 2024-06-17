@@ -528,9 +528,9 @@ def reader(directory,file_pattern,output_folder):
       #plt.xlim(min(bins_cntr_f)-2*binsize,mc.m_max)
       plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_free_IM_plot.png")
       plt.savefig(plot_file_path)
-      plt.show()
+      #plt.show()
       plt.close()
-      quit()
+      
       
 
     #################
@@ -565,20 +565,18 @@ def reader(directory,file_pattern,output_folder):
       mxpt=np.where(yfitbw_act==max(yfitbw_act))[0]
       fpval_at_max=poly_func(cmn_x[mxpt],*popt_f_p)[0]
       feval_at_max=exp_func(cmn_x[mxpt],*popt_f_e)[0]
-      fcmpval_at_max=exp_func(cmn_x[mxpt],*popt_f_cmp)[0]
-      
-      
-      foptval_at_max=f_opt_f(cmn_x[mxpt])
-
-
+      #fcmpval_at_max=exp_func(cmn_x[mxpt],*popt_f_cmp)[0]
+      foptval_at_max=f_opt_f(cmn_x[mxpt][0])
       fit_sclr2=1+Ndelta*(fpval_at_max/max(hist))
       fit_sclr3=1+Ndelta*(feval_at_max/max(hist))
       #fit_sclr4=1+Ndelta*(fcmpval_at_max/max(hist))
+      fit_sclr5=1+Ndelta*(foptval_at_max/max(hist))
       for i in range(0,len(xfitbw_act)):
         cmb_y.append(yfitbw_act[i]+yfit_f_p[i])
         cmb_ye.append(yfitbw_act[i]+yfit_f_e[i])
         cmb_y1.append(fit_sclr2*yfitbw_act[i]+fit_sclr1*yfit_f_p[i])
         cmb_y2.append(fit_sclr3*yfitbw_act[i]+fit_sclr1*yfit_f_e[i])
+        cmb_y3.append(fit_sclr5*yfitbw_act[i]+fit_sclr1*yfit_f_opt[i])
         #cmb_y3.append(fit_sclr4*yfitbw_act[i]+fit_sclr1*yfit_f_cmp[i])
         #scld_y.append(fit_sclr1*yfit_f_p[i])
         #scld_y2.append(fit_sclr1*yfit_f_e[i])
@@ -587,18 +585,22 @@ def reader(directory,file_pattern,output_folder):
         cmb_ye.append(yfit_f_e[i])
         cmb_y1.append(yfit_f_p[i]*fit_sclr1)
         cmb_y2.append(yfit_f_e[i]*fit_sclr1)
+        cmb_y3.append(yfit_f_opt[i]*fit_sclr1)
         #cmb_y3.append(yfit_f_cmp[i]*fit_sclr1)
         #scld_y.append(fit_sclr1*yfit_f_p[i])
         #scld_y2.append(fit_sclr1*yfit_f_e[i])
       xfit_diff=min(xfitbw_act)-min(xfit_f)
       cmn_x=[i+xfit_diff for i in cmn_x]
+
       plt.plot(xfitbw_act,yfitbw_act,label='BW Fit (Real)')
       plt.plot(xfit_f,yfit_f_p,label='poly fit (Free)')
       plt.plot(xfit_f,yfit_f_e,label='exp fit (Free)')
-      plt.plot(cmn_x,cmb_y,label='combined fit (poly)')
-      plt.plot(cmn_x,cmb_ye,label='combined fit (exp)')
-      plt.plot(cmn_x,cmb_y1,label='combined fit w/ scaling (poly)')
-      plt.plot(cmn_x,cmb_y2,label='combined fit w/ scaling (exp)') 
+      plt.plot(xfit_f,yfit_f_opt,label='opt fit (Free)')
+      plt.plot(cmn_x,cmb_y,label='cmb (poly)')
+      plt.plot(cmn_x,cmb_ye,label='cmb (exp)')
+      plt.plot(cmn_x,cmb_y1,label='cmb w/ scl (poly)')
+      plt.plot(cmn_x,cmb_y2,label='cmb fit w/ scl (exp)')
+      plt.plot(cmn_x,cmb_y3,label='cmb fit w/ scl (deg: %d)'%max_deg_f) 
       #plt.plot(cmn_x,cmb_y3,label='combined fit w/ scaling (cmp)')      
       plt.errorbar(cmb_bins[:-1],cmb_hist,xerr=binsize_cmb/2,yerr=cmb_err,fmt='.',label="Combined")
       plt.title("Real + Free")
@@ -609,7 +611,7 @@ def reader(directory,file_pattern,output_folder):
       plt.grid
       plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_add_IM_plot.png")
       plt.savefig(plot_file_path)
-      plt.show()
+      #plt.show()
       plt.close()
       
       #fitting with combined function using the existing histograms and parameters
@@ -618,19 +620,37 @@ def reader(directory,file_pattern,output_folder):
       uprbnd_cmb=[5,5,5,np.inf,np.inf,np.inf,np.inf,np.inf,fit_sclr2+2,fit_sclr1+2]
       lwrbnd_cmb1=[0,0,0,0,0,-np.inf,fit_sclr2-2,fit_sclr1-2]
       uprbnd_cmb1=[5,5,5,np.inf,np.inf,np.inf,fit_sclr2+2,fit_sclr1+2]
+      startpt=np.where(hist==max(hist))[0][0]
+      #endpt=np.where(np.abs(bins_cntr-mc.m_max+200)<=1)[0][0]
+      '''hist_diff=np.diff(hist)
+      limiter=6
+      hist_lim=limiter*np.std(hist_diff)
+      ind_jump=np.where(np.abs(hist_diff[startpt:])>hist_lim)[0]
+      while len(ind_jump)==0:
+        if limiter==0:
+          continue
+        else:
+          limiter=limiter-1
+          hist_lim=limiter*np.std(hist_diff)
+          ind_jump=np.where(np.abs(hist_diff[startpt:])>hist_lim)[0]
+      bg_start=startpt+ind_jump[-1]+1'''
       popt_guess,pcov_guess1=curve_fit(cmb_func_p,bins_cntr,hist,p0=[*param,*popt_f_p,fit_sclr2,fit_sclr1])
       popt_guess1,pcov_guess1=curve_fit(cmb_func_e,bins_cntr,hist,p0=[A_est,*param[1:],*popt_f_e,fit_sclr2,fit_sclr1],bounds=[lwrbnd_cmb1,uprbnd_cmb1])
       xfit_cmb=np.arange(min(bins_cntr),max(bins_cntr),0.5)
+      #xjumppt=np.where(np.abs(xfit_cmb-bins_cntr[startpt+ind_jump[-1]]<1))[0]
       yfit_cmb=cmb_func_p(xfit_cmb,*popt_guess)
       yfit_cmb2=cmb_func_e(xfit_cmb,*popt_guess1)
+      #bg_start=startpt+ind_jump[-1]+1
+      #bg_bins=bins_cntr[bg_start:]
       #print(popt_guess)
       #print(popt_guess1)
       plt.plot(xfit_cmb,yfit_cmb,label='cmb fit w/ p')
       plt.plot(xfit_cmb,yfit_cmb2,label='cmb fit w/ e')
       plt.errorbar(bins_cntr,hist,xerr=binsize/2,yerr=hist_err,fmt='.')
+      #plt.scatter(bins_cntr[startpt+ind_jump],hist[startpt+ind_jump],color='r',label='jumps')
       plt.xlim(min(bins_cntr)-2*binsize,mc.m_max)
       plt.legend(loc='upper right')
-      plt.show()
+      #plt.show()
       plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_cmb_IM_plot.png")
       plt.close()
       
@@ -648,6 +668,8 @@ def reader(directory,file_pattern,output_folder):
     if len(IM_list)!=0 and len(free_IM)!=0:
       plt.figure()
       plt.errorbar(bins_cntr,hist,xerr=binsize/2,yerr=hist_err,fmt='.',label='Recreated Deltas')
+      plt.errorbar(bins_cntr_act,hist_act,xerr=binsize/2,yerr=act_err,fmt='.',label='Actual Deltas')
+      
       #identify any jumps or kinks
       startpt=np.where(hist==max(hist))[0][0]
       #endpt=np.where(np.abs(bins_cntr-mc.m_max+200)<=1)[0][0]
@@ -678,7 +700,7 @@ def reader(directory,file_pattern,output_folder):
       popt_bg_cmp,pcov_bg_cmp=curve_fit(cmp_func,bg_bins,bg_hist,p0=[max(hist),1/mc.TDel,0],sigma=bg_err,absolute_sigma=True)
       #popt_bg_cmp_r,pcov_bg_cmp_r=curve_fit(cmp_func,bg_bins_rscl,bg_hist,p0=[max(hist),1/mc.TDel,0],sigma=bg_err,absolute_sigma=True)
       #print(popt_bg_p)
-      popt_bg_p2,pcov_bg_p2=curve_fit(poly_func,bg_bins_alt,bg_hist_alt,p0=[bg_hist[0],0,0,0,0],sigma=bg_err_alt,absolute_sigma=True)
+      #popt_bg_p2,pcov_bg_p2=curve_fit(poly_func,bg_bins_alt,bg_hist_alt,p0=[bg_hist[0],0,0,0,0],sigma=bg_err_alt,absolute_sigma=True)
       opt_coef,opt_deg=poly_fit_optimize(bg_bins_alt,bg_hist_alt,10)
       opt_p=np.poly1d(opt_coef)
       bg_x=np.arange(min(bins_cntr),max(bins_cntr),0.5)
@@ -687,43 +709,37 @@ def reader(directory,file_pattern,output_folder):
       bg_y_e=exp_func(bg_x,*popt_bg_e)
       bg_y_cmp=cmp_func(bg_x,*popt_bg_cmp)
       #bg_y_cmp_r=cmp_func(bg_x_r,*popt_bg_cmp_r)
-      bg_y_p2=poly_func(bg_x,*popt_bg_p2)
+      #bg_y_p2=poly_func(bg_x,*popt_bg_p2)
       bg_y_opt=opt_p(bg_x)
       bg_endpt=np.where(np.abs(bg_x-mc.m_max)<=1)[0][0]
+
+      y_sub_p=[]
+      y_sub_e=[]
+      y_sub_opt=[]
+      
+      
+      for i in range(0,len(hist)-1):
+        xbinpt=np.where(bg_x==bins_cntr[i])[0][0]
+        y_sub_p.append(hist[i]-bg_y_p[xbinpt])
+        y_sub_e.append(hist[i]-bg_y_e[xbinpt])
+        y_sub_opt.append(hist[i]-bg_y_opt[xbinpt])
+
       plt.plot(bg_x,bg_y_e,label='bg w/ exp fit')
       plt.plot(bg_x,bg_y_p,label='bg w/ poly fit')
       plt.plot(bg_x,bg_y_cmp,label='bg w/ cmp fit')
-      plt.plot(bg_x[:bg_endpt],bg_y_p2[:bg_endpt],label='bg w/ p2 fit')
+      #plt.plot(bg_x[:bg_endpt],bg_y_p2[:bg_endpt],label='bg w/ p2 fit')
       plt.plot(bg_x,bg_y_opt,label='bg w/ opt fit deg:%d'%opt_deg)
+      plt.plot(bins_cntr[:-1],y_sub_e,'.',label='- exp')
+      plt.plot(bins_cntr[:-1],y_sub_p,'.',label='- poly')
+      plt.plot(bins_cntr[:-1],y_sub_opt,'.',label='- opt')
       #plt.plot(bg_x,bg_y_cmp_r,label='bg w/ cmp fit (rscl)')
       plt.scatter(bins_cntr[startpt+ind_jump],hist[startpt+ind_jump],color='r',label='jumps')
       plt.legend(loc='upper right')
       plt.xlim(min(bins_cntr)-2*binsize,mc.m_max)
-      plt.show()
-      plt.close()
-      quit()
-
-    '''#subtracting free from recreated
-    if len(IM_list)!=0 and len(free_IM)!=0:
-      plt.figure(2)
-      plt.errorbar(bins_cntr,hist,xerr=binsize/2,yerr=hist_err,fmt='.',label='Recreated Deltas')
-      plt.errorbar(bins_cntr_f,hist_f,xerr=binsize/2,yerr=f_err,fmt='.',label='Free Particles')
-      plt.errorbar(bins_cntr_act,hist_act,xerr=binsize/2,yerr=act_err,fmt='.',label='Real Deltas')
-      sub_min=min(min(bins_cntr_f),min(bins_cntr))
-      sub_max=max(max(bins_cntr_f),max(bins_cntr))
-      cmn_hist1,sub_bins=np.histogram(IM_list,bins=np.arange(sub_min,sub_max,binsize_cmb))
-      cmn_hist2,sub_bins=np.histogram(free_IM,bins=sub_bins)
-      sub_hist=[a-b for a,b in zip(cmn_hist1,cmn_hist2)]
-      sub_err=np.sqrt(sub_hist)
-      plt.errorbar(sub_bins[:-1],sub_hist,xerr=binsize_cmb/2,yerr=sub_err,fmt='.',label='Difference')
-      plt.title("Recreated - Free")
-      plt.xlabel("Mass (MeV/c^2)")
-      plt.ylabel("Count")
-      plt.legend(loc='upper right')
+      plt.ylim(-20,max(hist)*1.2)
+      #plt.show()
       plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_sub_IM_plot.png")
-      plt.savefig(plot_file_path)
-      plt.show()
-      plt.close()'''
+      plt.close()
 
     contour=False
     if len(IM_list)!=0:
@@ -1042,8 +1058,8 @@ def reader(directory,file_pattern,output_folder):
 #read files
 abs_path=os.path.dirname(__file__)
 
-for dn in range(1,len(mc.Dlist)):
-  for fn in range(1,len(mc.Flist)):
+for dn in range(0,len(mc.Dlist)):
+  for fn in range(0,len(mc.Flist)):
     if dn==0 and fn==0:
       continue
     print("Ndelta:",mc.Dlist[dn],",","Nfree:",mc.Flist[fn])
@@ -1064,7 +1080,7 @@ for dn in range(1,len(mc.Dlist)):
 
     reader(directoryA,file_patternA,graph_folderA)
     print()
-    #reader(directorya,file_patterna,graph_foldera)
+    reader(directorya,file_patterna,graph_foldera)
     print()
-    #reader(directoryb,file_patternb,graph_folderb)
+    reader(directoryb,file_patternb,graph_folderb)
   
