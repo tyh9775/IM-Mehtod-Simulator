@@ -614,7 +614,7 @@ def reader(directory,file_pattern,output_folder):
       #plt.show()
       plt.close()
       
-      #fitting with combined function using the existing histograms and parameters
+      '''#fitting with combined function using the existing histograms and parameters
       plt.figure()
       lwrbnd_cmb=[0,0,0,-np.inf,-np.inf,-np.inf,-np.inf,-np.inf,fit_sclr2-2,fit_sclr1-2]
       uprbnd_cmb=[5,5,5,np.inf,np.inf,np.inf,np.inf,np.inf,fit_sclr2+2,fit_sclr1+2]
@@ -622,7 +622,7 @@ def reader(directory,file_pattern,output_folder):
       uprbnd_cmb1=[5,5,5,np.inf,np.inf,np.inf,fit_sclr2+2,fit_sclr1+2]
       startpt=np.where(hist==max(hist))[0][0]
       #endpt=np.where(np.abs(bins_cntr-mc.m_max+200)<=1)[0][0]
-      '''hist_diff=np.diff(hist)
+      hist_diff=np.diff(hist)
       limiter=6
       hist_lim=limiter*np.std(hist_diff)
       ind_jump=np.where(np.abs(hist_diff[startpt:])>hist_lim)[0]
@@ -633,9 +633,14 @@ def reader(directory,file_pattern,output_folder):
           limiter=limiter-1
           hist_lim=limiter*np.std(hist_diff)
           ind_jump=np.where(np.abs(hist_diff[startpt:])>hist_lim)[0]
-      bg_start=startpt+ind_jump[-1]+1'''
-      popt_guess,pcov_guess1=curve_fit(cmb_func_p,bins_cntr,hist,p0=[*param,*popt_f_p,fit_sclr2,fit_sclr1])
-      popt_guess1,pcov_guess1=curve_fit(cmb_func_e,bins_cntr,hist,p0=[A_est,*param[1:],*popt_f_e,fit_sclr2,fit_sclr1],bounds=[lwrbnd_cmb1,uprbnd_cmb1])
+      bg_start=startpt+ind_jump[-1]+1
+      cmb_fit_bins=bins_cntr[:bg_start]
+      cmb_fit_hist=hist[:bg_start]
+      cmb_fit_err=hist_err[:bg_start]
+      cmb_fit_err=[1 if i==0 else i for i in cmb_fit_err]
+      
+      popt_guess,pcov_guess1=curve_fit(cmb_func_p,cmb_fit_bins,cmb_fit_hist,p0=[*param,*popt_f_p,fit_sclr2,fit_sclr1])
+      popt_guess1,pcov_guess1=curve_fit(cmb_func_e,cmb_fit_bins,cmb_fit_hist,p0=[A_est,*param[1:],*popt_f_e,fit_sclr2,fit_sclr1],bounds=[lwrbnd_cmb1,uprbnd_cmb1])
       xfit_cmb=np.arange(min(bins_cntr),max(bins_cntr),0.5)
       #xjumppt=np.where(np.abs(xfit_cmb-bins_cntr[startpt+ind_jump[-1]]<1))[0]
       yfit_cmb=cmb_func_p(xfit_cmb,*popt_guess)
@@ -650,29 +655,24 @@ def reader(directory,file_pattern,output_folder):
       #plt.scatter(bins_cntr[startpt+ind_jump],hist[startpt+ind_jump],color='r',label='jumps')
       plt.xlim(min(bins_cntr)-2*binsize,mc.m_max)
       plt.legend(loc='upper right')
-      #plt.show()
+      plt.show()
       plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_cmb_IM_plot.png")
-      plt.close()
+      plt.close()'''
       
-
-    #####################
-    #subtraction methods#
-    #####################
-    
-    #goal: "take out" the affect of the background in the IM histogram
-    #step 1: find, if any, the distinguishing point(s) btwn bg and real
-    #step 2: curve_fit on section with just the bg
-    #step 3: extrapolate to the rest of the histogram
-    #step 4: subtract fit values from the histogram
-
-    if len(IM_list)!=0 and len(free_IM)!=0:
+      #####################
+      #subtraction methods#
+      #####################
+      
+      #goal: "take out" the affect of the background in the IM histogram
+      #step 1: find, if any, the distinguishing point(s) btwn bg and real
+      #step 2: curve_fit on section with just the bg
+      #step 3: extrapolate to the rest of the histogram
+      #step 4: subtract fit values from the histogram
       plt.figure()
       plt.errorbar(bins_cntr,hist,xerr=binsize/2,yerr=hist_err,fmt='.',label='Recreated Deltas')
       plt.errorbar(bins_cntr_act,hist_act,xerr=binsize/2,yerr=act_err,fmt='.',label='Actual Deltas')
-      
-      #identify any jumps or kinks
+      #find jumps and kinks
       startpt=np.where(hist==max(hist))[0][0]
-      #endpt=np.where(np.abs(bins_cntr-mc.m_max+200)<=1)[0][0]
       hist_diff=np.diff(hist)
       limiter=6
       hist_lim=limiter*np.std(hist_diff)
@@ -717,7 +717,6 @@ def reader(directory,file_pattern,output_folder):
       y_sub_e=[]
       y_sub_opt=[]
       
-      
       for i in range(0,len(hist)-1):
         xbinpt=np.where(bg_x==bins_cntr[i])[0][0]
         y_sub_p.append(hist[i]-bg_y_p[xbinpt])
@@ -739,6 +738,7 @@ def reader(directory,file_pattern,output_folder):
       plt.ylim(-20,max(hist)*1.2)
       #plt.show()
       plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_sub_IM_plot.png")
+      plt.savefig(plot_file_path)
       plt.close()
 
     contour=False
@@ -882,7 +882,7 @@ def reader(directory,file_pattern,output_folder):
       plt.title("Correlation Between 'a' and 'b' (Related Delta)")
       plt.xlabel('a')
       plt.ylabel('b')
-      aa=np.linspace(ac_est-eac,ac_est+eac,101)
+      aa=np.linspace(ac_est-eac,ac_est+eac,101)  
       bb=np.linspace(bc_est-ebc,bc_est+ebc,101)
       z=np.zeros((len(aa),len(bb)))
       for i in range (len(aa)):
@@ -1058,8 +1058,8 @@ def reader(directory,file_pattern,output_folder):
 #read files
 abs_path=os.path.dirname(__file__)
 
-for dn in range(0,len(mc.Dlist)):
-  for fn in range(0,len(mc.Flist)):
+for dn in range(1,len(mc.Dlist)):
+  for fn in range(1,len(mc.Flist)):
     if dn==0 and fn==0:
       continue
     print("Ndelta:",mc.Dlist[dn],",","Nfree:",mc.Flist[fn])
