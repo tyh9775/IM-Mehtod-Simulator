@@ -557,6 +557,7 @@ def reader(directory,file_pattern,output_folder):
       cmb_y2=[]
       cmb_ye=[]
       cmb_y3=[]
+      #opt_add=[]
       fit_sclr_list=[]
       for i in range(len(bins_cntr_act),len(bins_cntr_f)):
         if hist_f[i]>0:
@@ -580,6 +581,7 @@ def reader(directory,file_pattern,output_folder):
         #cmb_y3.append(fit_sclr4*yfitbw_act[i]+fit_sclr1*yfit_f_cmp[i])
         #scld_y.append(fit_sclr1*yfit_f_p[i])
         #scld_y2.append(fit_sclr1*yfit_f_e[i])
+        #opt_add.append(yfitbw_act[i]+fit_sclr1*yfit_f_opt[i])
       for i in range(len(xfitbw_act),len(xfit_f)):
         cmb_y.append(yfit_f_p[i])
         cmb_ye.append(yfit_f_e[i])
@@ -589,6 +591,7 @@ def reader(directory,file_pattern,output_folder):
         #cmb_y3.append(yfit_f_cmp[i]*fit_sclr1)
         #scld_y.append(fit_sclr1*yfit_f_p[i])
         #scld_y2.append(fit_sclr1*yfit_f_e[i])
+        #opt_add.append(fit_sclr1*yfit_f_opt[i])
       xfit_diff=min(xfitbw_act)-min(xfit_f)
       cmn_x=[i+xfit_diff for i in cmn_x]
 
@@ -601,6 +604,7 @@ def reader(directory,file_pattern,output_folder):
       plt.plot(cmn_x,cmb_y1,label='cmb w/ scl (poly)')
       plt.plot(cmn_x,cmb_y2,label='cmb fit w/ scl (exp)')
       plt.plot(cmn_x,cmb_y3,label='cmb fit w/ scl (deg: %d)'%max_deg_f) 
+      #plt.plot(cmn_x,opt_add,label='cmb fit (bg scl only)')
       #plt.plot(cmn_x,cmb_y3,label='combined fit w/ scaling (cmp)')      
       plt.errorbar(cmb_bins[:-1],cmb_hist,xerr=binsize_cmb/2,yerr=cmb_err,fmt='.',label="Combined")
       plt.title("Real + Free")
@@ -685,19 +689,23 @@ def reader(directory,file_pattern,output_folder):
           hist_lim=limiter*np.std(hist_diff)
           ind_jump=np.where(np.abs(hist_diff[startpt:])>hist_lim)[0]
       bg_start=startpt+ind_jump[-1]+1
+      #using theoretical max of delta IM if it is greater than the jump point
+      max_bin_pt=np.where(np.abs(bins_cntr-mc.md_max)<=binsize)[0][0]
+      if bg_start<max_bin_pt:
+        bg_start=max_bin_pt
       bg_bins=bins_cntr[bg_start:]
-      bg_bins_alt=bins_cntr[:10].tolist()+bg_bins.tolist()
+      bg_bins_alt=bins_cntr[:5].tolist()+bg_bins.tolist()
       #bg_bins_rscl=[ii-mc.md_min for ii in bg_bins]
       #bg_bins_alt=[ii-mc.md_min for ii in bg_bins_alt]
       bg_hist=hist[bg_start:]
-      bg_hist_alt=hist[:10].tolist()+bg_hist.tolist()
+      bg_hist_alt=hist[:5].tolist()+bg_hist.tolist()
       bg_err=hist_err[bg_start:]
       bg_err=[1 if i==0 else i for i in bg_err]
       bg_err_alt=np.sqrt(bg_hist_alt)
       bg_err_alt=[1 if i==0 else i for i in bg_err_alt]
-      popt_bg_p,pcov_bg_p=curve_fit(poly_func,bg_bins,bg_hist,p0=[bg_hist[0],0,0,0,0],sigma=bg_err,absolute_sigma=True)
+      popt_bg_p,pcov_bg_p=curve_fit(poly_func,bg_bins_alt,bg_hist_alt,p0=[bg_hist[0],0,0,0,0],sigma=bg_err_alt,absolute_sigma=True)
       popt_bg_e,pcov_bg_e=curve_fit(exp_func,bg_bins,bg_hist,p0=[max(hist),2/(mc.Tpfree+mc.Tpifree),0],sigma=bg_err,absolute_sigma=True)
-      popt_bg_cmp,pcov_bg_cmp=curve_fit(cmp_func,bg_bins,bg_hist,p0=[max(hist),1/mc.TDel,0],sigma=bg_err,absolute_sigma=True)
+      #popt_bg_cmp,pcov_bg_cmp=curve_fit(cmp_func,bg_bins,bg_hist,p0=[max(hist),1/mc.TDel,0],sigma=bg_err,absolute_sigma=True)
       #popt_bg_cmp_r,pcov_bg_cmp_r=curve_fit(cmp_func,bg_bins_rscl,bg_hist,p0=[max(hist),1/mc.TDel,0],sigma=bg_err,absolute_sigma=True)
       #print(popt_bg_p)
       #popt_bg_p2,pcov_bg_p2=curve_fit(poly_func,bg_bins_alt,bg_hist_alt,p0=[bg_hist[0],0,0,0,0],sigma=bg_err_alt,absolute_sigma=True)
@@ -707,7 +715,7 @@ def reader(directory,file_pattern,output_folder):
       #bg_x_r=bg_x-mc.md_min
       bg_y_p=poly_func(bg_x,*popt_bg_p)
       bg_y_e=exp_func(bg_x,*popt_bg_e)
-      bg_y_cmp=cmp_func(bg_x,*popt_bg_cmp)
+      #bg_y_cmp=cmp_func(bg_x,*popt_bg_cmp)
       #bg_y_cmp_r=cmp_func(bg_x_r,*popt_bg_cmp_r)
       #bg_y_p2=poly_func(bg_x,*popt_bg_p2)
       bg_y_opt=opt_p(bg_x)
@@ -725,7 +733,7 @@ def reader(directory,file_pattern,output_folder):
 
       plt.plot(bg_x,bg_y_e,label='bg w/ exp fit')
       plt.plot(bg_x,bg_y_p,label='bg w/ poly fit')
-      plt.plot(bg_x,bg_y_cmp,label='bg w/ cmp fit')
+      #plt.plot(bg_x,bg_y_cmp,label='bg w/ cmp fit')
       #plt.plot(bg_x[:bg_endpt],bg_y_p2[:bg_endpt],label='bg w/ p2 fit')
       plt.plot(bg_x,bg_y_opt,label='bg w/ opt fit deg:%d'%opt_deg)
       plt.plot(bins_cntr[:-1],y_sub_e,'.',label='- exp')
@@ -733,6 +741,7 @@ def reader(directory,file_pattern,output_folder):
       plt.plot(bins_cntr[:-1],y_sub_opt,'.',label='- opt')
       #plt.plot(bg_x,bg_y_cmp_r,label='bg w/ cmp fit (rscl)')
       plt.scatter(bins_cntr[startpt+ind_jump],hist[startpt+ind_jump],color='r',label='jumps')
+      plt.scatter(bins_cntr[bg_start],hist[bg_start],label='bg start')
       plt.legend(loc='upper right')
       plt.xlim(min(bins_cntr)-2*binsize,mc.m_max)
       plt.ylim(-20,max(hist)*1.2)
