@@ -503,6 +503,11 @@ def reader(directory,file_pattern,output_folder):
       #print(popt_f_p)
       plt.plot(xfit_f,yfit_f_p,label='poly fit, chi2=%s'%round(f_p_chi_sq,3))
       
+      c_opt_f,max_deg_f=poly_fit_optimize(bins_cntr_f,hist_f,max_deg=10)
+      f_opt_f=np.poly1d(c_opt_f)
+      
+      yfit_f_opt=f_opt_f(xfit_f)
+      plt.plot(xfit_f,yfit_f_opt,label="pwr %d poly"%(max_deg_f))
       '''bins_f_rscl=[i-min(bins_cntr_f) for i in bins_cntr_f]
       xfit_f_rscl=np.arange(min(bins_f_rscl),max(bins_f_rscl),0.5)
       popt_f_p_rscl,pcov_f_p_rscl=curve_fit(poly_func,bins_f_rscl,hist_f,p0=[max(hist_f),0,0,0,0],sigma=sigpts_f,absolute_sigma=True)
@@ -523,8 +528,9 @@ def reader(directory,file_pattern,output_folder):
       #plt.xlim(min(bins_cntr_f)-2*binsize,mc.m_max)
       plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_free_IM_plot.png")
       plt.savefig(plot_file_path)
-      #plt.show()
+      plt.show()
       plt.close()
+      quit()
       
 
     #################
@@ -550,7 +556,7 @@ def reader(directory,file_pattern,output_folder):
       #scld_y2=[]
       cmb_y2=[]
       cmb_ye=[]
-      #cmb_y3=[]
+      cmb_y3=[]
       fit_sclr_list=[]
       for i in range(len(bins_cntr_act),len(bins_cntr_f)):
         if hist_f[i]>0:
@@ -560,6 +566,11 @@ def reader(directory,file_pattern,output_folder):
       fpval_at_max=poly_func(cmn_x[mxpt],*popt_f_p)[0]
       feval_at_max=exp_func(cmn_x[mxpt],*popt_f_e)[0]
       fcmpval_at_max=exp_func(cmn_x[mxpt],*popt_f_cmp)[0]
+      
+      
+      foptval_at_max=f_opt_f(cmn_x[mxpt])
+
+
       fit_sclr2=1+Ndelta*(fpval_at_max/max(hist))
       fit_sclr3=1+Ndelta*(feval_at_max/max(hist))
       #fit_sclr4=1+Ndelta*(fcmpval_at_max/max(hist))
@@ -598,7 +609,7 @@ def reader(directory,file_pattern,output_folder):
       plt.grid
       plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_add_IM_plot.png")
       plt.savefig(plot_file_path)
-      #plt.show()
+      plt.show()
       plt.close()
       
       #fitting with combined function using the existing histograms and parameters
@@ -619,7 +630,7 @@ def reader(directory,file_pattern,output_folder):
       plt.errorbar(bins_cntr,hist,xerr=binsize/2,yerr=hist_err,fmt='.')
       plt.xlim(min(bins_cntr)-2*binsize,mc.m_max)
       plt.legend(loc='upper right')
-      #plt.show()
+      plt.show()
       plot_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(filename))[0]}_cmb_IM_plot.png")
       plt.close()
       
@@ -653,11 +664,11 @@ def reader(directory,file_pattern,output_folder):
           ind_jump=np.where(np.abs(hist_diff[startpt:])>hist_lim)[0]
       bg_start=startpt+ind_jump[-1]+1
       bg_bins=bins_cntr[bg_start:]
-      bg_bins_alt=bins_cntr[:5].tolist()+bg_bins.tolist()
+      bg_bins_alt=bins_cntr[:10].tolist()+bg_bins.tolist()
       #bg_bins_rscl=[ii-mc.md_min for ii in bg_bins]
       #bg_bins_alt=[ii-mc.md_min for ii in bg_bins_alt]
       bg_hist=hist[bg_start:]
-      bg_hist_alt=hist[:5].tolist()+bg_hist.tolist()
+      bg_hist_alt=hist[:10].tolist()+bg_hist.tolist()
       bg_err=hist_err[bg_start:]
       bg_err=[1 if i==0 else i for i in bg_err]
       bg_err_alt=np.sqrt(bg_hist_alt)
