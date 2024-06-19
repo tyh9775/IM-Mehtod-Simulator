@@ -24,7 +24,7 @@ nevts=20000
 
 #numbers of particles/pairs generated
 Dlist=[0,1,2]
-Flist=[0,1,2]
+Flist=[0,5,10]
 
 p_cut=1 #momentum restriction on the particles in delta frame
 m_cut=2 #mass error bar for delta 
