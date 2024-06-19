@@ -1052,13 +1052,12 @@ for dn in range(1,len(mc.Dlist)):
     print("Ndelta:",mc.Dlist[dn],",","Nfree:",mc.Flist[fn])
     ptcl_dir='D_%d_F_%d'%(mc.Dlist[dn],mc.Flist[fn])
     directory=os.path.join(abs_path,ptcl_dir)
-    file_patternA="BW_A_*.csv"
-    file_patterna="BW_a_*.csv"
-    file_patternb="BW_b_*.csv"
+    file_pattern="D_*_F_*.csv"
+
     #output folders
     graph_folder=os.path.join(directory,"results")
 
     os.makedirs(graph_folder,exist_ok=True)
 
-    reader(directory,file_patternb,graph_folder)
+    reader(directory,file_pattern,graph_folder)
   

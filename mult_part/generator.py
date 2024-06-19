@@ -318,5 +318,5 @@ for dn in range(0,len(Delta_num)):
     max_list=[]
     ver_list=[]
 
-    filename=f"D_{Delta_num[dn]}_f_{Free_num[fn]}.csv"
+    filename=f"D_{Delta_num[dn]}_F_{Free_num[fn]}.csv"
     generator(Delta_num[dn],Free_num[fn],filename,DT=delta_temp,output_folder=newfolder)
