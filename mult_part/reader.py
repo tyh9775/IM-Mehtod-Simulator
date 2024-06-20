@@ -1045,8 +1045,8 @@ def reader(directory,file_pattern,output_folder):
 #read files
 abs_path=os.path.dirname(__file__)
 
-for dn in range(1,len(mc.Dlist)):
-  for fn in range(1,len(mc.Flist)):
+for dn in range(0,len(mc.Dlist)):
+  for fn in range(0,len(mc.Flist)):
     if dn==0 and fn==0:
       continue
     print("Ndelta:",mc.Dlist[dn],",","Nfree:",mc.Flist[fn])
@@ -1060,4 +1060,4 @@ for dn in range(1,len(mc.Dlist)):
     os.makedirs(graph_folder,exist_ok=True)
 
     reader(directory,file_pattern,graph_folder)
-  
+
