@@ -306,17 +306,23 @@ delta_temp=300
 
 abs_path=os.path.dirname(__file__)
 
+xlist=[]
+ylist=[]
+fwhm_list=[]
+max_list=[]
+ver_list=[]
+
 for dn in range(0,len(Delta_num)):
   for fn in range(0,len(Free_num)):
     if dn==0 and fn==0:
       continue
     newfolder=os.path.join(abs_path,'D_%d_F_%d'%(Delta_num[dn],Free_num[fn]))
     os.makedirs(newfolder,exist_ok=True)
-    xlist=[]
-    ylist=[]
-    fwhm_list=[]
-    max_list=[]
-    ver_list=[]
+
 
     filename=f"D_{Delta_num[dn]}_F_{Free_num[fn]}.csv"
-    generator(Delta_num[dn],Free_num[fn],filename,DT=delta_temp,output_folder=newfolder)
+    x,y,fwhm,mxi=generator(Delta_num[dn],Free_num[fn],filename,DT=delta_temp,output_folder=newfolder)
+    
+    fwhm_list.append(fwhm)
+
+
