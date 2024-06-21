@@ -5,10 +5,11 @@ from scipy.optimize import curve_fit
 import myconst as mc
 import os
 import glob
-import re
 
 mass_method=True
-eventcheck=False
+eventcheck=True
+mass_width=True
+del_mw=mc.fwhm_def
 #distance formula: sqrt(x1^2+x2^2+...+xn^2)
 def dist_form(vec):
   vsum2=0

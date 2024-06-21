@@ -5,6 +5,7 @@ import csv
 import myconst as mc
 from matplotlib import pyplot as plt
 import os
+import re
 
 
 #Breit_Wigner distribution for the  mass distribution of delta resonances:
@@ -327,3 +328,7 @@ for dn in range(0,len(Delta_num)):
 
 fwhm_def=np.mean(fwhm_list)
 
+with open("myconst.py",'r') as myfile:
+  myconstants=myfile.read()
+  
+searcher=re.search(fwhm)

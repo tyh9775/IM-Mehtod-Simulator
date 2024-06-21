@@ -37,3 +37,6 @@ bw_mw=50
 Tpfree=150
 Tpifree=200
 TDel=300
+
+
+fwhm_def=97
