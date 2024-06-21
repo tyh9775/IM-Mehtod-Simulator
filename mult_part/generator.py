@@ -290,7 +290,7 @@ def generator(numD,numF,filename,DT=None,A=None,a=None,b=None,output_folder=None
           g.writerow(datapi)
           file.close()    
   print("numD,numF:",numD,numF)
-  print("Parameters:",A,a,b)
+  #print("Parameters:",A,a,b)
   print("Number of Delta resonances created:",ND_total)
   print("Number of all particles detected:", NP_total)
   print()
@@ -325,4 +325,5 @@ for dn in range(0,len(Delta_num)):
     
     fwhm_list.append(fwhm)
 
+fwhm_def=np.mean(fwhm_list)
 
