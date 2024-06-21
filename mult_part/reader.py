@@ -9,7 +9,13 @@ import glob
 mass_method=True
 eventcheck=True
 mass_width=True
-del_mw=mc.fwhm_def
+
+#read files
+abs_path=os.path.dirname(__file__)
+
+with open(os.path.join(abs_path,'fwhm.txt'),'r') as fwhmfile:
+  fwhm_default=float(fwhmfile.read())
+
 #distance formula: sqrt(x1^2+x2^2+...+xn^2)
 def dist_form(vec):
   vsum2=0
@@ -1043,8 +1049,7 @@ def reader(directory,file_pattern,output_folder):
   print()
   return IM_all,act_all,cr_all,mnt_all
 
-#read files
-abs_path=os.path.dirname(__file__)
+
 
 for dn in range(0,len(mc.Dlist)):
   for fn in range(0,len(mc.Flist)):

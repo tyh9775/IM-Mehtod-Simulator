@@ -326,9 +326,9 @@ for dn in range(0,len(Delta_num)):
     
     fwhm_list.append(fwhm)
 
+
 fwhm_def=np.mean(fwhm_list)
 
-with open("myconst.py",'r') as myfile:
-  myconstants=myfile.read()
-  
-searcher=re.search(fwhm)
+with open(os.path.join(abs_path,"fwhm.txt"),'w') as file:
+  file.write(f'{fwhm_def}')
+  file.close()
